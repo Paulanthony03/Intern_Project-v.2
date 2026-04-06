@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dashboard_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,31 +19,47 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isLoading = false;
   bool obscurePassword = true;
 
+  // ✅ Inline error variables
+  String? emailError;
+  String? passwordError;
+
   Future<void> loginUser() async {
-    // 🔥 VALIDATE FIRST
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      // If form fields are invalid, stop here
+      return;
+    }
 
     setState(() => isLoading = true);
 
-    String? token = await ApiService.login(
-      emailController.text.trim(),
-      passwordController.text.trim(),
+    final result = await ApiService.login(
+      emailController.text,
+      passwordController.text,
     );
 
     setState(() => isLoading = false);
 
-    if (token != null) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString("token", token);
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => DashboardScreen()),
+    if (result == null) {
+      // Show API error in SnackBar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Invalid email or password"),
+          backgroundColor: Colors.red,
+        ),
       );
+      return;
+    }
+
+    // ✅ Save token
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("token", result["token"]);
+
+    final role = result["role"];
+
+    // Navigate to the correct dashboard
+    if (role == 'admin') {
+      Navigator.pushReplacementNamed(context, '/admin');
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Invalid email or password")));
+      Navigator.pushReplacementNamed(context, '/user');
     }
   }
 
@@ -54,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Padding(
         padding: EdgeInsets.all(20),
         child: Form(
-          key: _formKey, // 🔥 IMPORTANT
+          key: _formKey,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -62,10 +77,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
               SizedBox(height: 20),
 
-              // 🔹 EMAIL
+              // 🔹 EMAIL FIELD
               TextFormField(
                 controller: emailController,
-                decoration: InputDecoration(labelText: "Email"),
+                decoration: InputDecoration(
+                  labelText: "Email",
+                  errorText: emailError, // ✅ Show backend/inline errors
+                ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -82,16 +100,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   return null;
                 },
+                onChanged: (_) {
+                  setState(() {
+                    emailError = null; // Clear error while typing
+                  });
+                },
               ),
 
               SizedBox(height: 15),
 
-              // 🔹 PASSWORD
+              // 🔹 PASSWORD FIELD
               TextFormField(
                 controller: passwordController,
                 obscureText: obscurePassword,
                 decoration: InputDecoration(
                   labelText: "Password",
+                  errorText: passwordError, // ✅ Show backend/inline errors
                   suffixIcon: IconButton(
                     icon: Icon(
                       obscurePassword ? Icons.visibility : Icons.visibility_off,
@@ -114,6 +138,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   return null;
                 },
+                onChanged: (_) {
+                  setState(() {
+                    passwordError = null; // Clear error while typing
+                  });
+                },
               ),
 
               SizedBox(height: 25),
@@ -122,7 +151,13 @@ class _LoginScreenState extends State<LoginScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: isLoading ? null : loginUser,
+                  onPressed: isLoading
+                      ? null
+                      : () {
+                          if (_formKey.currentState!.validate()) {
+                            loginUser();
+                          }
+                        },
                   child: isLoading
                       ? CircularProgressIndicator(color: Colors.white)
                       : Text("Login"),

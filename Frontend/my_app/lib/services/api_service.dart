@@ -36,9 +36,12 @@ class ApiService {
   }
 
   // =========================
-  // 🔹 LOGIN USER
+  // 🔹 LOGIN USER (UPDATED)
   // =========================
-  static Future<String?> login(String email, String password) async {
+  static Future<Map<String, dynamic>?> login(
+    String email,
+    String password,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/login'),
@@ -50,8 +53,14 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data["token"];
+
+        return {
+          "token": data["token"],
+          "role": data["user"]["role"], // 👈 IMPORTANT
+          "user": data["user"], // optional (good for profile)
+        };
       } else {
+        print("Login Failed: ${response.body}");
         return null;
       }
     } catch (e) {
@@ -101,6 +110,54 @@ class ApiService {
     } catch (e) {
       print("Get Users Error: $e");
       return null;
+    }
+  }
+
+  static Future<void> createUser(
+    String token,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/users'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('Failed to create user');
+    }
+  }
+
+  static Future<void> updateUser(
+    String token,
+    dynamic id,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/users/$id'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update user');
+    }
+  }
+
+  static Future<void> deleteUser(String token, dynamic id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/users/$id'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete user');
     }
   }
 }
