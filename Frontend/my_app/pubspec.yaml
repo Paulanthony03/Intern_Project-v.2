@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  
+  flutter_secure_storage: ^9.0.0
 
   carousel_slider: ^5.0.0
 
