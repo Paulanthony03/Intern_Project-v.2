@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dashboard_screen.dart';
 import 'register_screen.dart';
+import 'package:flutter/foundation.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +20,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool isLoading = false;
   bool obscurePassword = true;
+
+static const Color maroon = Color(0xFF6B1010);
+static const Color bgBeige = Color(0xFFF5EDE8);
+static const Color cardPink = Color(0xFFE8D5D0);
+
 
   Future<void> loginUser() async {
     // 🔥 VALIDATE FIRST
@@ -48,24 +54,161 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+Widget buildField({
+  required String label,
+  required TextEditingController controller,
+  bool obscureText = false,
+  Widget? suffixIcon,
+  TextInputType? keyboardType,
+  String? Function(String?)? validator,
+}){
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label, 
+        style: TextStyle(
+          color: maroon,
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+          letterSpacing:1.2,
+          ),
+          ),
+      SizedBox(height: 8),
+      TextFormField(
+        controller: controller,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        validator: validator,
+        style: TextStyle(color: maroon),
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: Colors.white,
+          suffixIcon: suffixIcon,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: maroon, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.red, width: 1),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.red, width: 1.5),
+          ),
+        ),
+      ),                                             
+    ],
+  );
+}
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isLargeScreen = screenWidth > 600;
+
     return Scaffold(
-      body: Padding(
-        padding: EdgeInsets.all(20),
-        child: Form(
-          key: _formKey, // 🔥 IMPORTANT
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text("Login", style: TextStyle(fontSize: 28)),
+      backgroundColor: bgBeige,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(24),
+          child: Form(
+            key: _formKey, // 🔥 IMPORTANT
+            child: isLargeScreen
+            ? Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 🔹 LEFT SIDE - IMAGE
+                Expanded(
+                  child: Column(
+                   mainAxisAlignment: MainAxisAlignment.center,
+                   children: [
+                      Image.asset("assets/mylogo.png", height: 150),
+                       SizedBox(height: 40),
+                       Text("InternShip",
+                    style: TextStyle(
+                      fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: maroon,
+                    letterSpacing: 4,
+                  ),
+                  ),
+              ],
+              ),
+            ),
+            SizedBox (width: 40),
 
-              SizedBox(height: 20),
+              Expanded(child: _buildFormContent(),
+              ),
+              ],
+            )
+            : Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+              kIsWeb
+               ? Image.network(
+               "assets/mylogo.png",
+                height: 280,
+                  errorBuilder: (context, error, stackTrace) {
+                 return Icon(Icons.image_not_supported, size: 100, color: maroon);
+                  },
+               )
+               : Image.asset(
+                 "assets/mylogo.png",
+                 height: 280,
+                  errorBuilder: (context, error, stackTrace) {
+                  return Icon(Icons.image_not_supported, size: 100, color: maroon);
+                   },
+                 ),
+                    ],
+              ),
+            ),
+          ),
+            ),
+            );
+            }
 
-              // 🔹 EMAIL
-              TextFormField(
+  Widget _buildFormContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+         Text("Welcome Back!",
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: maroon,
+          ),
+          ),
+              SizedBox(height: 6),
+              Text(
+                "Let's Login to your account",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: maroon.withOpacity(0.7),
+                  letterSpacing: 0.5,
+                ),
+              ),
+              SizedBox(height: 32),
+              //card
+              Container(
+                padding: EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: cardPink,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  children: [
+              buildField(
+                label: "Username",
                 controller: emailController,
-                decoration: InputDecoration(labelText: "Email"),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -84,24 +227,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
               ),
 
-              SizedBox(height: 15),
+              SizedBox(height: 20),
 
-              // 🔹 PASSWORD
-              TextFormField(
+              buildField(
+                label: "Password",
                 controller: passwordController,
                 obscureText: obscurePassword,
-                decoration: InputDecoration(
-                  labelText: "Password",
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      obscurePassword ? Icons.visibility : Icons.visibility_off,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        obscurePassword = !obscurePassword;
-                      });
-                    },
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    obscurePassword
+                    ? Icons.visibility
+                    : Icons.visibility_off,
+                    color: maroon,
                   ),
+                  onPressed: () {
+                    setState(() {
+                      obscurePassword = !obscurePassword;
+                    });
+                  },
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -116,34 +259,69 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
               ),
 
-              SizedBox(height: 25),
+              SizedBox(height: 28),
 
               // 🔹 LOGIN BUTTON
               SizedBox(
                 width: double.infinity,
+                height: 50,
                 child: ElevatedButton(
                   onPressed: isLoading ? null : loginUser,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: maroon,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
                   child: isLoading
-                      ? CircularProgressIndicator(color: Colors.white)
-                      : Text("Login"),
+                      ? CircularProgressIndicator(color: maroon)
+                      : Text(
+                        "Login",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize:16,
+                          letterSpacing: 2,
+                          ),
+                          ),
                 ),
               ),
 
-              SizedBox(height: 10),
+              SizedBox(height: 20),
 
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => RegisterScreen()),
-                  );
-                },
-                child: Text("Don't have an account? Register"),
+              Row(mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Don't have an account?",
+                    style: TextStyle(
+                      color:maroon.withOpacity(0.7),
+                      fontSize: 12,
+                    ),
+                  ),
+                GestureDetector(
+                  onTap: (){
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => RegisterScreen()),
+                    );
+                  },
+                  child: Text(
+                    "Register now",
+                    style:TextStyle(
+                      color: maroon,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                      ),  
+                    ),
+                ),
+               ],
               ),
-            ],
-          ),
+             ],
+             ),
         ),
-      ),
+      ],
     );
   }
 }
