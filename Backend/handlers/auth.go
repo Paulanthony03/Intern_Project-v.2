@@ -1,25 +1,28 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"time"
+
 	"student-system/config"
 	"student-system/models"
 	"student-system/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func Register(c *gin.Context) {
 	var user models.User
 
-	// 1. Bind JSON
+	// Bind JSON
 	if err := c.BindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 🔥 STEP 3: CHECK IF EMAIL EXISTS (PUT HERE)
 	var existingUser models.User
 	config.DB.Where("email = ?", user.Email).First(&existingUser)
 
@@ -30,11 +33,10 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// 2. Hash password
+	// Hash password
 	hash, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
 	user.Password = string(hash)
 
-	// 🔥 STEP 4: CREATE USER (PUT HERE)
 	result := config.DB.Create(&user)
 
 	if result.Error != nil {
@@ -43,11 +45,11 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
-
-	// 3. Success response
+	// Success response
 	c.JSON(http.StatusOK, gin.H{
 		"message": "User registered",
 	})
+
 }
 
 func Login(c *gin.Context) {
@@ -83,4 +85,82 @@ func Login(c *gin.Context) {
 			"role":  user.Role,
 		},
 	})
+}
+
+func ForgotPassword(c *gin.Context) {
+	var req struct {
+		Email string `json:"email"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	fmt.Println("Forgot Password called")
+
+	var user models.User
+	if err := config.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
+		fmt.Println("User not found:", err)
+		c.JSON(404, gin.H{"error": "User not found"})
+		return
+	}
+
+	token := uuid.New().String()
+
+	user.ResetToken = token
+	user.TokenExpiry = time.Now().Add(15 * time.Minute)
+
+	if err := config.DB.Save(&user).Error; err != nil {
+		fmt.Println("DB save error:", err)
+		c.JSON(500, gin.H{"error": "DB error"})
+		return
+	}
+
+	resetLink := "myapp://reset?token=" + token
+	body := "Click to reset password:\n\n" + resetLink
+
+	err := utils.SendEmail(user.Email, "Reset Password", body)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Email failed"})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "Reset link sent",
+		"token":   token,
+	})
+}
+
+func ResetPassword(c *gin.Context) {
+	var req struct {
+		Token       string `json:"token"`
+		NewPassword string `json:"password"`
+	}
+
+	c.BindJSON(&req)
+
+	var user models.User
+	if err := config.DB.Where("reset_token = ?", req.Token).First(&user).Error; err != nil {
+		c.JSON(400, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	if time.Now().After(user.TokenExpiry) {
+		c.JSON(400, gin.H{"error": "Token expired"})
+		return
+	}
+
+	hashed, _ := bcrypt.GenerateFromPassword([]byte(req.NewPassword), 10)
+
+	user.Password = string(hashed)
+	user.ResetToken = ""
+	user.TokenExpiry = time.Time{}
+
+	if err := config.DB.Save(&user).Error; err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Password updated"})
 }

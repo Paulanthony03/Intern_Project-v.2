@@ -18,4 +18,6 @@ func SetupRoutes(r *gin.Engine) {
 		auth.GET("/profile", handlers.GetProfile)
 		auth.POST("/users", handlers.CreateUser)
 	}
+	r.POST("/api/forgot-password", handlers.ForgotPassword)
+	r.POST("/api/reset-password", handlers.ResetPassword)
 }
