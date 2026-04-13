@@ -97,8 +97,9 @@ class _LoginScreenState extends State<LoginScreen> {
             Positioned(
               top: 30,
               left: 50,
+              right: 30,
               child: Text(
-                "crescent",
+                "Blacky",
                 style: GoogleFonts.googleSans(
                   fontWeight: FontWeight.bold,
                   fontSize: 25,
@@ -124,13 +125,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Transform.scale(
-                                scale: 1.5,
+                                scale: 1.2,
                                 child: Image.asset(
                                   '../assets/images/mylogo.png',
                                 ),
                               ),
 
-                              const SizedBox(height: 50),
+                              const SizedBox(height: 26),
 
                               Text(
                                 "Welcome Back!",
@@ -148,18 +149,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               const SizedBox(height: 1),
 
-                              SelectableText(
-                                "Access your account to manage intern profiles and dashboards.",
-                                style: GoogleFonts.googleSans(
-                                  fontSize: 15,
-                                  color: const Color.fromARGB(
-                                    255,
-                                    240,
-                                    238,
-                                    238,
+                              Center(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth:
+                                        MediaQuery.of(context).size.width * 0.3,
+                                  ),
+                                  child: SelectableText(
+                                    "Access your account to manage intern profiles and dashboards.",
+                                    style: GoogleFonts.googleSans(
+                                      color: const Color.fromARGB(
+                                        255,
+                                        240,
+                                        238,
+                                        238,
+                                      ),
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
-                                textAlign: TextAlign.center,
                               ),
                             ],
                           ),
@@ -172,44 +180,52 @@ class _LoginScreenState extends State<LoginScreen> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const SizedBox(height: 150),
+                            const SizedBox(height: 130),
 
                             Padding(
                               padding: const EdgeInsets.only(
-                                right: 50,
-                                top: 40,
+                                right: 85,
+                                top: 20,
                               ),
                               child: Container(
-                                width: 500,
-                                padding: const EdgeInsets.all(30),
+                                width: 650,
+                                padding: const EdgeInsets.only(
+                                  left: 45,
+                                  right: 45,
+                                  top: 45,
+                                  bottom: 35,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: const Color.fromARGB(255, 50, 49, 49),
+                                  color: const Color.fromARGB(255, 51, 49, 49),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
 
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      "Login",
-                                      style: GoogleFonts.googleSans(
-                                        fontSize: 15,
-                                        color: const Color.fromARGB(
-                                          255,
-                                          240,
-                                          238,
-                                          238,
+                                    Center(
+                                      child: Text(
+                                        "Login to Blacky",
+                                        style: GoogleFonts.googleSans(
+                                          fontSize: 27,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color.fromARGB(
+                                            255,
+                                            240,
+                                            238,
+                                            238,
+                                          ),
                                         ),
                                       ),
                                     ),
 
-                                    const SizedBox(height: 15),
+                                    const SizedBox(height: 25),
 
                                     // EMAIL LABEL
                                     Text(
                                       "Email",
                                       style: GoogleFonts.googleSans(
-                                        fontSize: 10,
+                                        fontSize: 15,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -232,7 +248,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                       decoration: InputDecoration(
                                         hintText: "Enter your email",
                                         hintStyle: const TextStyle(
-                                          color: Colors.grey,
+                                          fontSize: 11,
+                                          color: Color.fromARGB(
+                                            221,
+                                            158,
+                                            158,
+                                            158,
+                                          ),
                                         ),
                                         errorText: emailError,
                                         filled: true,
@@ -282,7 +304,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     Text(
                                       "Password",
                                       style: GoogleFonts.googleSans(
-                                        fontSize: 10,
+                                        fontSize: 15,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -306,7 +328,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                       decoration: InputDecoration(
                                         hintText: "Enter your password",
                                         hintStyle: const TextStyle(
-                                          color: Colors.grey,
+                                          fontSize: 11,
+                                          color: Color.fromARGB(
+                                            221,
+                                            158,
+                                            158,
+                                            158,
+                                          ),
                                         ),
                                         errorText: passwordError,
                                         filled: true,
@@ -364,7 +392,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       },
                                     ),
 
-                                    const SizedBox(height: 5),
+                                    const SizedBox(height: 6),
 
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.end,
@@ -375,7 +403,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               "Forgot Password?",
                                               style: GoogleFonts.googleSans(
                                                 color: Colors.grey,
-                                                fontSize: 10,
+                                                fontSize: 12,
                                               ),
                                             ),
                                           ],
@@ -383,13 +411,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ],
                                     ),
 
-                                    const SizedBox(height: 15),
+                                    const SizedBox(height: 35),
 
                                     // LOGIN BUTTON
                                     SizedBox(
                                       width: double.infinity,
                                       child: ElevatedButton(
                                         style: ElevatedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 16,
+                                          ),
                                           backgroundColor: const Color.fromARGB(
                                             255,
                                             212,
@@ -416,7 +447,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             : Text(
                                                 "Login",
                                                 style: GoogleFonts.googleSans(
-                                                  fontSize: 15,
+                                                  fontSize: 18,
                                                   fontWeight: FontWeight.bold,
                                                   color: Colors.black,
                                                 ),
@@ -424,7 +455,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     ),
 
-                                    const SizedBox(height: 5),
+                                    const SizedBox(height: 20),
 
                                     // REGISTER LINK
                                     Center(
@@ -442,14 +473,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                           text: TextSpan(
                                             text: "Don't have an account? ",
                                             style: GoogleFonts.googleSans(
-                                              fontSize: 10,
+                                              fontSize: 13,
                                               color: Colors.grey,
                                             ),
                                             children: [
                                               TextSpan(
                                                 text: "Register",
                                                 style: GoogleFonts.googleSans(
-                                                  fontSize: 10,
+                                                  fontSize: 13,
                                                   fontWeight: FontWeight.bold,
                                                   color: const Color.fromARGB(
                                                     255,
