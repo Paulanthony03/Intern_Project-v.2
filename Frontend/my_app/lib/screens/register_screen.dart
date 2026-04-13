@@ -126,7 +126,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 0),
 
                           Text(
                             "Register to access your intern profile and dashboard.",
@@ -145,17 +145,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Expanded(
                     flex: 2,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         const SizedBox(height: 20),
-
                         Padding(
-                          padding: const EdgeInsets.only(right: 20),
+                          padding: const EdgeInsets.symmetric(vertical: 30),
                           child: Container(
-                            width: 500,
+                            width: 700,
 
-                            padding: const EdgeInsets.all(20),
-
+                            padding: const EdgeInsets.only(
+                              top: 30,
+                              left: 30,
+                              right: 30,
+                              bottom: 20,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color.fromARGB(255, 50, 49, 49),
                               borderRadius: BorderRadius.circular(20),
