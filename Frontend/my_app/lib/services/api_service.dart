@@ -5,7 +5,7 @@ class ApiService {
   static const String baseUrl = "http://10.22.0.124:8080";
 
   // =========================
-  // 🔹 REGISTER USER
+  // REGISTER USER
   // =========================
   static Future<String?> register(
     String name,
@@ -36,7 +36,7 @@ class ApiService {
   }
 
   // =========================
-  // 🔹 LOGIN USER (UPDATED)
+  // LOGIN USER (UPDATED)
   // =========================
   static Future<Map<String, dynamic>?> login(
     String email,
@@ -56,8 +56,8 @@ class ApiService {
 
         return {
           "token": data["token"],
-          "role": data["user"]["role"], // 👈 IMPORTANT
-          "user": data["user"], // optional (good for profile)
+          "role": data["user"]["role"],
+          "user": data["user"],
         };
       } else {
         print("Login Failed: ${response.body}");
@@ -70,7 +70,7 @@ class ApiService {
   }
 
   // =========================
-  // 🔹 GET USER PROFILE
+  // GET USER PROFILE
   // =========================
   static Future<Map<String, dynamic>?> getProfile(String token) async {
     try {
@@ -159,5 +159,31 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Failed to delete user');
     }
+  }
+
+  static Future<Map<String, dynamic>?> forgotPassword(String email) async {
+    final response = await http.post(
+      Uri.parse("http://localhost:8080/api/forgot-password"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"email": email}),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      return data; // ✅ return whole response
+    } else {
+      return null;
+    }
+  }
+
+  static Future<bool> resetPassword(String token, String password) async {
+    final response = await http.post(
+      Uri.parse("http://localhost:8080/api/reset-password"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"token": token, "password": password}),
+    );
+
+    return response.statusCode == 200;
   }
 }

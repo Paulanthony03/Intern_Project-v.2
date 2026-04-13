@@ -1,233 +1,496 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
-import '../screens/login_screen.dart';
+import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  _RegisterScreenState createState() => _RegisterScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final nameController = TextEditingController();
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
   final emailController = TextEditingController();
+  final schoolController = TextEditingController();
+  final programController = TextEditingController();
+  final internIdController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
-  final internIdController = TextEditingController();
-  final schoolController = TextEditingController();
 
-  bool isLoading = false;
   bool obscurePassword = true;
-  bool obscureConfirmPassword = true;
+  bool obscureConfirm = true;
+  bool isLoading = false;
 
-  String? emailError;
+  InputDecoration inputStyle(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: Colors.grey),
+      filled: true,
+      fillColor: const Color.fromRGBO(255, 255, 255, 1),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(5)),
+      contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+      isDense: true,
+    );
+  }
 
   Future<void> registerUser() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      isLoading = true;
-      emailError = null;
-    });
+    setState(() => isLoading = true);
 
-    try {
-      String? result = await ApiService.register(
-        nameController.text.trim(),
-        emailController.text.trim(),
-        passwordController.text.trim(),
-        internIdController.text.trim(),
-        schoolController.text.trim(),
+    String? result = await ApiService.register(
+      "${firstNameController.text} ${lastNameController.text}",
+      emailController.text,
+      passwordController.text,
+      internIdController.text,
+      schoolController.text,
+    );
+
+    setState(() => isLoading = false);
+
+    if (result == "success") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
-
-      if (result == "success") {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Registered Successfully")),
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      } else {
-        setState(() {
-          emailError = result;
-        });
-
-        _formKey.currentState!.validate();
-      }
-    } catch (e) {
+    } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Something went wrong")));
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
+      ).showSnackBar(SnackBar(content: Text(result ?? "Registration Failed")));
     }
+  }
+
+  Widget label(String text) {
+    return Text(
+      text,
+      style: GoogleFonts.googleSans(fontSize: 11, color: Colors.white),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              const SizedBox(height: 60),
-
-              const Text(
-                "Create Account",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-
-              const SizedBox(height: 30),
-
-              // 🔹 FULL NAME
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: "Full Name"),
-                validator: (value) =>
-                    value!.isEmpty ? "Enter your full name" : null,
-              ),
-
-              const SizedBox(height: 15),
-
-              // 🔹 EMAIL
-              TextFormField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  labelText: "Email",
-                  errorText: emailError,
-                ),
-                keyboardType: TextInputType.emailAddress,
-                onChanged: (_) {
-                  if (emailError != null) {
-                    setState(() => emailError = null);
-                  }
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Enter your email";
-                  }
-
-                  final emailRegex = RegExp(
-                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                  );
-
-                  if (!emailRegex.hasMatch(value)) {
-                    return "Enter a valid email";
-                  }
-
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 15),
-
-              // 🔹 INTERN ID
-              TextFormField(
-                controller: internIdController,
-                decoration: const InputDecoration(labelText: "Intern ID"),
-                validator: (value) =>
-                    value!.isEmpty ? "Enter your Intern ID" : null,
-              ),
-
-              const SizedBox(height: 15),
-
-              // 🔹 SCHOOL
-              TextFormField(
-                controller: schoolController,
-                decoration: const InputDecoration(
-                  labelText: "School / University",
-                ),
-                validator: (value) =>
-                    value!.isEmpty ? "Enter your school" : null,
-              ),
-
-              const SizedBox(height: 15),
-
-              // 🔹 PASSWORD
-              TextFormField(
-                controller: passwordController,
-                obscureText: obscurePassword,
-                decoration: InputDecoration(
-                  labelText: "Password",
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      obscurePassword ? Icons.visibility : Icons.visibility_off,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        obscurePassword = !obscurePassword;
-                      });
-                    },
-                  ),
-                ),
-                validator: (value) {
-                  if (value!.isEmpty) return "Enter password";
-                  if (value.length < 6) return "Minimum 6 characters";
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 15),
-
-              // 🔹 CONFIRM PASSWORD
-              TextFormField(
-                controller: confirmPasswordController,
-                obscureText: obscureConfirmPassword,
-                decoration: InputDecoration(
-                  labelText: "Confirm Password",
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      obscureConfirmPassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        obscureConfirmPassword = !obscureConfirmPassword;
-                      });
-                    },
-                  ),
-                ),
-                validator: (value) {
-                  if (value!.isEmpty) return "Confirm your password";
-                  if (value != passwordController.text) {
-                    return "Passwords do not match";
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 30),
-
-              // 🔹 BUTTON
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : registerUser,
-                  child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Register"),
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text("Already have an account? Login"),
-              ),
-            ],
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("../assets/images/background.png"),
+            fit: BoxFit.cover,
           ),
+        ),
+
+        child: Stack(
+          children: [
+            /// TOP TITLE
+            Positioned(
+              top: 30,
+              left: 50,
+              child: Text(
+                "Blacky",
+                style: GoogleFonts.googleSans(
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+
+            Form(
+              key: _formKey,
+              child: Row(
+                children: [
+                  /// LEFT SIDE
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 200),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Transform.scale(
+                            scale: 1.5,
+                            child: Image.asset("../assets/images/mylogo.png"),
+                          ),
+
+                          const SizedBox(height: 50),
+
+                          Text(
+                            "Set Up Account",
+                            style: GoogleFonts.googleSans(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+
+                          const SizedBox(height: 5),
+
+                          Text(
+                            "Register to access your intern profile and dashboard.",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.googleSans(
+                              fontSize: 12,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  /// RIGHT SIDE FORM
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const SizedBox(height: 20),
+
+                        Padding(
+                          padding: const EdgeInsets.only(right: 20),
+                          child: Container(
+                            width: 500,
+
+                            padding: const EdgeInsets.all(20),
+
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(255, 50, 49, 49),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Create your Profile",
+                                  style: GoogleFonts.googleSans(
+                                    fontSize: 20,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 25),
+
+                                /// FIRST + LAST
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          label("First Name"),
+                                          const SizedBox(height: 5),
+
+                                          TextFormField(
+                                            controller: firstNameController,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                            ),
+                                            decoration: inputStyle(
+                                              "Enter your First Name",
+                                            ),
+                                            validator: (v) =>
+                                                v!.isEmpty ? "Required" : null,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 15),
+
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          label("Last Name"),
+                                          const SizedBox(height: 5),
+
+                                          TextFormField(
+                                            controller: lastNameController,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                            ),
+                                            decoration: inputStyle(
+                                              "Enter your Last Name",
+                                            ),
+                                            validator: (v) =>
+                                                v!.isEmpty ? "Required" : null,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 15),
+
+                                /// EMAIL + INTERN ID
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          label("Email"),
+                                          const SizedBox(height: 5),
+
+                                          TextFormField(
+                                            controller: emailController,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                            ),
+                                            decoration: inputStyle(
+                                              "Enter your email",
+                                            ),
+                                            validator: (v) =>
+                                                v!.isEmpty ? "Required" : null,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 15),
+
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          label("Intern ID"),
+                                          const SizedBox(height: 5),
+
+                                          TextFormField(
+                                            controller: internIdController,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                            ),
+                                            decoration: inputStyle(
+                                              "Enter your Intern ID",
+                                            ),
+                                            validator: (v) =>
+                                                v!.isEmpty ? "Required" : null,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 15),
+
+                                /// SCHOOL
+                                label("School"),
+                                const SizedBox(height: 5),
+
+                                TextFormField(
+                                  controller: schoolController,
+                                  style: const TextStyle(fontSize: 12),
+                                  decoration: inputStyle("Enter School Name"),
+                                  validator: (v) =>
+                                      v!.isEmpty ? "Required" : null,
+                                ),
+
+                                const SizedBox(height: 15),
+
+                                /// PROGRAM
+                                label("Program"),
+                                const SizedBox(height: 5),
+
+                                TextFormField(
+                                  controller: programController,
+                                  style: const TextStyle(fontSize: 12),
+                                  decoration: inputStyle(
+                                    "Enter your College Program",
+                                  ),
+                                  validator: (v) =>
+                                      v!.isEmpty ? "Required" : null,
+                                ),
+
+                                const SizedBox(height: 15),
+
+                                /// PASSWORDS
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          label("Password"),
+                                          const SizedBox(height: 5),
+
+                                          TextFormField(
+                                            controller: passwordController,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                            ),
+                                            obscureText: obscurePassword,
+                                            decoration:
+                                                inputStyle(
+                                                  "Create Password",
+                                                ).copyWith(
+                                                  suffixIcon: IconButton(
+                                                    icon: Icon(
+                                                      obscurePassword
+                                                          ? Icons.visibility_off
+                                                          : Icons.visibility,
+                                                      color: Colors.white,
+                                                    ),
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        obscurePassword =
+                                                            !obscurePassword;
+                                                      });
+                                                    },
+                                                  ),
+                                                  suffixIconConstraints:
+                                                      const BoxConstraints(
+                                                        minHeight: 30,
+                                                        minWidth: 30,
+                                                      ),
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 15),
+
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          label("Confirm Password"),
+                                          const SizedBox(height: 5),
+
+                                          TextFormField(
+                                            controller:
+                                                confirmPasswordController,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                            ),
+                                            obscureText: obscureConfirm,
+                                            decoration:
+                                                inputStyle(
+                                                  "Confirm your Password",
+                                                ).copyWith(
+                                                  suffixIcon: IconButton(
+                                                    icon: Icon(
+                                                      obscureConfirm
+                                                          ? Icons.visibility_off
+                                                          : Icons.visibility,
+                                                      color: Colors.white,
+                                                    ),
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        obscureConfirm =
+                                                            !obscureConfirm;
+                                                      });
+                                                    },
+                                                  ),
+                                                  suffixIconConstraints:
+                                                      const BoxConstraints(
+                                                        minHeight: 30,
+                                                        minWidth: 30,
+                                                      ),
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 25),
+
+                                /// REGISTER BUTTON
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color.fromARGB(
+                                        255,
+                                        212,
+                                        226,
+                                        74,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                    ),
+                                    onPressed: isLoading ? null : registerUser,
+                                    child: isLoading
+                                        ? const CircularProgressIndicator(
+                                            color: Colors.black,
+                                          )
+                                        : Text(
+                                            "Register",
+                                            style: GoogleFonts.googleSans(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 10),
+
+                                /// LOGIN LINK
+                                Center(
+                                  child: TextButton(
+                                    onPressed: () {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const LoginScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: RichText(
+                                      text: TextSpan(
+                                        text: "Already have an account? ",
+                                        style: GoogleFonts.googleSans(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                        children: [
+                                          TextSpan(
+                                            text: "Login",
+                                            style: GoogleFonts.googleSans(
+                                              fontWeight: FontWeight.bold,
+                                              color: const Color.fromARGB(
+                                                255,
+                                                212,
+                                                226,
+                                                74,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
