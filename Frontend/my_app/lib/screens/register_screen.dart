@@ -199,8 +199,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
                                         ),
-                                        textAlign: TextAlign
-                                            .center, // 👈 important for multi-line
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
 
@@ -319,9 +318,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                 decoration: inputStyle(
                                                   "Enter your email",
                                                 ),
-                                                validator: (v) => v!.isEmpty
-                                                    ? "Email address is required"
-                                                    : null,
+                                                validator: (value) {
+                                                  if (value == null ||
+                                                      value.isEmpty) {
+                                                    return "Email address is required";
+                                                  }
+                                                  final emailRegex = RegExp(
+                                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                                  );
+                                                  if (!emailRegex.hasMatch(
+                                                    value,
+                                                  )) {
+                                                    return "Enter a valid email";
+                                                  }
+                                                  return null;
+                                                },
                                               ),
                                             ],
                                           ),
@@ -357,9 +368,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                 decoration: inputStyle(
                                                   "Enter your Intern ID",
                                                 ),
-                                                validator: (v) => v!.isEmpty
-                                                    ? "Intern ID is required"
-                                                    : null,
+                                                validator: (value) {
+                                                  if (value == null ||
+                                                      value.isEmpty) {
+                                                    return "Intern ID is required";
+                                                  }
+
+                                                  if (!RegExp(
+                                                    r'^[0-9]+$',
+                                                  ).hasMatch(value)) {
+                                                    return "Intern ID must contain numbers only";
+                                                  }
+
+                                                  return null;
+                                                },
                                               ),
                                             ],
                                           ),
@@ -562,9 +584,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                             minWidth: 30,
                                                           ),
                                                     ),
-                                                validator: (v) => v!.isEmpty
-                                                    ? "Please confirm your password"
-                                                    : null,
+                                                validator: (value) {
+                                                  if (value == null ||
+                                                      value.isEmpty) {
+                                                    return "Please confirm your password";
+                                                  }
+                                                  if (value.length < 6) {
+                                                    return "Minimum 6 characters";
+                                                  }
+                                                  if (value !=
+                                                      passwordController.text) {
+                                                    return "Passwords do not match";
+                                                  }
+
+                                                  return null;
+                                                },
                                               ),
                                             ],
                                           ),

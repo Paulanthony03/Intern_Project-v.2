@@ -381,6 +381,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                   borderRadius:
                                                       BorderRadius.circular(10),
                                                 ),
+                                                errorText: passwordError,
                                                 filled: true,
                                                 fillColor: const Color.fromARGB(
                                                   255,
