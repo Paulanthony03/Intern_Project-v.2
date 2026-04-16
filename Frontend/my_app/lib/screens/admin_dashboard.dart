@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'login_screen.dart';
 
 class AdminProfile extends StatelessWidget {
   final String fullName;
@@ -127,7 +128,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
               Navigator.pop(ctx);
               final prefs = await SharedPreferences.getInstance();
               await prefs.clear();
-              Navigator.pushReplacementNamed(context, '/login');
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+              );
             },
             child: Text(
               "Yes",

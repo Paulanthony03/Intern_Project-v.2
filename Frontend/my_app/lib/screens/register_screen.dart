@@ -514,9 +514,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                             minWidth: 30,
                                                           ),
                                                     ),
-                                                validator: (v) => v!.isEmpty
-                                                    ? "Password is required"
-                                                    : null,
+                                                validator: (value) {
+                                                  if (value == null ||
+                                                      value.isEmpty) {
+                                                    return "Password is required";
+                                                  }
+                                                  if (value.length < 6) {
+                                                    return "Minimum 6 characters";
+                                                  }
+                                                  return null;
+                                                },
                                               ),
                                             ],
                                           ),
