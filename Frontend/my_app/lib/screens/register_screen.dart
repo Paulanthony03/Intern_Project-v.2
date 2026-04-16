@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
 
@@ -70,10 +69,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget label(String text) {
-    return Text(
-      text,
-      style: GoogleFonts.googleSans(fontSize: 15, color: Colors.white),
-    );
+    return Text(text, style: TextStyle(fontSize: 15, color: Colors.white));
   }
 
   @override
@@ -95,7 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               left: 50,
               child: Text(
                 "Blacky",
-                style: GoogleFonts.googleSans(
+                style: TextStyle(
                   fontSize: 25,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -127,7 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                               Text(
                                 "Set Up Account",
-                                style: GoogleFonts.googleSans(
+                                style: TextStyle(
                                   fontSize: 35,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
@@ -143,7 +139,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ),
                                   child: SelectableText(
                                     "Register to access your intern profile and dashboard.",
-                                    style: GoogleFonts.googleSans(
+                                    style: TextStyle(
                                       color: const Color.fromARGB(
                                         255,
                                         240,
@@ -194,7 +190,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       alignment: Alignment.center,
                                       child: Text(
                                         "Create your Profile",
-                                        style: GoogleFonts.googleSans(
+                                        style: TextStyle(
                                           fontSize: 27,
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
@@ -215,7 +211,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             children: [
                                               Text(
                                                 "First Name",
-                                                style: GoogleFonts.googleSans(
+                                                style: TextStyle(
                                                   fontSize: 13,
                                                   color: const Color.fromARGB(
                                                     255,
@@ -254,7 +250,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             children: [
                                               Text(
                                                 "Last Name",
-                                                style: GoogleFonts.googleSans(
+                                                style: TextStyle(
                                                   fontSize: 13,
                                                   color: const Color.fromARGB(
                                                     255,
@@ -297,7 +293,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             children: [
                                               Text(
                                                 "Email",
-                                                style: GoogleFonts.googleSans(
+                                                style: TextStyle(
                                                   fontSize: 13,
                                                   color: const Color.fromARGB(
                                                     255,
@@ -347,7 +343,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             children: [
                                               Text(
                                                 "Intern ID",
-                                                style: GoogleFonts.googleSans(
+                                                style: TextStyle(
                                                   fontSize: 13,
                                                   color: const Color.fromARGB(
                                                     255,
@@ -394,7 +390,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     /// SCHOOL
                                     Text(
                                       "School",
-                                      style: GoogleFonts.googleSans(
+                                      style: TextStyle(
                                         fontSize: 13,
                                         color: const Color.fromARGB(
                                           255,
@@ -425,7 +421,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     /// PROGRAM
                                     Text(
                                       "Program",
-                                      style: GoogleFonts.googleSans(
+                                      style: TextStyle(
                                         fontSize: 13,
                                         color: const Color.fromARGB(
                                           255,
@@ -463,7 +459,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             children: [
                                               Text(
                                                 "Password",
-                                                style: GoogleFonts.googleSans(
+                                                style: TextStyle(
                                                   fontSize: 13,
                                                   color: const Color.fromARGB(
                                                     255,
@@ -538,7 +534,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             children: [
                                               Text(
                                                 "Confirm Password",
-                                                style: GoogleFonts.googleSans(
+                                                style: TextStyle(
                                                   fontSize: 13,
                                                   color: const Color.fromARGB(
                                                     255,
@@ -644,7 +640,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               )
                                             : Text(
                                                 "Register",
-                                                style: GoogleFonts.googleSans(
+                                                style: TextStyle(
                                                   fontSize: 18,
                                                   fontWeight: FontWeight.bold,
                                                   color: Colors.black,
@@ -670,14 +666,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         child: RichText(
                                           text: TextSpan(
                                             text: "Already have an account? ",
-                                            style: GoogleFonts.googleSans(
+                                            style: TextStyle(
                                               fontSize: 13,
                                               color: Colors.grey,
                                             ),
                                             children: [
                                               TextSpan(
                                                 text: "Login",
-                                                style: GoogleFonts.googleSans(
+                                                style: TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   color: const Color.fromARGB(
                                                     255,

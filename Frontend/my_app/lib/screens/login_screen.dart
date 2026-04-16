@@ -3,8 +3,8 @@ import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'admin_dashboard.dart';
 import 'user_dashboard.dart';
+import 'forgot_password_screen.dart';
 import 'register_screen.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 String? emailError;
 String? passwordError;
@@ -102,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
               right: 30,
               child: Text(
                 "Blacky",
-                style: GoogleFonts.googleSans(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 25,
                   color: const Color.fromRGBO(255, 255, 255, 1),
@@ -139,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   Text(
                                     "Welcome Back!",
-                                    style: GoogleFonts.googleSans(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 35,
                                       color: const Color.fromARGB(
@@ -162,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                       child: SelectableText(
                                         "Access your account to manage intern profiles and dashboards.",
-                                        style: GoogleFonts.googleSans(
+                                        style: TextStyle(
                                           color: const Color.fromARGB(
                                             255,
                                             240,
@@ -215,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         Center(
                                           child: Text(
                                             "Login to Blacky",
-                                            style: GoogleFonts.googleSans(
+                                            style: TextStyle(
                                               fontSize: 27,
                                               fontWeight: FontWeight.bold,
                                               color: const Color.fromARGB(
@@ -233,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         // EMAIL LABEL
                                         Text(
                                           "Email",
-                                          style: GoogleFonts.googleSans(
+                                          style: TextStyle(
                                             fontSize: 13,
                                             color: const Color.fromARGB(
                                               255,
@@ -317,7 +317,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         // EMAIL LABEL
                                         Text(
                                           "Password",
-                                          style: GoogleFonts.googleSans(
+                                          style: TextStyle(
                                             fontSize: 13,
                                             color: const Color.fromARGB(
                                               255,
@@ -417,22 +417,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                         const SizedBox(height: 6),
 
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  "Forgot Password?",
-                                                  style: GoogleFonts.googleSans(
-                                                    color: Colors.grey,
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                        TextButton(
+                                          style: ElevatedButton.styleFrom(),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    ForgotPasswordScreen(),
+                                              ),
+                                            );
+                                          },
+                                          child: Text("Forgot Password"),
                                         ),
 
                                         const SizedBox(height: 35),
@@ -473,13 +469,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                                   )
                                                 : Text(
                                                     "Login",
-                                                    style:
-                                                        GoogleFonts.googleSans(
-                                                          fontSize: 18,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Colors.black,
-                                                        ),
+                                                    style: TextStyle(
+                                                      fontSize: 18,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.black,
+                                                    ),
                                                   ),
                                           ),
                                         ),
@@ -501,14 +496,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                             child: RichText(
                                               text: TextSpan(
                                                 text: "Don't have an account? ",
-                                                style: GoogleFonts.googleSans(
+                                                style: TextStyle(
                                                   fontSize: 13,
                                                   color: Colors.grey,
                                                 ),
                                                 children: [
                                                   TextSpan(
                                                     text: "Register",
-                                                    style: GoogleFonts.googleSans(
+                                                    style: TextStyle(
                                                       fontSize: 13,
                                                       fontWeight:
                                                           FontWeight.bold,

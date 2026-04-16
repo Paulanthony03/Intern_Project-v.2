@@ -161,29 +161,27 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> forgotPassword(String email) async {
-    final response = await http.post(
-      Uri.parse("http://localhost:8080/api/forgot-password"),
+  static Future forgotPassword(String email) async {
+    return await http.post(
+      Uri.parse("$baseUrl/forgot-password"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"email": email}),
     );
-
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200) {
-      return data; // ✅ return whole response
-    } else {
-      return null;
-    }
   }
 
-  static Future<bool> resetPassword(String token, String password) async {
-    final response = await http.post(
-      Uri.parse("http://localhost:8080/api/reset-password"),
+  static Future verifyOtp(String email, String otp) async {
+    return await http.post(
+      Uri.parse("$baseUrl/verify-otp"),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"token": token, "password": password}),
+      body: jsonEncode({"email": email, "otp": otp}),
     );
+  }
 
-    return response.statusCode == 200;
+  static Future resetPassword(String email, String password) async {
+    return await http.post(
+      Uri.parse("$baseUrl/reset-password"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"email": email, "new_password": password}),
+    );
   }
 }
