@@ -32,7 +32,7 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
-
+	user.Role = "user"
 	// Hash password
 	hash, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
 	user.Password = string(hash)
