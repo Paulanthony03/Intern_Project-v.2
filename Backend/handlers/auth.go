@@ -3,14 +3,14 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
-	"student-system/config"
+	config "student-system/config"
 	"student-system/models"
 	"student-system/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -45,7 +45,7 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
-	// Success response
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "User registered",
 	})
@@ -92,75 +92,110 @@ func ForgotPassword(c *gin.Context) {
 		Email string `json:"email"`
 	}
 
-	if err := c.BindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	fmt.Println("Forgot Password called")
+	// 1. Check if user exists
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+	fmt.Println("INPUT:", req.Email)
+	fmt.Println("NORMALIZED:", email)
 
+	var users []models.User
+	config.DB.Find(&users)
+
+	for _, u := range users {
+		fmt.Println("DB:", u.Email)
+	}
 	var user models.User
-	if err := config.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
-		fmt.Println("User not found:", err)
-		c.JSON(404, gin.H{"error": "User not found"})
-		return
-	}
 
-	token := uuid.New().String()
+	err := config.DB.
+		Where("email = ?", email).
+		First(&user).Error
 
-	user.ResetToken = token
-	user.TokenExpiry = time.Now().Add(15 * time.Minute)
-
-	if err := config.DB.Save(&user).Error; err != nil {
-		fmt.Println("DB save error:", err)
-		c.JSON(500, gin.H{"error": "DB error"})
-		return
-	}
-
-	resetLink := "myapp://reset?token=" + token
-	body := "Click to reset password:\n\n" + resetLink
-
-	err := utils.SendEmail(user.Email, "Reset Password", body)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Email failed"})
+		c.JSON(404, gin.H{"error": "Email not found"})
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"message": "Reset link sent",
-		"token":   token,
-	})
+	// 2. Generate OTP
+	otp := utils.GenerateOTP()
+	expiry := time.Now().Add(5 * time.Minute)
+
+	// 3. Save OTP
+	otpRecord := models.OTPCode{
+		Email:     email,
+		OTP:       otp,
+		ExpiresAt: expiry,
+		Verified:  false,
+	}
+
+	config.DB.Create(&otpRecord)
+
+	// 4. Send email
+	utils.SendOTPEmail(req.Email, otp)
+
+	c.JSON(http.StatusOK, gin.H{"message": "OTP sent successfully"})
+}
+
+func VerifyOTP(c *gin.Context) {
+	var req struct {
+		Email string `json:"email"`
+		OTP   string `json:"otp"`
+	}
+
+	var otpRecord models.OTPCode
+
+	err := config.DB.
+		Where("email = ?", req.Email).
+		Order("created_at DESC").
+		First(&otpRecord).Error
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "OTP not found"})
+		return
+	}
+
+	if otpRecord.OTP != req.OTP || time.Now().After(otpRecord.ExpiresAt) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or expired OTP"})
+		return
+	}
+
+	// mark verified
+	config.DB.Model(&otpRecord).Update("verified", true)
+
+	c.JSON(http.StatusOK, gin.H{"message": "OTP verified"})
 }
 
 func ResetPassword(c *gin.Context) {
 	var req struct {
-		Token       string `json:"token"`
-		NewPassword string `json:"password"`
+		Email       string `json:"email"`
+		NewPassword string `json:"new_password"`
 	}
 
-	c.BindJSON(&req)
+	// check latest OTP verified
+	var otpRecord models.OTPCode
 
-	var user models.User
-	if err := config.DB.Where("reset_token = ?", req.Token).First(&user).Error; err != nil {
-		c.JSON(400, gin.H{"error": "Invalid token"})
+	err := config.DB.
+		Where("email = ? AND verified = ?", req.Email, true).
+		Order("created_at DESC").
+		First(&otpRecord).Error
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "OTP not verified"})
 		return
 	}
 
-	if time.Now().After(user.TokenExpiry) {
-		c.JSON(400, gin.H{"error": "Token expired"})
+	hashed, err := utils.HashPassword(req.NewPassword)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to hash password"})
 		return
 	}
 
-	hashed, _ := bcrypt.GenerateFromPassword([]byte(req.NewPassword), 10)
+	config.DB.Model(&models.User{}).
+		Where("email = ?", req.Email).
+		Update("password", hashed)
 
-	user.Password = string(hashed)
-	user.ResetToken = ""
-	user.TokenExpiry = time.Time{}
-
-	if err := config.DB.Save(&user).Error; err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(200, gin.H{"message": "Password updated"})
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset successful"})
 }

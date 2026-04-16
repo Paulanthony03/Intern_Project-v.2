@@ -1,7 +1,7 @@
 package main
 
 import (
-	"student-system/config"
+	config "student-system/config"
 	"student-system/routes"
 
 	"github.com/gin-contrib/cors"

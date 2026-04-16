@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"student-system/config"
+	config "student-system/config"
 	"student-system/models"
 
 	"github.com/gin-gonic/gin"
