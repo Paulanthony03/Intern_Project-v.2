@@ -1,27 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/screens/login_screen.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'login_screen.dart';
-
-class AdminProfile extends StatelessWidget {
-  final String fullName;
-
-  const AdminProfile({super.key, required this.fullName});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Admin Profile"),
-        backgroundColor: const Color(0xFF2A2A2A),
-      ),
-      body: Center(child: Text("Admin Profile: $fullName")),
-    );
-  }
-}
 
 class AdminDashboard extends StatefulWidget {
-  const AdminDashboard({super.key});
+  final String token;
+
+  const AdminDashboard({Key? key, required this.token}) : super(key: key);
 
   @override
   _AdminDashboardState createState() => _AdminDashboardState();
@@ -31,15 +16,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
   List<dynamic>? users;
   String fullName = "";
   String currentUserId = "";
-  bool isAdmin = false;
   String searchQuery = "";
   int departmentCount = 5;
+  int? hoveredIndex;
 
-  // 🎨 Dark theme colors matching your screenshot
   final Color pageBg = const Color(0xFF1A1A1A);
   final Color headerBg = const Color(0xFF2A2A2A);
   final Color cardBg = const Color(0xFF2E2E2E);
-  final Color accent = const Color(0xFFD4E24A); // yellow-green
+  final Color accent = const Color(0xFFD4E24A);
   final Color textMain = Colors.white;
   final Color textMuted = const Color(0xFF888888);
   final Color borderColor = const Color(0xFF3A3A3A);
@@ -57,9 +41,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
         prefs.getString("full_name") ??
         prefs.getString("name") ??
         prefs.getString("username") ??
-        "User";
+        "Admin";
     final userId = prefs.getString("user_id") ?? "";
-    final admin = prefs.getBool("is_admin") ?? false;
     final savedDept = prefs.getInt("department_count");
 
     if (token != null) {
@@ -71,11 +54,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
         return seen.add(id);
       }).toList();
 
+      // 🔹 Filter out admin accounts — only show intern cards
+      final internsOnly = deduped?.where((u) {
+        final role = (u["role"] ?? u["user_type"] ?? "")
+            .toString()
+            .toLowerCase();
+        return role != "admin";
+      }).toList();
+
       setState(() {
-        users = deduped;
+        users = internsOnly;
         fullName = name;
         currentUserId = userId;
-        isAdmin = admin;
         if (savedDept != null) departmentCount = savedDept;
       });
     }
@@ -97,7 +87,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }).toList();
   }
 
-  // 🔹 LOGOUT DIALOG
+  // 🔹 LOGOUT — goes to login/register page
   void showLogoutDialog() {
     showDialog(
       context: context,
@@ -128,9 +118,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
               Navigator.pop(ctx);
               final prefs = await SharedPreferences.getInstance();
               await prefs.clear();
-              Navigator.pushReplacement(
+
+              Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => LoginScreen()),
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
               );
             },
             child: Text(
@@ -143,7 +134,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // 🔹 ADMIN: Edit department count
   void showEditDepartmentDialog() {
     final controller = TextEditingController(text: departmentCount.toString());
     showDialog(
@@ -196,15 +186,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // 🔹 PROFILE EXPANDED DIALOG
+  // 🔹 VIEW PROFILE DIALOG
   void showProfileDialog(Map<String, dynamic> user, int internNumber) {
     final String name = (user["name"] ?? "Unknown").toUpperCase();
     final String school = user["school"] ?? "-";
     final String email = user["email"] ?? "-";
     final String contact = user["contact"] ?? user["contact_no"] ?? "-";
     final String? photoUrl = user["photo_url"];
-    final String userId = user["id"]?.toString() ?? "";
-    final bool isMyCard = userId == currentUserId;
 
     showDialog(
       context: context,
@@ -282,35 +270,36 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     const SizedBox(height: 12),
                     _infoRow("Contact No.:", contact),
                     const SizedBox(height: 24),
-                    if (isMyCard)
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: accent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+
+                    // 🔹 Admin can edit any intern's profile
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          onPressed: () {
-                            Navigator.pop(ctx);
-                            Navigator.pushNamed(
-                              context,
-                              '/edit-profile',
-                              arguments: user,
-                            );
-                          },
-                          child: Text(
-                            "Edit My Profile",
-                            style: TextStyle(
-                              color: pageBg,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          Navigator.pushNamed(
+                            context,
+                            '/edit-profile',
+                            arguments: user,
+                          );
+                        },
+                        child: Text(
+                          "Edit Profile",
+                          style: TextStyle(
+                            color: pageBg,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -332,6 +321,75 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // 🔹 DELETE CONFIRMATION DIALOG
+  void showDeleteDialog(Map<String, dynamic> user) {
+    final String name = user["name"] ?? "this intern";
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: cardBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          "Delete Intern",
+          style: TextStyle(
+            color: Colors.redAccent,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          "Are you sure you want to delete $name? This cannot be undone.",
+          style: TextStyle(color: textMain),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text("Cancel", style: TextStyle(color: textMuted)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () async {
+              try {
+                final prefs = await SharedPreferences.getInstance();
+                final token = prefs.getString("token");
+
+                if (token != null) {
+                  await ApiService.deleteUser(
+                    token,
+                    int.parse(user['id'].toString()),
+                  );
+
+                  setState(() {
+                    users!.removeWhere((u) => u['id'] == user['id']);
+                  });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("$name has been deleted.")),
+                  );
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text("Delete failed")));
+              }
+            },
+            child: const Text(
+              "Delete",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -358,104 +416,122 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // 🔹 HEADER — "WELCOME, [Name]!" in center like screenshot
+  // 🔹 HEADER — dropdown with Profile and Logout only
   Widget buildHeader() {
     return Container(
       color: headerBg,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
         children: [
-          // Left: logo + site name
-          Image.asset('../assets/images/mylogo.png', height: 32),
+          // LEFT — logo + site name
+          Image.asset('../assets/images/mylogo.png', height: 36),
           const SizedBox(width: 10),
           Text(
-            "cresent",
+            "Blacky",
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: textMain,
               letterSpacing: 1,
             ),
           ),
 
-          // Center: welcome message
-          Expanded(
-            child: Center(
-              child: Text(
-                "Hello, Admin!",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: textMain,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ),
+          // MIDDLE — empty spacer
+          const Spacer(),
+
+          // RIGHT — dropdown menu
           PopupMenuButton<String>(
             color: cardBg,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
               side: BorderSide(color: borderColor),
             ),
-            offset: const Offset(0, 48),
+            offset: const Offset(0, 52),
             onSelected: (value) {
               if (value == 'profile') {
-                Navigator.push(
+                Navigator.pushNamed(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => AdminProfile(fullName: fullName),
-                  ),
+                  '/admin-profile',
+                  arguments: {"name": fullName},
                 );
-              } else if (value == 'settings') {
-                showGeneralSettingsDialog();
               } else if (value == 'logout') {
                 showLogoutDialog();
               }
             },
             itemBuilder: (ctx) => [
+              // Profile card at top of dropdown
+              PopupMenuItem(
+                enabled: false,
+                height: 120,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: borderColor,
+                      child: Icon(Icons.person, size: 28, color: accent),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      fullName,
+                      style: TextStyle(
+                        color: textMain,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Administrator",
+                      style: TextStyle(color: textMuted, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+
+              PopupMenuDivider(height: 1),
+
+              // View admin profile
               PopupMenuItem(
                 value: 'profile',
                 child: Row(
                   children: [
-                    Icon(Icons.account_circle, color: accent, size: 18),
+                    Icon(
+                      Icons.account_circle_outlined,
+                      color: accent,
+                      size: 18,
+                    ),
                     const SizedBox(width: 10),
                     Text(
-                      "Admin Profile",
+                      "My Profile",
                       style: TextStyle(color: textMain, fontSize: 13),
                     ),
                   ],
                 ),
               ),
-              const PopupMenuDivider(height: 1),
-              PopupMenuItem(
-                value: 'settings',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings, color: accent, size: 18),
-                    const SizedBox(width: 10),
-                    Text(
-                      "General Settings",
-                      style: TextStyle(color: textMain, fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(height: 1),
+
+              PopupMenuDivider(height: 1),
+
+              // Logout
               PopupMenuItem(
                 value: 'logout',
                 child: Row(
                   children: [
-                    Icon(Icons.logout, color: accent, size: 18),
+                    Icon(Icons.logout, color: Colors.redAccent, size: 18),
                     const SizedBox(width: 10),
                     Text(
                       "Logout",
-                      style: TextStyle(color: textMain, fontSize: 13),
+                      style: TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
+
             child: Row(
               children: [
                 Text(
@@ -476,307 +552,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // 🔹 GENERAL SETTINGS DIALOG — edit name, email, password
-  void showGeneralSettingsDialog() {
-    final nameController = TextEditingController(text: fullName);
-    final emailController = TextEditingController();
-    final currentPassController = TextEditingController();
-    final newPassController = TextEditingController();
-    final confirmPassController = TextEditingController();
-    bool obscureCurrent = true;
-    bool obscureNew = true;
-    bool obscureConfirm = true;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            width: 420,
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: borderColor),
-            ),
-            child: Stack(
-              children: [
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(28),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "General Settings",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: accent,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Name
-                      Text(
-                        "Name",
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: nameController,
-                        style: TextStyle(color: textMain, fontSize: 13),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: borderColor,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      // Email
-                      Text(
-                        "Email",
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: emailController,
-                        style: TextStyle(color: textMain, fontSize: 13),
-                        decoration: InputDecoration(
-                          hintText: "Enter new email",
-                          hintStyle: TextStyle(color: textMuted, fontSize: 13),
-                          filled: true,
-                          fillColor: borderColor,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-                      Divider(color: borderColor),
-                      const SizedBox(height: 14),
-
-                      Text(
-                        "Change Password",
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: textMain,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Current password
-                      Text(
-                        "Current Password",
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: currentPassController,
-                        obscureText: obscureCurrent,
-                        style: TextStyle(color: textMain, fontSize: 13),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: borderColor,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                          suffixIcon: GestureDetector(
-                            onTap: () => setModalState(
-                              () => obscureCurrent = !obscureCurrent,
-                            ),
-                            child: Icon(
-                              obscureCurrent
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              color: textMuted,
-                              size: 18,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      // New password
-                      Text(
-                        "New Password",
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: newPassController,
-                        obscureText: obscureNew,
-                        style: TextStyle(color: textMain, fontSize: 13),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: borderColor,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                          suffixIcon: GestureDetector(
-                            onTap: () =>
-                                setModalState(() => obscureNew = !obscureNew),
-                            child: Icon(
-                              obscureNew
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              color: textMuted,
-                              size: 18,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      // Confirm new password
-                      Text(
-                        "Confirm New Password",
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: confirmPassController,
-                        obscureText: obscureConfirm,
-                        style: TextStyle(color: textMain, fontSize: 13),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: borderColor,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                          suffixIcon: GestureDetector(
-                            onTap: () => setModalState(
-                              () => obscureConfirm = !obscureConfirm,
-                            ),
-                            child: Icon(
-                              obscureConfirm
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              color: textMuted,
-                              size: 18,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Save button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: accent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          onPressed: () async {
-                            // Validate passwords match
-                            if (newPassController.text.isNotEmpty &&
-                                newPassController.text !=
-                                    confirmPassController.text) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text("Passwords do not match"),
-                                  backgroundColor: Colors.redAccent,
-                                ),
-                              );
-                              return;
-                            }
-
-                            // Save name locally
-                            if (nameController.text.isNotEmpty) {
-                              final prefs =
-                                  await SharedPreferences.getInstance();
-                              await prefs.setString(
-                                "full_name",
-                                nameController.text,
-                              );
-                              setState(() => fullName = nameController.text);
-                            }
-
-                            // TODO: call your API to update
-                            // email and password on the backend
-
-                            Navigator.pop(ctx);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text("Settings saved"),
-                                backgroundColor: accent,
-                              ),
-                            );
-                          },
-                          child: Text(
-                            "Save Changes",
-                            style: TextStyle(
-                              color: pageBg,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: 12,
-                  right: 16,
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx),
-                    child: Text(
-                      "X",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: textMuted,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   // 🔹 STAT CARD
   Widget buildStatCard(
     String value,
@@ -785,7 +560,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }) {
     return Expanded(
       child: GestureDetector(
-        onTap: adminEditable && isAdmin ? showEditDepartmentDialog : null,
+        onTap: adminEditable ? showEditDepartmentDialog : null,
         child: Container(
           margin: const EdgeInsets.all(6),
           padding: const EdgeInsets.symmetric(vertical: 18),
@@ -815,7 +590,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  if (adminEditable && isAdmin) ...[
+                  if (adminEditable) ...[
                     const SizedBox(width: 4),
                     Icon(Icons.edit, size: 12, color: accent),
                   ],
@@ -828,72 +603,127 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // 🔹 INTERN PROFILE CARD — grid layout, 3 per row
+  // 🔹 INTERN CARD — edit & delete icons appear on hover
   Widget buildProfileCard(Map<String, dynamic> user, int index) {
     final String name = user["name"] ?? "Unknown";
     final String? photoUrl = user["photo_url"];
-    final String userId = user["id"]?.toString() ?? "";
-    final bool isMyCard = userId == currentUserId;
+    final bool isHovered = hoveredIndex == index;
 
-    return GestureDetector(
-      onTap: () => showProfileDialog(user, index + 1),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(14),
-          border: isMyCard
-              ? Border.all(color: accent, width: 2)
-              : Border.all(color: borderColor, width: 0.5),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: borderColor,
-              backgroundImage: photoUrl != null && photoUrl.isNotEmpty
-                  ? NetworkImage(photoUrl)
-                  : null,
-              child: photoUrl == null || photoUrl.isEmpty
-                  ? Icon(Icons.person, size: 36, color: textMuted)
-                  : null,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              name,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: textMain,
+    return MouseRegion(
+      onEnter: (_) => setState(() => hoveredIndex = index),
+      onExit: (_) => setState(() => hoveredIndex = null),
+      child: GestureDetector(
+        onTap: () => showProfileDialog(user, index + 1),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          decoration: BoxDecoration(
+            color: isHovered ? cardBg.withOpacity(0.85) : cardBg,
+            borderRadius: BorderRadius.circular(14),
+            border: isHovered
+                ? Border.all(color: accent, width: 1.5)
+                : Border.all(color: borderColor, width: 0.5),
+          ),
+          child: Stack(
+            children: [
+              // Card content
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: borderColor,
+                    backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                        ? NetworkImage(photoUrl)
+                        : null,
+                    child: photoUrl == null || photoUrl.isEmpty
+                        ? Icon(Icons.person, size: 28, color: textMuted)
+                        : null,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    name,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: textMain,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Intern ${index + 1}",
+                    style: TextStyle(fontSize: 11, color: textMuted),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "View Profile",
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: accent,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                      decorationColor: accent,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "Intern ${index + 1}",
-              style: TextStyle(fontSize: 11, color: textMuted),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "View Profile",
-              style: TextStyle(
-                fontSize: 13,
-                color: accent,
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.underline,
-                decorationColor: accent,
-              ),
-            ),
-          ],
+
+              // 🔹 Edit & Delete icons — appear on hover
+              if (isHovered)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Row(
+                    children: [
+                      // Edit
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/edit-profile',
+                            arguments: user,
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: accent,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Icon(Icons.edit, size: 14, color: pageBg),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      // Delete
+                      GestureDetector(
+                        onTap: () => showDeleteDialog(user),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.delete,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ADD INTERN CARD — shown as last card, admin only
+  // 🔹 ADD INTERN CARD
   Widget buildAddInternCard() {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/register'),
@@ -927,13 +757,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget build(BuildContext context) {
     final filtered = filteredUsers;
 
-    // Build the grid items: intern cards + add intern card if admin
     final List<Widget> gridItems = [
       ...List.generate(
         filtered.length,
         (i) => buildProfileCard(filtered[i] as Map<String, dynamic>, i),
       ),
-      if (isAdmin) buildAddInternCard(),
+      buildAddInternCard(), // 🔹 always show on admin page
     ];
 
     return Scaffold(
@@ -953,7 +782,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // STAT CARDS
                           Row(
                             children: [
                               buildStatCard(
@@ -976,7 +804,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           Divider(color: borderColor),
                           const SizedBox(height: 12),
 
-                          // SEARCH — right aligned
                           Align(
                             alignment: Alignment.centerRight,
                             child: Container(
@@ -1012,7 +839,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                           const SizedBox(height: 16),
 
-                          // 🔹 GRID — 3 columns, wraps to new rows automatically
                           gridItems.isEmpty
                               ? Center(
                                   child: Padding(

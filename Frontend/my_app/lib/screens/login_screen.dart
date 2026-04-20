@@ -5,6 +5,7 @@ import 'admin_dashboard.dart';
 import 'user_dashboard.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
+import 'landing_screen.dart';
 
 String? emailError;
 String? passwordError;
@@ -58,17 +59,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (result != null) {
       final prefs = await SharedPreferences.getInstance();
+      final token = result["token"];
 
       await prefs.setString("token", result["token"]);
       await prefs.setString("role", result["role"]);
 
       if (result["role"].toString().toLowerCase() == "admin") {
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => AdminDashboard()),
+          MaterialPageRoute(builder: (_) => AdminDashboard(token: token)),
         );
       } else {
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => UserDashboard()),
         );
@@ -99,13 +101,25 @@ class _LoginScreenState extends State<LoginScreen> {
             Positioned(
               top: 30,
               left: 50,
-              right: 30,
-              child: Text(
-                "Blacky",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 25,
-                  color: const Color.fromRGBO(255, 255, 255, 1),
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LandingScreen()),
+                  );
+                },
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Blacky",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 25,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -415,22 +429,32 @@ class _LoginScreenState extends State<LoginScreen> {
                                           },
                                         ),
 
-                                        const SizedBox(height: 6),
-
-                                        TextButton(
-                                          style: ElevatedButton.styleFrom(),
-                                          onPressed: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    ForgotPasswordScreen(),
+                                        Align(
+                                          alignment: Alignment.centerRight,
+                                          child: TextButton(
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      ForgotPasswordScreen(),
+                                                ),
+                                              );
+                                            },
+                                            child: Text(
+                                              "Forgot Password",
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: const Color.fromARGB(
+                                                  255,
+                                                  126,
+                                                  123,
+                                                  123,
+                                                ),
                                               ),
-                                            );
-                                          },
-                                          child: Text("Forgot Password"),
+                                            ),
+                                          ),
                                         ),
-
                                         const SizedBox(height: 35),
 
                                         // LOGIN BUTTON

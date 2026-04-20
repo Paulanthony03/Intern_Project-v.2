@@ -150,17 +150,6 @@ class ApiService {
     }
   }
 
-  static Future<void> deleteUser(String token, dynamic id) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/users/$id'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete user');
-    }
-  }
-
   static Future forgotPassword(String email) async {
     return await http.post(
       Uri.parse("$baseUrl/forgot-password"),
@@ -183,5 +172,19 @@ class ApiService {
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"email": email, "new_password": password}),
     );
+  }
+
+  static Future<void> deleteUser(String token, int userId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/users/$userId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete user');
+    }
   }
 }
