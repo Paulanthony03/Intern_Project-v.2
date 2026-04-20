@@ -20,5 +20,6 @@ func SetupRoutes(r *gin.Engine) {
 	}
 	r.POST("/api/forgot-password", handlers.ForgotPassword)
 	r.POST("/api/reset-password", handlers.ResetPassword)
+	r.DELETE("/users/:id", handlers.DeleteUser)
 
 }

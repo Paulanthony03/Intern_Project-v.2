@@ -198,4 +198,18 @@ func ResetPassword(c *gin.Context) {
 		Update("password", hashed)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Password reset successful"})
+
+}
+func DeleteUser(c *gin.Context) {
+	id := c.Param("id")
+
+	var user models.User
+	if err := config.DB.First(&user, id).Error; err != nil {
+		c.JSON(404, gin.H{"error": "User not found"})
+		return
+	}
+
+	config.DB.Delete(&user)
+
+	c.JSON(200, gin.H{"message": "User deleted successfully"})
 }
