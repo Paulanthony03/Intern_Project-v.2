@@ -357,6 +357,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
             ),
             onPressed: () async {
+              Navigator.pop(ctx);
+
               try {
                 final prefs = await SharedPreferences.getInstance();
                 final token = prefs.getString("token");
