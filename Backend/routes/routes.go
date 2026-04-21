@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"student-system/controllers"
 	"student-system/handlers"
 	"student-system/middleware"
 
@@ -8,18 +9,22 @@ import (
 )
 
 func SetupRoutes(r *gin.Engine) {
-	r.POST("/api/register", handlers.Register)
-	r.POST("/api/login", handlers.Login)
-	r.GET("/api/users", handlers.GetAllUsers)
-
-	auth := r.Group("/api")
-	auth.Use(middleware.AuthMiddleware())
+	public := r.Group("/api")
 	{
-		auth.GET("/profile", handlers.GetProfile)
-		auth.POST("/users", handlers.CreateUser)
-	}
-	r.POST("/api/forgot-password", handlers.ForgotPassword)
-	r.POST("/api/reset-password", handlers.ResetPassword)
-	r.DELETE("/api/users/:id", handlers.DeleteUser)
+		public.POST("/register", handlers.Register)
+		public.POST("/login", handlers.Login)
+		public.GET("/users", handlers.GetAllUsers)
 
+		public.POST("/forgot-password", controllers.ForgotPasswordHandler)
+		public.POST("/reset-password", controllers.ResetPasswordHandler)
+		public.POST("/verify-otp", controllers.VerifyOTPHandler)
+	}
+
+	protected := r.Group("/api")
+	protected.Use(middleware.AuthMiddleware())
+	{
+		protected.GET("/profile", handlers.GetProfile)
+		protected.POST("/users", handlers.CreateUser)
+		protected.DELETE("/users/:id", handlers.DeleteUser)
+	}
 }

@@ -1,7 +1,10 @@
 package main
 
 import (
+	"log"
 	config "student-system/config"
+	"student-system/controllers"
+	"student-system/handlers"
 	"student-system/routes"
 
 	"github.com/gin-contrib/cors"
@@ -9,7 +12,14 @@ import (
 )
 
 func main() {
-	config.ConnectDB()
+	db, err := config.ConnectDB()
+	if err != nil {
+		panic(err)
+	}
+
+	handlers.SetDB(db)
+
+	controllers.SetDB(db)
 
 	r := gin.Default()
 
@@ -26,5 +36,8 @@ func main() {
 
 	routes.SetupRoutes(r)
 
-	r.Run(":8080")
+	log.Println("Server is starting on port :8080...")
+	if err := r.Run(":8080"); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
 }
