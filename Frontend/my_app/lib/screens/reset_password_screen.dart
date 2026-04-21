@@ -2,61 +2,45 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  final String email;
-
-  ResetPasswordScreen({required this.email});
-
   @override
   _ResetPasswordScreenState createState() => _ResetPasswordScreenState();
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
-  final passController = TextEditingController();
-  final confirmController = TextEditingController();
+  final passwordController = TextEditingController();
 
-  void resetPassword() async {
-    if (passController.text != confirmController.text) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Passwords do not match")));
-      return;
-    }
-
-    final res = await ApiService.resetPassword(
-      widget.email,
-      passController.text,
+  void reset(String email) async {
+    final success = await ApiService.resetPassword(
+      email,
+      passwordController.text,
     );
 
-    if (res.statusCode == 200) {
-      Navigator.popUntil(context, (route) => route.isFirst);
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Password reset successful")),
+      );
+
+      // 🔥 IMPORTANT: Navigate to login screen
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
     } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Reset failed")));
+      ).showSnackBar(const SnackBar(content: Text("Reset failed")));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final email = ModalRoute.of(context)!.settings.arguments as String;
+
     return Scaffold(
-      appBar: AppBar(title: Text("Reset Password")),
-      body: Padding(
-        padding: EdgeInsets.all(20),
+      body: Center(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: passController,
-              obscureText: true,
-              decoration: InputDecoration(labelText: "New Password"),
-            ),
-            TextField(
-              controller: confirmController,
-              obscureText: true,
-              decoration: InputDecoration(labelText: "Confirm Password"),
-            ),
-            SizedBox(height: 20),
+            TextField(controller: passwordController),
             ElevatedButton(
-              onPressed: resetPassword,
+              onPressed: () => reset(email),
               child: Text("Reset Password"),
             ),
           ],

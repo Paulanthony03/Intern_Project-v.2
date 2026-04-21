@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = "http://10.22.0.124:8080";
+  static const String baseUrl = "http://10.22.0.124:8080/api";
 
   // =========================
   // REGISTER USER
@@ -15,7 +15,7 @@ class ApiService {
     String school,
   ) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/api/register'),
+      Uri.parse('$baseUrl/register'),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "name": name,
@@ -44,7 +44,7 @@ class ApiService {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/api/login'),
+        Uri.parse('$baseUrl/login'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": email, "password": password}),
       );
@@ -75,7 +75,7 @@ class ApiService {
   static Future<Map<String, dynamic>?> getProfile(String token) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/profile'),
+        Uri.parse('$baseUrl/profile'),
         headers: {"Authorization": "Bearer $token"},
       );
 
@@ -96,7 +96,7 @@ class ApiService {
   static Future<List<dynamic>?> getUsers(String token) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/users'),
+        Uri.parse('$baseUrl/users'),
         headers: {"Authorization": "Bearer $token"},
       );
 
@@ -150,41 +150,48 @@ class ApiService {
     }
   }
 
-  static Future forgotPassword(String email) async {
-    return await http.post(
+  static Future<bool> forgotPassword(String email) async {
+    final res = await http.post(
       Uri.parse("$baseUrl/forgot-password"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"email": email}),
     );
+    return res.statusCode == 200;
   }
 
-  static Future verifyOtp(String email, String otp) async {
-    return await http.post(
+  static Future<bool> verifyOTP(String email, String otp) async {
+    final res = await http.post(
       Uri.parse("$baseUrl/verify-otp"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"email": email, "otp": otp}),
     );
+    return res.statusCode == 200;
   }
 
-  static Future resetPassword(String email, String password) async {
-    return await http.post(
+  static Future<bool> resetPassword(String email, String newPassword) async {
+    final res = await http.post(
       Uri.parse("$baseUrl/reset-password"),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"email": email, "new_password": password}),
+      body: jsonEncode({"email": email, "new_password": newPassword}),
     );
+
+    print("RESET STATUS: ${res.statusCode}");
+    print("RESET BODY: ${res.body}");
+
+    return res.statusCode == 200;
   }
 
-  static Future<void> deleteUser(String token, int userId) async {
+  static Future<void> deleteUser(String token, String id) async {
     final response = await http.delete(
-      Uri.parse('$baseUrl/api/users/$userId'),
+      Uri.parse("$baseUrl/users/$id"),
       headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
       },
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to delete user');
+      throw Exception("Failed to delete user");
     }
   }
 }
