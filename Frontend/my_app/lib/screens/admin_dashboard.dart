@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:my_app/screens/landing_screen.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'admin_interns_screen.dart';
+import 'admin_departments_screen.dart';
+import 'admin_schools_screen.dart';
+import 'admin_settings_screen.dart';
+import 'admin_bin_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   final String token;
@@ -22,7 +27,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   int? hoveredIndex;
 
   // Sidebar: is the Admin dropdown expanded?
-  bool _adminMenuExpanded = false;
+  bool _adminMenuExpanded = true;
   // Which nav item is highlighted
   String _selectedNav = 'dashboard';
 
@@ -45,6 +50,41 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void initState() {
     super.initState();
     loadUsers();
+  }
+
+  void navigateTo(String key) {
+    Widget screen;
+
+    switch (key) {
+      case 'dashboard':
+        screen = AdminDashboard(token: widget.token);
+        break;
+
+      case 'interns':
+        screen = InternsScreen(token: widget.token);
+        break;
+
+      case 'departments':
+        screen = DepartmentsScreen(token: widget.token);
+        break;
+
+      case 'school':
+        screen = SchoolScreen(token: widget.token);
+        break;
+
+      case 'bin':
+        screen = BinScreen(token: widget.token);
+        break;
+
+      case 'settings':
+        screen = SettingsScreen(token: widget.token);
+        break;
+
+      default:
+        return;
+    }
+
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
 
   // ─── LOAD USERS ──────────────────────────────────────────
@@ -485,6 +525,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         "School",
                         'school',
                       ),
+                      _navItem(Icons.delete_rounded, "Bin", 'bin'),
                       _navItem(Icons.settings_rounded, "Settings", 'settings'),
                     ],
                   ),
@@ -597,13 +638,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       child: GestureDetector(
         onTap: () {
+          if (_selectedNav == key) return;
+
           setState(() => _selectedNav = key);
-          if (key == 'interns') Navigator.pushNamed(context, '/interns');
-          if (key == 'departments')
-            Navigator.pushNamed(context, '/departments');
-          if (key == 'school') Navigator.pushNamed(context, '/schools');
-          if (key == 'settings') Navigator.pushNamed(context, '/settings');
-          // 'dashboard' stays on this page
+          navigateTo(key);
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
@@ -643,7 +681,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       child: Row(
         children: [
           Text(
-            "Welcome Back, ADMIN!",
+            "Welcome Back, Admin!",
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -651,29 +689,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
           const Spacer(),
-          // Search bar
-          Container(
-            width: 300,
-            height: 40,
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: borderColor),
-            ),
-            child: TextField(
-              cursorColor: Color.fromARGB(114, 114, 114, 114),
-              onChanged: (val) => setState(() => searchQuery = val),
-              style: TextStyle(color: textMain, fontSize: 13),
-              decoration: InputDecoration(
-                hintText: "Search for intern name or id....",
-                hintStyle: TextStyle(fontSize: 12, color: textMuted),
-                prefixIcon: Icon(Icons.search, color: textMuted, size: 18),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 11),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
           // Notification bell
           Container(
             padding: const EdgeInsets.all(8),
@@ -863,61 +878,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   // ════════════════════════════════════════════════════════
-  //  ADD INTERN / ADD DEPARTMENT BUTTONS
-  // ════════════════════════════════════════════════════════
-  Widget buildActionButtons() {
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: accent,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            icon: Icon(Icons.add, color: pageBg, size: 20),
-            label: Text(
-              "Add Intern",
-              style: TextStyle(
-                color: pageBg,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            onPressed: () => Navigator.pushNamed(context, '/register'),
-          ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: accent,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            icon: Icon(Icons.add, color: pageBg, size: 20),
-            label: Text(
-              "Add Department",
-              style: TextStyle(
-                color: pageBg,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            onPressed: () => Navigator.pushNamed(context, '/add-department'),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ════════════════════════════════════════════════════════
   //  DEPARTMENT OVERVIEW
   // ════════════════════════════════════════════════════════
   Widget buildDepartmentOverview() {
@@ -1052,8 +1012,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   // ════════════════════════════════════════════════════════
-  //  INTERN CARD — matches screenshot layout exactly
-  //  Photo + name + id on top; View Profile / edit / delete
+  //  INTERN CARD
   // ════════════════════════════════════════════════════════
   Widget buildProfileCard(Map<String, dynamic> user, int index) {
     final String name = user["name"] ?? "Unknown";
@@ -1303,9 +1262,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(flex: 5, child: buildRecentPanel()),
-                                const SizedBox(width: 16),
-                                Expanded(flex: 3, child: buildActionButtons()),
+                                Expanded(flex: 8, child: buildRecentPanel()),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   flex: 4,
@@ -1320,7 +1277,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             Row(
                               children: [
                                 Expanded(
-                                  flex: 4,
+                                  flex: 5,
                                   child: Container(
                                     height: 44,
                                     decoration: BoxDecoration(
@@ -1362,13 +1319,51 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 14),
                                 _buildDepartmentDropdown(),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 14),
                                 _buildSchoolDropdown(),
+                                const SizedBox(width: 14),
+
+                                Expanded(
+                                  flex: 4, // 👈 matches 1/3 like the stat cards
+                                  child: SizedBox(
+                                    height: 44, // 👈 matches search bar height
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: accent,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 12,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                      ),
+                                      icon: Icon(
+                                        Icons.add,
+                                        color: pageBg,
+                                        size: 20,
+                                      ),
+                                      label: Text(
+                                        "Add Intern",
+                                        style: TextStyle(
+                                          color: pageBg,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      onPressed: () => Navigator.pushNamed(
+                                        context,
+                                        '/register',
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
-
                             const SizedBox(height: 16),
                           ],
                         ),
@@ -1383,7 +1378,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             children: [
                               // Only intern grid scrolls
                               Expanded(
-                                flex: 7,
+                                flex: 8,
                                 child: filtered.isEmpty
                                     ? Center(
                                         child: Text(
@@ -1413,10 +1408,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               const SizedBox(width: 16),
 
                               // Recent Activity panel is fixed (not scrolling)
-                              SizedBox(
-                                width: 260,
-                                child: buildRecentActivity(),
-                              ),
+                              Expanded(flex: 4, child: buildRecentActivity()),
                             ],
                           ),
                         ),
