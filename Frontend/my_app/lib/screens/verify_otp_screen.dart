@@ -14,19 +14,41 @@ class VerifyOTPScreen extends StatefulWidget {
 
 class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
   final otpController = TextEditingController();
+  bool isLoading = false;
+  String? otpError;
+  String? emailError;
 
   void verify(String email) async {
-    final success = await ApiService.verifyOTP(email, otpController.text);
+    final otp = otpController.text.trim();
+
+    setState(() {
+      otpError = null;
+    });
+
+    // 🔴 EMPTY CHECK
+    if (otp.isEmpty) {
+      setState(() {
+        otpError = "OTP is required";
+      });
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    final success = await ApiService.verifyOTP(email, otp);
 
     if (!mounted) return;
 
-    if (success) {
-      Navigator.pushNamed(context, '/reset-password', arguments: email);
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Invalid OTP")));
+    setState(() => isLoading = false);
+
+    if (!success) {
+      setState(() {
+        otpError = "Invalid or expired OTP";
+      });
+      return;
     }
+
+    Navigator.pushNamed(context, '/reset-password', arguments: email);
   }
 
   @override
@@ -54,7 +76,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 2),
               Text(
                 "Enter the OTP sent to your email",
                 style: TextStyle(color: textMuted),
@@ -76,6 +98,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(color: Colors.white, width: 2),
                   ),
+                  errorText: otpError,
                 ),
               ),
               const SizedBox(height: 20),
@@ -96,6 +119,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 7),
             ],
           ),
         ),

@@ -15,6 +15,8 @@ class ResetPasswordScreen extends StatefulWidget {
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final passwordController = TextEditingController();
 
+  bool isLoading = false;
+
   void reset(String email) async {
     final success = await ApiService.resetPassword(
       email,
@@ -61,7 +63,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 2),
               Text(
                 "Enter your new password",
                 style: TextStyle(color: textMuted),
@@ -95,15 +97,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () => reset(email),
-                  child: Text(
-                    "Reset Password",
-                    style: TextStyle(
-                      color: pageBg,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: isLoading
+                      ? const CircularProgressIndicator(color: Colors.black)
+                      : Text(
+                          "Reset Password",
+                          style: TextStyle(
+                            color: pageBg,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
+              const SizedBox(height: 7),
             ],
           ),
         ),

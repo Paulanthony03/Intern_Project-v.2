@@ -50,7 +50,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       // go to OTP screen
       Navigator.pushNamed(context, '/verify-otp', arguments: email);
     } catch (e) {
-      setState(() => error = "Failed to send OTP");
+      setState(() => error = "No account found with this email");
     } finally {
       setState(() => isLoading = false);
     }
@@ -79,12 +79,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 2),
               Text(
                 "Enter your email to receive OTP",
                 style: TextStyle(color: textMuted),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 25),
               TextField(
                 cursorColor: Color.fromARGB(114, 114, 114, 114),
                 controller: emailController,
@@ -101,26 +101,37 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(color: Colors.white, width: 2),
                   ),
+                  errorText: error.isEmpty ? null : error,
                 ),
               ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
+                  onPressed: isLoading ? null : sendOTP,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accent,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  onPressed: sendOTP,
-                  child: Text(
-                    "Send OTP",
-                    style: TextStyle(
-                      color: pageBg,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          "Send OTP",
+                          style: TextStyle(
+                            color: pageBg,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
+              const SizedBox(height: 7),
             ],
           ),
         ),
