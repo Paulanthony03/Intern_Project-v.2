@@ -13,23 +13,46 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final emailController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  bool isLoading = false;
+  String error = "";
+
+  bool isValidEmail(String email) {
+    final regex = RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
+    return regex.hasMatch(email);
+  }
 
   void sendOTP() async {
-    final success = await ApiService.forgotPassword(emailController.text);
+    final email = emailController.text.trim();
 
-    if (!mounted) return;
+    if (email.isEmpty) {
+      setState(() => error = "Email is required");
+      return;
+    }
 
-    if (success) {
-      Navigator.pushNamed(
-        context,
-        '/verify-otp',
-        arguments: emailController.text,
-      );
-    } else {
+    if (!isValidEmail(email)) {
+      setState(() => error = "Invalid email format");
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+      error = "";
+    });
+
+    try {
+      final res = await ApiService.forgotPassword(email);
+
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Failed to send OTP")));
+      ).showSnackBar(SnackBar(content: Text(res["message"])));
+
+      // go to OTP screen
+      Navigator.pushNamed(context, '/verify-otp', arguments: email);
+    } catch (e) {
+      setState(() => error = "Failed to send OTP");
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
@@ -39,7 +62,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       backgroundColor: pageBg,
       body: Center(
         child: Container(
-          width: 380,
+          width: 480,
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             color: cardBg,
@@ -63,6 +86,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
               const SizedBox(height: 20),
               TextField(
+                cursorColor: Color.fromARGB(114, 114, 114, 114),
                 controller: emailController,
                 style: TextStyle(color: textMain),
                 decoration: InputDecoration(
@@ -72,6 +96,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   fillColor: pageBg,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.white, width: 2),
                   ),
                 ),
               ),

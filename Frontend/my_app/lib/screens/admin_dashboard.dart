@@ -430,17 +430,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "blacky",
+                      "Blacky",
                       style: TextStyle(
                         color: textMain,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1,
                       ),
-                    ),
-                    Text(
-                      "admin",
-                      style: TextStyle(color: textMuted, fontSize: 11),
                     ),
                   ],
                 ),
@@ -461,21 +457,40 @@ class _AdminDashboardState extends State<AdminDashboard> {
           // ── Nav items (shown always, but can be inside dropdown) ──
           // Per the request: the Admin dropdown contains all items below it.
           // We show them as an animated expanding section.
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 200),
-            crossFadeState: _adminMenuExpanded
-                ? CrossFadeState.showFirst
-                : CrossFadeState.showSecond,
-            firstChild: Column(
-              children: [
-                _navItem(Icons.dashboard_rounded, "Dashboard", 'dashboard'),
-                _navItem(Icons.people_alt_rounded, "Interns", 'interns'),
-                _navItem(Icons.folder_rounded, "Departments", 'departments'),
-                _navItem(Icons.account_balance_rounded, "School", 'school'),
-                _navItem(Icons.settings_rounded, "Settings", 'settings'),
-              ],
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            child: ClipRect(
+              child: Align(
+                alignment: Alignment.topCenter,
+                heightFactor: _adminMenuExpanded ? 1.0 : 0.0,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 150),
+                  opacity: _adminMenuExpanded ? 1 : 0,
+                  child: Column(
+                    children: [
+                      _navItem(
+                        Icons.dashboard_rounded,
+                        "Dashboard",
+                        'dashboard',
+                      ),
+                      _navItem(Icons.people_alt_rounded, "Interns", 'interns'),
+                      _navItem(
+                        Icons.folder_rounded,
+                        "Departments",
+                        'departments',
+                      ),
+                      _navItem(
+                        Icons.account_balance_rounded,
+                        "School",
+                        'school',
+                      ),
+                      _navItem(Icons.settings_rounded, "Settings", 'settings'),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            secondChild: const SizedBox.shrink(),
           ),
 
           const Spacer(),
@@ -646,6 +661,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               border: Border.all(color: borderColor),
             ),
             child: TextField(
+              cursorColor: Color.fromARGB(114, 114, 114, 114),
               onChanged: (val) => setState(() => searchQuery = val),
               style: TextStyle(color: textMain, fontSize: 13),
               decoration: InputDecoration(
@@ -1336,6 +1352,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       border: Border.all(color: borderColor),
                                     ),
                                     child: TextField(
+                                      cursorColor: Color.fromARGB(
+                                        114,
+                                        114,
+                                        114,
+                                        114,
+                                      ),
                                       onChanged: (val) =>
                                           setState(() => searchQuery = val),
                                       style: TextStyle(

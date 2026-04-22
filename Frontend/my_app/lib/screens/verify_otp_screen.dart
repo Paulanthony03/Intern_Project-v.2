@@ -37,7 +37,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
       backgroundColor: pageBg,
       body: Center(
         child: Container(
-          width: 380,
+          width: 480,
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             color: cardBg,
@@ -61,6 +61,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
               ),
               const SizedBox(height: 20),
               TextField(
+                cursorColor: Color.fromARGB(114, 114, 114, 114),
                 controller: otpController,
                 style: TextStyle(color: textMain),
                 decoration: InputDecoration(
@@ -70,6 +71,10 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
                   fillColor: pageBg,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.white, width: 2),
                   ),
                 ),
               ),

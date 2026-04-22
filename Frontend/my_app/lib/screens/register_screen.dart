@@ -238,6 +238,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               const SizedBox(height: 5),
 
                                               TextFormField(
+                                                cursorColor: Color.fromARGB(
+                                                  114,
+                                                  114,
+                                                  114,
+                                                  114,
+                                                ),
                                                 controller: firstNameController,
                                                 style: const TextStyle(
                                                   fontSize: 15,
@@ -276,6 +282,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               const SizedBox(height: 5),
 
                                               TextFormField(
+                                                cursorColor: Color.fromARGB(
+                                                  114,
+                                                  114,
+                                                  114,
+                                                  114,
+                                                ),
                                                 controller: lastNameController,
                                                 style: const TextStyle(
                                                   fontSize: 15,
@@ -319,6 +331,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               const SizedBox(height: 5),
 
                                               TextFormField(
+                                                cursorColor: Color.fromARGB(
+                                                  114,
+                                                  114,
+                                                  114,
+                                                  114,
+                                                ),
                                                 controller: emailController,
                                                 style: const TextStyle(
                                                   fontSize: 15,
@@ -369,6 +387,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               const SizedBox(height: 5),
 
                                               TextFormField(
+                                                cursorColor: Color.fromARGB(
+                                                  114,
+                                                  114,
+                                                  114,
+                                                  114,
+                                                ),
                                                 controller: internIdController,
                                                 style: const TextStyle(
                                                   fontSize: 15,
@@ -416,6 +440,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     const SizedBox(height: 5),
 
                                     TextFormField(
+                                      cursorColor: Color.fromARGB(
+                                        114,
+                                        114,
+                                        114,
+                                        114,
+                                      ),
                                       controller: schoolController,
                                       style: const TextStyle(
                                         fontSize: 15,
@@ -447,6 +477,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     const SizedBox(height: 5),
 
                                     TextFormField(
+                                      cursorColor: Color.fromARGB(
+                                        114,
+                                        114,
+                                        114,
+                                        114,
+                                      ),
                                       controller: programController,
                                       style: const TextStyle(
                                         fontSize: 15,
@@ -485,6 +521,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               const SizedBox(height: 5),
 
                                               TextFormField(
+                                                cursorColor: Color.fromARGB(
+                                                  114,
+                                                  114,
+                                                  114,
+                                                  114,
+                                                ),
                                                 controller: passwordController,
                                                 style: const TextStyle(
                                                   fontSize: 15,
@@ -561,6 +603,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               const SizedBox(height: 5),
 
                                               TextFormField(
+                                                cursorColor: Color.fromARGB(
+                                                  114,
+                                                  114,
+                                                  114,
+                                                  114,
+                                                ),
                                                 controller:
                                                     confirmPasswordController,
                                                 style: const TextStyle(

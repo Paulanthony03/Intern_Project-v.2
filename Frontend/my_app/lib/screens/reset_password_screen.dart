@@ -44,7 +44,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       backgroundColor: pageBg,
       body: Center(
         child: Container(
-          width: 380,
+          width: 480,
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             color: cardBg,
@@ -68,6 +68,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               ),
               const SizedBox(height: 20),
               TextField(
+                cursorColor: Color.fromARGB(114, 114, 114, 114),
                 controller: passwordController,
                 obscureText: false,
                 style: TextStyle(color: textMain),
@@ -78,6 +79,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   fillColor: pageBg,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.white, width: 2),
                   ),
                 ),
               ),

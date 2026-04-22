@@ -262,6 +262,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                         // EMAIL
                                         TextFormField(
+                                          cursorColor: Color.fromARGB(
+                                            114,
+                                            114,
+                                            114,
+                                            114,
+                                          ),
                                           controller: emailController,
                                           keyboardType:
                                               TextInputType.emailAddress,
@@ -346,6 +352,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                         // PASSWORD
                                         TextFormField(
+                                          cursorColor: Color.fromARGB(
+                                            114,
+                                            114,
+                                            114,
+                                            114,
+                                          ),
                                           controller: passwordController,
                                           style: const TextStyle(
                                             fontSize: 15,
@@ -357,6 +369,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                           ),
                                           obscureText: obscurePassword,
+
                                           decoration:
                                               InputDecoration(
                                                 hintText: "Enter your password",
@@ -442,7 +455,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               );
                                             },
                                             child: Text(
-                                              "Forgot Password",
+                                              "Forgot Password?",
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 color: const Color.fromARGB(

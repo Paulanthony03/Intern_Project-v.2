@@ -150,13 +150,14 @@ class ApiService {
     }
   }
 
-  static Future<bool> forgotPassword(String email) async {
-    final res = await http.post(
+  static Future<Map<String, dynamic>> forgotPassword(String email) async {
+    final response = await http.post(
       Uri.parse("$baseUrl/forgot-password"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"email": email}),
     );
-    return res.statusCode == 200;
+
+    return jsonDecode(response.body);
   }
 
   static Future<bool> verifyOTP(String email, String otp) async {
