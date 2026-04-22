@@ -91,7 +91,9 @@ func ForgotPasswordHandler(c *gin.Context) {
 	db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)", email).Scan(&exists)
 
 	if !exists {
-		c.JSON(http.StatusOK, gin.H{"message": "If email exists, OTP was sent"})
+		c.JSON(400, gin.H{
+			"error": "Email does not exist",
+		})
 		return
 	}
 
@@ -101,12 +103,12 @@ func ForgotPasswordHandler(c *gin.Context) {
 
 	err := sendOTPEmail(email, otp)
 	if err != nil {
-		fmt.Println("❌ EMAIL ERROR:", err)
+		fmt.Println("EMAIL ERROR:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send email"})
 		return
 	}
 
-	fmt.Println("✅ EMAIL SENT SUCCESSFULLY")
+	fmt.Println("EMAIL SENT SUCCESSFULLY")
 
 	c.JSON(http.StatusOK, gin.H{"message": "OTP sent to email"})
 }
