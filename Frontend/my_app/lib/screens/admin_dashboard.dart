@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:my_app/screens/landing_screen.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'admin_interns_screen.dart';
-import 'admin_departments_screen.dart';
-import 'admin_schools_screen.dart';
-import 'admin_settings_screen.dart';
-import 'admin_bin_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   final String token;
@@ -27,7 +22,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   int? hoveredIndex;
 
   // Sidebar: is the Admin dropdown expanded?
-  bool _adminMenuExpanded = true;
+  bool _adminMenuExpanded = false;
   // Which nav item is highlighted
   String _selectedNav = 'dashboard';
 
@@ -50,41 +45,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void initState() {
     super.initState();
     loadUsers();
-  }
-
-  void navigateTo(String key) {
-    Widget screen;
-
-    switch (key) {
-      case 'dashboard':
-        screen = AdminDashboard(token: widget.token);
-        break;
-
-      case 'interns':
-        screen = InternsScreen(token: widget.token);
-        break;
-
-      case 'departments':
-        screen = DepartmentsScreen(token: widget.token);
-        break;
-
-      case 'school':
-        screen = SchoolScreen(token: widget.token);
-        break;
-
-      case 'bin':
-        screen = BinScreen(token: widget.token);
-        break;
-
-      case 'settings':
-        screen = SettingsScreen(token: widget.token);
-        break;
-
-      default:
-        return;
-    }
-
-    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
 
   // ─── LOAD USERS ──────────────────────────────────────────
@@ -525,7 +485,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         "School",
                         'school',
                       ),
-                      _navItem(Icons.delete_rounded, "Bin", 'bin'),
                       _navItem(Icons.settings_rounded, "Settings", 'settings'),
                     ],
                   ),
@@ -638,10 +597,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       child: GestureDetector(
         onTap: () {
-          if (_selectedNav == key) return;
-
           setState(() => _selectedNav = key);
-          navigateTo(key);
+          if (key == 'interns') Navigator.pushNamed(context, '/interns');
+          if (key == 'departments')
+            Navigator.pushNamed(context, '/departments');
+          if (key == 'school') Navigator.pushNamed(context, '/schools');
+          if (key == 'settings') Navigator.pushNamed(context, '/settings');
+          // 'dashboard' stays on this page
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
@@ -1258,6 +1220,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                         child: Column(
                           children: [
+                            // Stat cards (all read-only)
+                            Row(
+                              children: [
+                                buildStatCard(
+                                  users!.length.toString().padLeft(2, '0'),
+                                  "Total Interns",
+                                  Icons.people_alt_rounded,
+                                ),
+                                buildStatCard(
+                                  departmentCount.toString().padLeft(2, '0'),
+                                  "Total Depts.",
+                                  Icons.folder_rounded,
+                                ),
+                                buildStatCard(
+                                  schoolCount.toString().padLeft(2, '0'),
+                                  "Partner Schools",
+                                  Icons.account_balance_rounded,
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 20),
+
                             // Middle row
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
