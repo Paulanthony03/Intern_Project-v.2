@@ -1299,29 +1299,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                         child: Column(
                           children: [
-                            // Stat cards (all read-only)
-                            Row(
-                              children: [
-                                buildStatCard(
-                                  users!.length.toString().padLeft(2, '0'),
-                                  "Total Interns",
-                                  Icons.people_alt_rounded,
-                                ),
-                                buildStatCard(
-                                  departmentCount.toString().padLeft(2, '0'),
-                                  "Total Depts.",
-                                  Icons.folder_rounded,
-                                ),
-                                buildStatCard(
-                                  schoolCount.toString().padLeft(2, '0'),
-                                  "Partner Schools",
-                                  Icons.account_balance_rounded,
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-
                             // Middle row
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,

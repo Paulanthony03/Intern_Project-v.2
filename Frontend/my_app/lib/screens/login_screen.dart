@@ -72,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => UserDashboard()),
+          MaterialPageRoute(builder: (_) => UserDashboard(token: token)),
         );
       }
     }

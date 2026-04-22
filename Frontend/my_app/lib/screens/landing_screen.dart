@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
+import 'about_screen.dart';
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({super.key});
@@ -35,7 +35,7 @@ class LandingScreen extends StatelessWidget {
 
                       Text(
                         "Blacky",
-                        style: GoogleFonts.googleSans(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -48,10 +48,49 @@ class LandingScreen extends StatelessWidget {
                   Row(
                     children: [
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              transitionDuration: const Duration(
+                                milliseconds: 400,
+                              ),
+
+                              pageBuilder:
+                                  (context, animation, secondaryAnimation) =>
+                                      const AboutScreen(),
+
+                              transitionsBuilder:
+                                  (
+                                    context,
+                                    animation,
+                                    secondaryAnimation,
+                                    child,
+                                  ) {
+                                    const begin = Offset(
+                                      0,
+                                      1,
+                                    ); // start from bottom
+                                    const end = Offset.zero;
+
+                                    final tween = Tween(begin: begin, end: end)
+                                        .chain(
+                                          CurveTween(
+                                            curve: Curves.easeOutCubic,
+                                          ),
+                                        );
+
+                                    return SlideTransition(
+                                      position: animation.drive(tween),
+                                      child: child,
+                                    );
+                                  },
+                            ),
+                          );
+                        },
                         child: Text(
                           "ABOUT",
-                          style: GoogleFonts.googleSans(
+                          style: TextStyle(
                             color: Colors.white70,
                             fontWeight: FontWeight.w600,
                           ),
@@ -71,7 +110,7 @@ class LandingScreen extends StatelessWidget {
                         },
                         child: Text(
                           "REGISTER",
-                          style: GoogleFonts.googleSans(
+                          style: TextStyle(
                             color: Colors.white70,
                             fontWeight: FontWeight.w600,
                           ),
@@ -108,7 +147,7 @@ class LandingScreen extends StatelessWidget {
 
                         child: Text(
                           "SIGN IN",
-                          style: GoogleFonts.googleSans(
+                          style: TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
                           ),
@@ -132,7 +171,7 @@ class LandingScreen extends StatelessWidget {
                       children: [
                         Text(
                           "Start your journey with a smarter way to manage your internship",
-                          style: GoogleFonts.googleSans(
+                          style: TextStyle(
                             fontSize: 48,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -144,7 +183,7 @@ class LandingScreen extends StatelessWidget {
 
                         Text(
                           "We're glad to have you here. This platform is designed to help interns easily manage their profiles and access their information, while administrators ensure everything stays organized and up to date.",
-                          style: GoogleFonts.googleSans(
+                          style: TextStyle(
                             fontSize: 18,
                             color: Colors.white70,
                             height: 1.6,
