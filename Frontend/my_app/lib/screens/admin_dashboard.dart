@@ -390,7 +390,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
             ),
             onPressed: () async {
-              Navigator.of(ctx).pop(); // close dialog FIRST
+              Navigator.pop(ctx); // close dialog FIRST
 
               await Future.delayed(
                 Duration(milliseconds: 100),
@@ -398,25 +398,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
               try {
                 await ApiService.deleteUser(widget.token, userId.toString());
+
                 await loadUsers();
 
-                if (!mounted) return;
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("$name has been deleted."),
-                    backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-                  ),
-                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("$name has been deleted."),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                }
               } catch (e) {
-                if (!mounted) return;
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Failed to delete: $e"),
-                    backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-                  ),
-                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Failed to delete: $e"),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                }
               }
             },
             child: const Text(
