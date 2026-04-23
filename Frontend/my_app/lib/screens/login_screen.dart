@@ -65,16 +65,11 @@ class _LoginScreenState extends State<LoginScreen> {
       await prefs.setString("role", result["role"]);
 
       if (result["role"].toString().toLowerCase() == "admin") {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => AdminDashboard(token: token)),
-        );
-      } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => UserDashboard()),
-        );
-      }
+  Navigator.pushReplacementNamed(context, '/admin'); // 👈 goes through AppShell
+} else {
+  Navigator.pushReplacementNamed(context, '/user');
+}
+  
     }
     if (result == null) {
       setState(() {
