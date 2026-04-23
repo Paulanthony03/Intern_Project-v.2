@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"net/http"
+	"time"
 
 	"student-system/models"
 	"student-system/utils"
@@ -57,6 +58,7 @@ func Register(c *gin.Context) {
 		user.Email,
 		user.Password,
 		user.Role,
+		time.Now(),
 	)
 
 	if err != nil {
