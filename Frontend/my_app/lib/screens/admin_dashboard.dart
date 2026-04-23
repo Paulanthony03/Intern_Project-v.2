@@ -944,7 +944,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         Row(
                           children: [
                             Expanded(
-                              flex: 5,
+                              flex: 6,
                               child: Row(
                                 children: [
                                   Expanded(
@@ -978,7 +978,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             ),
                             const SizedBox(width: 14),
                             Expanded(
-                              flex: 2,
+                              flex: 3,
                               child: SizedBox(
                                 height: 44,
                                 child: ElevatedButton.icon(

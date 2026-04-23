@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
 import 'admin_dashboard.dart';
 import 'admin_interns.dart';
 
@@ -14,17 +16,21 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   // ── THEME COLORS ──
-  static const pageBg     = Color(0xFF111111);
-  static const sidebarBg  = Color(0xFF151515);
-  static const headerBg   = Color(0xFF151515);
-  static const cardBg     = Color(0xFF1A1A1A);
+  static const pageBg      = Color(0xFF111111);
+  static const sidebarBg   = Color(0xFF151515);
+  static const headerBg    = Color(0xFF151515);
+  static const cardBg      = Color(0xFF1A1A1A);
   static const borderColor = Color(0xFF2A2A2A);
-  static const accent     = Color(0xFFBFCF33);
-  static const textMain   = Color(0xFFFFFFFF);
-  static const textMuted  = Color(0xFF888888);
+  static const accent      = Color(0xFFBFCF33);
+  static const textMain    = Color(0xFFFFFFFF);
+  static const textMuted   = Color(0xFF888888);
 
-  bool _adminMenuExpanded = false;
+  bool _adminMenuExpanded = true;
   String _selectedNav = 'dashboard';
+
+  // ── SHARED STATE ──────────────────────────────────────
+  List<dynamic>? _users;   // null = still loading
+  String? _token;
 
   final List<String> _navKeys = [
     'dashboard',
@@ -36,11 +42,42 @@ class _AppShellState extends State<AppShell> {
 
   int get _selectedIndex => _navKeys.indexOf(_selectedNav);
 
+  // ════════════════════════════════════════════════════════
+  //  LOAD USERS (lifted from AdminDashboard)
+  // ════════════════════════════════════════════════════════
   @override
   void initState() {
     super.initState();
-    // Auto-expand admin menu if a nav item is selected
-    _adminMenuExpanded = true;
+    _loadUsers();
+  }
+
+  Future<void> _loadUsers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("token") ?? '';
+    _token = token;
+
+    if (token.isNotEmpty) {
+      final data = await ApiService.getUsers(token);
+
+      final seen = <String>{};
+      final deduped = data?.where((u) {
+        final id = u["id"]?.toString() ?? "";
+        return seen.add(id);
+      }).toList();
+
+      final internsOnly = deduped?.where((u) {
+        final role = (u["role"] ?? u["user_type"] ?? "")
+            .toString()
+            .toLowerCase();
+        return role != "admin";
+      }).toList();
+
+      if (mounted) {
+        setState(() => _users = internsOnly ?? []);
+      }
+    } else {
+      if (mounted) setState(() => _users = []);
+    }
   }
 
   // ════════════════════════════════════════════════════════
@@ -204,9 +241,7 @@ class _AppShellState extends State<AppShell> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       child: GestureDetector(
-        onTap: () {
-          setState(() => _selectedNav = key);
-        },
+        onTap: () => setState(() => _selectedNav = key),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
@@ -244,16 +279,15 @@ class _AppShellState extends State<AppShell> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       child: Row(
         children: [
-          Text(
+          const Text(
             "Welcome Back, Admin!",
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: textMain,
             ),
           ),
           const Spacer(),
-          // Notification bell
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -268,7 +302,6 @@ class _AppShellState extends State<AppShell> {
             ),
           ),
           const SizedBox(width: 16),
-          // Admin info
           GestureDetector(
             onTap: () => Navigator.pushNamed(
               context,
@@ -283,25 +316,26 @@ class _AppShellState extends State<AppShell> {
                   child: const Icon(Icons.person, color: accent, size: 20),
                 ),
                 const SizedBox(width: 10),
-                Column(
+                const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                     "Admin Mc",
-                      style: const TextStyle(
+                      "Admin Mc",
+                      style: TextStyle(
                         color: textMain,
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const Text(
+                    Text(
                       "id: admin_08",
                       style: TextStyle(color: textMuted, fontSize: 11),
                     ),
                   ],
                 ),
                 const SizedBox(width: 6),
-                const Icon(Icons.chevron_right_rounded, color: textMuted, size: 18),
+                const Icon(Icons.chevron_right_rounded,
+                    color: textMuted, size: 18),
               ],
             ),
           ),
@@ -318,7 +352,8 @@ class _AppShellState extends State<AppShell> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: cardBg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: const Text("Logout", style: TextStyle(color: textMain)),
         content: const Text(
           "Are you sure you want to logout?",
@@ -333,8 +368,7 @@ class _AppShellState extends State<AppShell> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+                  borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () {
               Navigator.pop(context);
@@ -355,39 +389,33 @@ class _AppShellState extends State<AppShell> {
   //  BUILD
   // ════════════════════════════════════════════════════════
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: pageBg,
-    body: Row(
-      children: [
-        // Shared sidebar
-        buildSidebar(),
-
-        // Main content area
-        Expanded(
-          child: Column(
-            children: [
-              // Shared top bar
-              buildTopBar(),
-
-              // Screen content
-              Expanded(
-                child: IndexedStack(
-                  index: _selectedIndex,
-                  children: [
-                    AdminDashboard(token: ''),   // index 0 - dashboard
-                    AdminInterns(),     // index 1 - interns
-                    const Placeholder(), // index 2 - departments
-                    const Placeholder(), // index 3 - school
-                    const Placeholder(), // index 4 - settings
-                  ],
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: pageBg,
+      body: Row(
+        children: [
+          buildSidebar(),
+          Expanded(
+            child: Column(
+              children: [
+                buildTopBar(),
+                Expanded(
+                  child: IndexedStack(
+                    index: _selectedIndex,
+                    children: [
+                      AdminDashboard(token: _token ?? ''),  // index 0
+                      AdminInterns(users: _users),           // index 1
+                      const Placeholder(),                   // index 2
+                      const Placeholder(),                   // index 3
+                      const Placeholder(),                   // index 4
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 }

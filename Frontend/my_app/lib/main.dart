@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/screens/landing_screen.dart';
-import 'package:my_app/screens/admin_dashboard.dart';
 import 'package:my_app/screens/login_screen.dart';
 import 'package:my_app/screens/user_dashboard.dart';
 import 'package:my_app/screens/forgot_password_screen.dart';
@@ -30,7 +29,6 @@ class MyApp extends StatelessWidget {
         '/forgot-password': (_) => ForgotPasswordScreen(),
         '/verify-otp': (_) => VerifyOTPScreen(),
         '/reset-password': (_) => ResetPasswordScreen(),
-         '/interns': (context) => AdminInterns(),   
       },
     );
   }
