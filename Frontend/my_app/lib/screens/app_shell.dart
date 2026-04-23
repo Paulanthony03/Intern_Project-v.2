@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import 'admin_dashboard.dart';
 import 'admin_interns.dart';
+import 'admin_school.dart';
 
 // ════════════════════════════════════════════════════════
 //  APP SHELL — Shared sidebar + top bar wrapper
@@ -31,6 +32,23 @@ class _AppShellState extends State<AppShell> {
   // ── SHARED STATE ──────────────────────────────────────
   List<dynamic>? _users;   // null = still loading
   String? _token;
+  final List<Map<String, dynamic>> _schools = [
+  {
+    "name": "Pamantasan ng Lungsod ng San Pablo",
+    "since": "2022",
+    "logo_url": "assets/images/schools/plsp.png",
+  },
+  {
+    "name": "CARD-MRI Development Institute",
+    "since": "2022",
+    "logo_url": "assets/images/schools/cmdi.png",
+  },
+  {
+    "name": "Laguna State Polytechnic University",
+    "since": "2024",
+    "logo_url": "assets/images/schools/lspu.png",
+  },
+];
 
   final List<String> _navKeys = [
     'dashboard',
@@ -404,9 +422,9 @@ class _AppShellState extends State<AppShell> {
                     index: _selectedIndex,
                     children: [
                       AdminDashboard(token: _token ?? ''),  // index 0
-                      AdminInterns(users: _users),           // index 1
-                      const Placeholder(),                   // index 2
-                      const Placeholder(),                   // index 3
+                      AdminInterns(users: _users),          // index 1
+                      const Placeholder(),                  // index 2
+                      AdminSchools(schools: _schools),      // index 3
                       const Placeholder(),                   // index 4
                     ],
                   ),

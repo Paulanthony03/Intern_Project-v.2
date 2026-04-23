@@ -5,7 +5,6 @@ import 'package:my_app/screens/user_dashboard.dart';
 import 'package:my_app/screens/forgot_password_screen.dart';
 import 'package:my_app/screens/verify_otp_screen.dart';
 import 'package:my_app/screens/reset_password_screen.dart';
-import 'package:my_app/screens/admin_interns.dart';
 import 'package:my_app/screens/app_shell.dart';
 void main() {
   runApp(const MyApp());

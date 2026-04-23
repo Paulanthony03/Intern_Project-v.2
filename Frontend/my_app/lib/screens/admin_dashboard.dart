@@ -54,30 +54,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final userId = prefs.getString("user_id") ?? "";
     final savedDept = prefs.getInt("department_count");
 
-    if (token != null) {
-      final data = await ApiService.getUsers(token);
+    final data = await ApiService.getUsers(token);
 
-      final seen = <String>{};
-      final deduped = data?.where((u) {
-        final id = u["id"]?.toString() ?? "";
-        return seen.add(id);
-      }).toList();
+    final seen = <String>{};
+    final deduped = data?.where((u) {
+      final id = u["id"]?.toString() ?? "";
+      return seen.add(id);
+    }).toList();
 
-      final internsOnly = deduped?.where((u) {
-        final role = (u["role"] ?? u["user_type"] ?? "")
-            .toString()
-            .toLowerCase();
-        return role != "admin";
-      }).toList();
+    final internsOnly = deduped?.where((u) {
+      final role = (u["role"] ?? u["user_type"] ?? "")
+          .toString()
+          .toLowerCase();
+      return role != "admin";
+    }).toList();
 
-      setState(() {
-        users = internsOnly;
-        fullName = name;
-        currentUserId = userId;
-        if (savedDept != null) departmentCount = savedDept;
-      });
+    setState(() {
+      users = internsOnly;
+      fullName = name;
+      currentUserId = userId;
+      if (savedDept != null) departmentCount = savedDept;
+    });
     }
-  }
 
   // ─── COMPUTED ────────────────────────────────────────────
   int get schoolCount {
