@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'department_page.dart';
 
 class UserDashboard extends StatefulWidget {
   final String token;
@@ -17,6 +18,20 @@ class _UserDashboardState extends State<UserDashboard> {
   List<dynamic>? allUsers;
   bool isLoading = true;
   bool isSaving = false;
+  bool get isAdmin {
+    final role = (userProfile?["role"] ?? userProfile?["user_type"] ?? "")
+        .toString()
+        .toLowerCase();
+    return role == "admin";
+  }
+
+  List<Map<String, dynamic>> departments = [
+    {"name": "Development Unit", "status": "Ongoing", "grade": 90},
+    {"name": "Tech Support", "status": "Finished", "grade": 85},
+    {"name": "QA", "status": "Finished", "grade": 88},
+    {"name": "PMO", "status": "Finished", "grade": 87},
+    {"name": "BRM", "status": "Finished", "grade": 89},
+  ];
 
   String searchQuery = "";
   String? selectedDepartment;
@@ -254,7 +269,7 @@ class _UserDashboardState extends State<UserDashboard> {
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
-          width: 400,
+          width: 450,
           decoration: BoxDecoration(
             color: cardBg,
             borderRadius: BorderRadius.circular(24),
@@ -358,6 +373,161 @@ class _UserDashboardState extends State<UserDashboard> {
                   onTap: () => Navigator.pop(ctx),
                   child: Icon(Icons.close, color: textMuted, size: 20),
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void showDepartmentDialog(String name, String status, String grade) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: 420,
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: accent.withOpacity(0.4)),
+          ),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: TextStyle(
+                        color: accent,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Department Details",
+                      style: TextStyle(color: textMuted, fontSize: 12),
+                    ),
+
+                    const SizedBox(height: 16),
+                    Divider(color: borderColor),
+
+                    const SizedBox(height: 16),
+
+                    _infoRow("Status:", status),
+                    const SizedBox(height: 12),
+                    _infoRow("Grade:", grade), // ✅ FIXED
+                    const SizedBox(height: 12),
+                    _infoRow("Supervisor:", "Lery Villanueva"),
+
+                    const SizedBox(height: 20),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accent,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text(
+                          "Close",
+                          style: TextStyle(
+                            color: pageBg,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Positioned(
+                top: 12,
+                right: 12,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Icon(Icons.close, color: textMuted, size: 20),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void showEditGradeDialog(int index) {
+    final controller = TextEditingController(
+      text: departments[index]["grade"].toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: 350,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: accent.withOpacity(0.4)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Edit Grade",
+                style: TextStyle(
+                  color: accent,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                style: TextStyle(color: textMain),
+                decoration: InputDecoration(
+                  hintText: "Enter grade",
+                  hintStyle: TextStyle(color: textMuted),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text("Cancel", style: TextStyle(color: textMuted)),
+                    ),
+                  ),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: accent),
+                      onPressed: () {
+                        setState(() {
+                          departments[index]["grade"] =
+                              int.tryParse(controller.text) ?? 0;
+                        });
+                        Navigator.pop(ctx);
+                      },
+                      child: Text("Save", style: TextStyle(color: pageBg)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -780,6 +950,7 @@ class _UserDashboardState extends State<UserDashboard> {
 
           _navItem(Icons.dashboard_rounded, "Dashboard", 'dashboard'),
           _navItem(Icons.person_rounded, "My Profile", 'profile'),
+          _navItem(Icons.person_rounded, "Departments", 'departments'),
 
           const Spacer(),
 
@@ -941,93 +1112,6 @@ class _UserDashboardState extends State<UserDashboard> {
   }
 
   // ════════════════════════════════════════════════════════
-  //  DEPARTMENT OVERVIEW
-  // ════════════════════════════════════════════════════════
-  Widget buildDepartmentOverview() {
-    Widget deptRow(String name, String status) {
-      return Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                        color: textMain,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(status, style: TextStyle(color: accent, fontSize: 11)),
-                  ],
-                ),
-              ),
-
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accent,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                ),
-                onPressed: () {
-                  print("$name clicked");
-                },
-                child: Text(
-                  "View",
-                  style: TextStyle(
-                    color: pageBg,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-          Divider(color: borderColor, height: 1),
-          const SizedBox(height: 14),
-        ],
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Department Overview",
-            style: TextStyle(
-              color: textMain,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          deptRow("Development Unit", "Ongoing"),
-          deptRow("Tech Support", "Finished"),
-          deptRow("QA", "Finished"),
-          deptRow("PMO", "Finished"),
-          deptRow("BRM", "Finished"),
-        ],
-      ),
-    );
-  }
-
-  // ════════════════════════════════════════════════════════
   //  RECENT ACTIVITY
   // ════════════════════════════════════════════════════════
   Widget buildRecentActivity() {
@@ -1152,9 +1236,10 @@ class _UserDashboardState extends State<UserDashboard> {
                   ),
               ],
             ),
-            const Spacer(),
+            const SizedBox(height: 12),
             Row(
               children: [
+                const Spacer(),
                 GestureDetector(
                   onTap: () => showProfileDialog(user, index + 1),
                   child: Container(
@@ -1176,7 +1261,7 @@ class _UserDashboardState extends State<UserDashboard> {
                     ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 12),
               ],
             ),
           ],
@@ -1312,19 +1397,6 @@ class _UserDashboardState extends State<UserDashboard> {
 
         const SizedBox(height: 20),
 
-        // Middle info row
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [Expanded(flex: 4, child: buildDepartmentOverview())],
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
         // Search + filter row
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1380,18 +1452,17 @@ class _UserDashboardState extends State<UserDashboard> {
                             style: TextStyle(color: textMuted, fontSize: 14),
                           ),
                         )
-                      : GridView.builder(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio: 1.9,
-                              ),
+                      : ListView.builder(
                           itemCount: filtered.length,
-                          itemBuilder: (_, i) => buildProfileCard(
-                            filtered[i] as Map<String, dynamic>,
-                            i,
+                          itemBuilder: (_, i) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: SizedBox(
+                              height: 140, // 👉 controls "long box" height
+                              child: buildProfileCard(
+                                filtered[i] as Map<String, dynamic>,
+                                i,
+                              ),
+                            ),
                           ),
                         ),
                 ),
@@ -1427,7 +1498,13 @@ class _UserDashboardState extends State<UserDashboard> {
                       Expanded(
                         child: _selectedNav == 'dashboard'
                             ? buildDashboard()
-                            : buildMyProfile(),
+                            : _selectedNav == 'profile'
+                            ? buildMyProfile()
+                            : DepartmentPage(
+                                departments: departments,
+                                isAdmin: isAdmin,
+                                onEditGrade: showEditGradeDialog,
+                              ),
                       ),
                     ],
                   ),
