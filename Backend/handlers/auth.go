@@ -24,7 +24,6 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// check if email exists
 	var exists bool
 	err := DB.QueryRow(
 		"SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)",
@@ -43,7 +42,6 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// hash password
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to hash password"})
@@ -53,10 +51,12 @@ func Register(c *gin.Context) {
 	user.Password = string(hash)
 	user.Role = "user"
 
-	// insert user
 	_, err = DB.Exec(
-		"INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)",
-		user.Name, user.Email, user.Password, user.Role,
+		"INSERT INTO users (name, email, password, role, created_at) VALUES ($1, $2, $3, $4, $5)",
+		user.Name,
+		user.Email,
+		user.Password,
+		user.Role,
 	)
 
 	if err != nil {

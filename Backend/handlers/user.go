@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"net/http"
+	"time"
 
 	"student-system/models"
 
@@ -34,38 +35,38 @@ func GetProfile(c *gin.Context) {
 
 	c.JSON(http.StatusOK, user)
 }
-func GetAllUsers(c *gin.Context) {
-
-	rows, err := DB.Query(
-		"SELECT id, name, email, password, role FROM users",
-	)
-
+func GetUsers(c *gin.Context) {
+	rows, err := DB.Query(`
+		SELECT id, name, email, password, role, created_at 
+		FROM users
+		WHERE is_deleted = false
+		ORDER BY created_at DESC
+	`)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to fetch users"})
 		return
 	}
 	defer rows.Close()
 
-	var users []models.User
+	var users []gin.H
 
 	for rows.Next() {
-		var user models.User
+		var id int
+		var name, email, password, role string
+		var createdAt time.Time
 
-		err := rows.Scan(
-			&user.ID,
-			&user.Name,
-			&user.Email,
-			&user.Password,
-			&user.Role,
-		)
-
+		err := rows.Scan(&id, &name, &email, &password, &role, &createdAt)
 		if err != nil {
-			c.JSON(500, gin.H{"error": "Error reading users"})
-			return
+			continue
 		}
 
-		user.Password = "" // hide password
-		users = append(users, user)
+		users = append(users, gin.H{
+			"id":         id,
+			"name":       name,
+			"email":      email,
+			"role":       role,
+			"created_at": createdAt,
+		})
 	}
 
 	c.JSON(200, users)

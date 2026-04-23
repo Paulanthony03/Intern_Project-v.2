@@ -13,7 +13,7 @@ func SetupRoutes(r *gin.Engine) {
 	{
 		public.POST("/register", handlers.Register)
 		public.POST("/login", handlers.Login)
-		public.GET("/users", handlers.GetAllUsers)
+		public.GET("/users", handlers.GetUsers)
 
 		public.POST("/forgot-password", controllers.ForgotPasswordHandler)
 		public.POST("/reset-password", controllers.ResetPasswordHandler)
