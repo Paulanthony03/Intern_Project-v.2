@@ -405,7 +405,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text("$name has been deleted."),
-                    backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                    backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                   ),
                 );
               } catch (e) {
@@ -414,7 +414,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text("Failed to delete: $e"),
-                    backgroundColor: const Color.fromRGBO(0, 0, 0, 0),
+                    backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                   ),
                 );
               }

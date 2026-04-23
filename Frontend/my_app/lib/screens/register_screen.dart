@@ -58,11 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => isLoading = false);
 
     if (result == "success") {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
+      Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(
         context,
