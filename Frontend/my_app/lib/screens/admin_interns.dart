@@ -4,9 +4,16 @@ import 'package:flutter/material.dart';
 //  INTERNS SCREEN
 // ════════════════════════════════════════════════════════
 class AdminInterns extends StatefulWidget {
-  final List<dynamic>? users; // ← received from the dashboard
+  final List<dynamic>? users;
+  final void Function(Map<String, dynamic> user, int index)? onView;
+  final void Function(Map<String, dynamic> user)? onDelete;
 
-  const AdminInterns({super.key, required this.users});
+  const AdminInterns({
+    super.key,
+    required this.users,
+    this.onView,
+    this.onDelete,
+  });
 
   @override
   State<AdminInterns> createState() => _AdminInternsState();
@@ -170,11 +177,7 @@ class _AdminInternsState extends State<AdminInterns> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          onPressed: () => Navigator.pushNamed(
-                            context,
-                            '/profile',
-                            arguments: user,
-                          ),
+                         onPressed: () => widget.onView?.call(user, index),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -198,7 +201,7 @@ class _AdminInternsState extends State<AdminInterns> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          onPressed: () => _confirmDelete(user),
+                          onPressed: () => widget.onDelete?.call(user),
                         ),
                       ),
                     ],
@@ -210,50 +213,6 @@ class _AdminInternsState extends State<AdminInterns> {
       ),
     );
   }
-
-  // ════════════════════════════════════════════════════════
-  //  DELETE CONFIRMATION
-  //  Uses the user map (not a positional index) so it works
-  //  correctly even after filtering.
-  // ════════════════════════════════════════════════════════
-  void _confirmDelete(Map<String, dynamic> user) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: cardBg,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: const Text("Delete Intern",
-            style: TextStyle(color: textMain)),
-        content: const Text(
-          "Are you sure you want to delete this intern?",
-          style: TextStyle(color: textMuted),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child:
-                const Text("Cancel", style: TextStyle(color: textMuted)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade700,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () {
-              // Notify the parent dashboard to remove this user
-              // so the shared list stays in sync.
-              Navigator.pop(context);
-            },
-            child: const Text("Delete",
-                style: TextStyle(color: textMain)),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ════════════════════════════════════════════════════════
   //  DROPDOWNS
   // ════════════════════════════════════════════════════════

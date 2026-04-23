@@ -98,6 +98,7 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
+
   // ════════════════════════════════════════════════════════
   //  SIDEBAR
   // ════════════════════════════════════════════════════════
@@ -421,8 +422,11 @@ class _AppShellState extends State<AppShell> {
                   child: IndexedStack(
                     index: _selectedIndex,
                     children: [
-                      AdminDashboard(token: _token ?? ''),  // index 0
-                      AdminInterns(users: _users),          // index 1
+                      AdminDashboard(token: _token ?? '', users: _users, onRefresh: _loadUsers),  // index 0
+                      AdminInterns(users: _users,
+                        onView: (user, index) => _showProfileDialog(user, index + 1),
+                        onDelete: (user) => _showDeleteDialog(user),
+                        ),          // index 1
                       const Placeholder(),                  // index 2
                       AdminSchools(schools: _schools),      // index 3
                       const Placeholder(),                   // index 4
@@ -436,4 +440,185 @@ class _AppShellState extends State<AppShell> {
       ),
     );
   }
+
+  void _showProfileDialog(Map<String, dynamic> user, int internNumber) {
+  final String name = (user["name"] ?? "Unknown").toUpperCase();
+  final String school = user["school"] ?? "-";
+  final String email = user["email"] ?? "-";
+  final String contact = user["contact"] ?? user["contact_no"] ?? "-";
+  final String? photoUrl = user["photo_url"];
+
+  showDialog(
+    context: context,
+    builder: (ctx) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 400,
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: borderColor),
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(30),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        radius: 55,
+                        backgroundColor: borderColor,
+                        backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                            ? NetworkImage(photoUrl)
+                            : null,
+                        child: photoUrl == null || photoUrl.isEmpty
+                            ? Text(
+                                (user["name"] ?? "U")[0].toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 32,
+                                  color: accent,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 10),
+                            Text(name,
+                                style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: textMain)),
+                            const SizedBox(height: 6),
+                            Text("Intern $internNumber",
+                                style: const TextStyle(
+                                    fontSize: 13, color: textMuted)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Divider(color: borderColor),
+                  const SizedBox(height: 16),
+                  _infoRow("School:", school),
+                  const SizedBox(height: 12),
+                  _infoRow("Email:", email),
+                  const SizedBox(height: 12),
+                  _infoRow("Contact No.:", contact),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accent,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        Navigator.pushNamed(context, '/edit-profile',
+                            arguments: user);
+                      },
+                      child: const Text("Edit Profile",
+                          style: TextStyle(
+                              color: pageBg,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 12,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(ctx),
+                child: const Icon(Icons.close, color: textMuted, size: 20),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+void _showDeleteDialog(Map<String, dynamic> user) {
+  final String name = user["name"] ?? "this intern";
+  final String userId = user["id"]?.toString() ?? "";
+
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: cardBg,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: const Text("Delete Intern",
+          style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+      content: Text(
+        "Are you sure you want to delete $name?\nThis cannot be undone.",
+        style: const TextStyle(color: textMain),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text("Cancel", style: TextStyle(color: textMuted)),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.redAccent,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          onPressed: () async {
+            Navigator.pop(ctx);
+            try {
+              await ApiService.deleteUser(_token ?? '', userId);
+              await _loadUsers(); // ← refreshes the shared list
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("$name has been deleted."),
+                    backgroundColor: Colors.redAccent),
+              );
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Failed to delete: $e"),
+                    backgroundColor: Colors.redAccent),
+              );
+            }
+          },
+          child: const Text("Delete",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _infoRow(String label, String value) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      SizedBox(
+        width: 110,
+        child: Text(label,
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, color: accent, fontSize: 13)),
+      ),
+      Expanded(
+        child: Text(value,
+            style: const TextStyle(color: textMain, fontSize: 13)),
+      ),
+    ],
+  );
+}
 }

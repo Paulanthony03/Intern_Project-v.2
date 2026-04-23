@@ -5,8 +5,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AdminDashboard extends StatefulWidget {
   final String token;
+  final List<dynamic>? users;
+  final Future<void> Function()? onRefresh;
 
-  const AdminDashboard({Key? key, required this.token}) : super(key: key);
+  const AdminDashboard({
+    Key? key,
+    required this.token,
+    this.users,
+    this.onRefresh,
+  }) : super(key: key);
 
   @override
   _AdminDashboardState createState() => _AdminDashboardState();
@@ -14,7 +21,7 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   // ─── STATE ───────────────────────────────────────────────
-  List<dynamic>? users;
+  List<dynamic>? get users => widget.users;
   String fullName = "";
   String currentUserId = "";
   String searchQuery = "";
@@ -39,43 +46,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   void initState() {
     super.initState();
-    loadUsers();
   }
 
-  // ─── LOAD USERS ──────────────────────────────────────────
-  Future<void> loadUsers() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = widget.token;
-    final name =
-        prefs.getString("full_name") ??
-        prefs.getString("name") ??
-        prefs.getString("username") ??
-        "Admin";
-    final userId = prefs.getString("user_id") ?? "";
-    final savedDept = prefs.getInt("department_count");
-
-    final data = await ApiService.getUsers(token);
-
-    final seen = <String>{};
-    final deduped = data?.where((u) {
-      final id = u["id"]?.toString() ?? "";
-      return seen.add(id);
-    }).toList();
-
-    final internsOnly = deduped?.where((u) {
-      final role = (u["role"] ?? u["user_type"] ?? "")
-          .toString()
-          .toLowerCase();
-      return role != "admin";
-    }).toList();
-
-    setState(() {
-      users = internsOnly;
-      fullName = name;
-      currentUserId = userId;
-      if (savedDept != null) departmentCount = savedDept;
-    });
-    }
 
   // ─── COMPUTED ────────────────────────────────────────────
   int get schoolCount {
@@ -351,7 +323,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               Navigator.pop(ctx);
               try {
                 await ApiService.deleteUser(widget.token, userId.toString());
-                await loadUsers();
+                await widget.onRefresh?.call();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text("$name has been deleted."),
