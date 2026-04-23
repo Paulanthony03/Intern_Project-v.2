@@ -144,7 +144,33 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   List<dynamic> get recentUsers {
     if (users == null || users!.isEmpty) return [];
-    return List<dynamic>.from(users!).reversed.take(2).toList();
+
+    List<dynamic> sorted = List.from(users!);
+
+    sorted.sort((a, b) {
+      DateTime parseDate(dynamic val) {
+        try {
+          String raw = (val ?? "").toString();
+
+          raw = raw.replaceFirst(" ", "T");
+
+          if (raw.endsWith("+08")) {
+            raw = raw + ":00";
+          }
+
+          return DateTime.parse(raw);
+        } catch (_) {
+          return DateTime(2000); // fallback old date
+        }
+      }
+
+      final aDate = parseDate(a["created_at"]);
+      final bDate = parseDate(b["created_at"]);
+
+      return bDate.compareTo(aDate); // 🔥 newest FIRST
+    });
+
+    return sorted.take(2).toList();
   }
 
   // ════════════════════════════════════════════════════════
@@ -364,21 +390,31 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
             ),
             onPressed: () async {
-              Navigator.pop(ctx);
+              Navigator.of(ctx).pop(); // close dialog FIRST
+
+              await Future.delayed(
+                Duration(milliseconds: 100),
+              ); // ensures UI clears
+
               try {
                 await ApiService.deleteUser(widget.token, userId.toString());
                 await loadUsers();
+
+                if (!mounted) return;
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text("$name has been deleted."),
-                    backgroundColor: Colors.redAccent,
+                    backgroundColor: const Color.fromARGB(0, 0, 0, 0),
                   ),
                 );
               } catch (e) {
+                if (!mounted) return;
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text("Failed to delete: $e"),
-                    backgroundColor: Colors.redAccent,
+                    backgroundColor: const Color.fromRGBO(0, 0, 0, 0),
                   ),
                 );
               }
@@ -621,7 +657,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             borderRadius: BorderRadius.circular(10),
             border: selected
                 ? Border.all(color: accent.withOpacity(0.4))
-                : Border.all(color: Colors.transparent),
+                : Border.all(color: const Color.fromRGBO(0, 0, 0, 0)),
           ),
           child: Row(
             children: [
@@ -1372,10 +1408,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      onPressed: () => Navigator.pushNamed(
-                                        context,
-                                        '/register',
-                                      ),
+                                      onPressed: () =>
+                                          Navigator.pushNamed(context, ''),
                                     ),
                                   ),
                                 ),

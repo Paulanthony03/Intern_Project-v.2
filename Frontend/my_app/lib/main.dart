@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/screens/landing_screen.dart';
 import 'package:my_app/screens/admin_dashboard.dart';
+import 'package:my_app/screens/register_screen.dart';
 import 'package:my_app/screens/login_screen.dart';
 import 'package:my_app/screens/user_dashboard.dart';
 import 'package:my_app/screens/forgot_password_screen.dart';
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => LandingScreen(),
         '/admin': (context) => AdminDashboard(token: ''),
+        '/register': (context) => const RegisterScreen(),
         '/user': (context) => UserDashboard(token: ''),
         '/login': (_) => LoginScreen(),
         '/forgot-password': (_) => ForgotPasswordScreen(),
