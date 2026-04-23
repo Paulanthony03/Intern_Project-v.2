@@ -172,19 +172,19 @@ class LandingScreen extends StatelessWidget {
                         Text(
                           "Start your journey with a smarter way to manage your internship",
                           style: TextStyle(
-                            fontSize: 48,
+                            fontSize: 45,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                             height: 1.2,
                           ),
                         ),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 17),
 
                         Text(
                           "We're glad to have you here. This platform is designed to help interns easily manage their profiles and access their information, while administrators ensure everything stays organized and up to date.",
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 17,
                             color: Colors.white70,
                             height: 1.6,
                           ),
@@ -194,8 +194,7 @@ class LandingScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
-              const Spacer(),
+              const SizedBox(height: 70),
             ],
           ),
         ),

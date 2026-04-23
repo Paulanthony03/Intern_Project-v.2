@@ -22,7 +22,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   int? hoveredIndex;
 
   // Sidebar: is the Admin dropdown expanded?
-  bool _adminMenuExpanded = false;
+  bool _adminMenuExpanded = true;
   // Which nav item is highlighted
   String _selectedNav = 'dashboard';
 
@@ -82,6 +82,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
         if (savedDept != null) departmentCount = savedDept;
       });
     }
+  }
+
+  String timeAgo(DateTime time) {
+    final diff = DateTime.now().difference(time);
+
+    if (diff.inSeconds < 60) return "just now";
+    if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
+    if (diff.inHours < 24) return "${diff.inHours} hrs ago";
+    return "${diff.inDays} days ago";
   }
 
   // ─── COMPUTED ────────────────────────────────────────────
@@ -785,10 +794,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
           else
             ...recent.asMap().entries.map((e) {
               final user = e.value as Map<String, dynamic>;
+
               final name = user["name"] ?? "Unknown";
               final id = user["intern_id"] ?? user["id"] ?? "-";
               final photoUrl = user["photo_url"] as String?;
-              final daysAgo = e.key + 3;
+              final String? createdAt = user["created_at"];
+
+              DateTime time;
+
+              try {
+                String raw = (createdAt ?? "").toString();
+
+                raw = raw.replaceFirst(" ", "T");
+
+                if (raw.endsWith("+08")) {
+                  raw = raw + ":00";
+                }
+
+                time = DateTime.parse(raw);
+              } catch (e) {
+                print("Invalid date: $createdAt");
+                time = DateTime.now();
+              }
+
               return Column(
                 children: [
                   Row(
@@ -804,6 +832,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             : null,
                       ),
                       const SizedBox(width: 12),
+
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -816,19 +845,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+
                             Text(
-                              "$daysAgo days ago",
+                              timeAgo(time),
                               style: TextStyle(color: textMuted, fontSize: 11),
                             ),
                           ],
                         ),
                       ),
+
                       Text(
                         "id: $id",
                         style: TextStyle(color: textMuted, fontSize: 11),
                       ),
                     ],
                   ),
+
                   if (e.key < recent.length - 1)
                     Divider(color: borderColor, height: 20),
                 ],
