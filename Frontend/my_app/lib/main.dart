@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/screens/app_shell.dart';
 import 'package:my_app/screens/landing_screen.dart';
-import 'package:my_app/screens/admin_dashboard.dart';
 import 'package:my_app/screens/register_screen.dart';
 import 'package:my_app/screens/login_screen.dart';
 import 'package:my_app/screens/user_dashboard.dart';
@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
 
       routes: {
         '/': (context) => LandingScreen(),
-        '/admin': (context) => AdminDashboard(token: ''),
+        '/admin': (context) => AppShell(),
         '/register': (context) => const RegisterScreen(),
         '/user': (context) => UserDashboard(token: ''),
         '/login': (_) => LoginScreen(),
