@@ -486,19 +486,6 @@ class _AdminSettingsState extends State<AdminSettings>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
-          child: Text(
-            'Account Settings',
-            style: const TextStyle(
-              color: textMain,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ),
-
         TabBar(
           controller: _tabController,
           labelColor: accent,

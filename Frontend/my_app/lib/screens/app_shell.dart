@@ -20,17 +20,24 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   // ── THEME COLORS ──
   static const pageBg      = Color(0xFF111111);
-  static const sidebarBg   = Color(0xFF151515);
-  static const headerBg    = Color(0xFF151515);
+  static const sidebarBg   = Color.fromARGB(255, 0, 0, 0);
+  static const headerBg    = Color(0xFF111111);
   static const cardBg      = Color(0xFF1A1A1A);
   static const borderColor = Color(0xFF2A2A2A);
   static const accent      = Color(0xFFBFCF33);
   static const textMain    = Color(0xFFFFFFFF);
   static const textMuted   = Color(0xFF888888);
 
+static const Map<String, String> _navTitles = {
+  'dashboard':   'Welcome Back, Admin!',
+  'interns':     'Meet Our Interns!',
+  'departments': 'Department Overview',
+  'school':      'Our Partnered School',
+  'settings':    'Account Settings',
+};
+
   bool _adminMenuExpanded = true;
   String _selectedNav = 'dashboard';
-   bool _profileHovered = false;  
   String? _hoveredNav; 
 
   // ── SHARED STATE ──────────────────────────────────────
@@ -150,7 +157,7 @@ final Map<String, dynamic> _adminData = {
                       _navItem(Icons.people_alt_rounded, "Interns", 'interns'),
                       _navItem(Icons.folder_rounded, "Departments", 'departments'),
                       _navItem(Icons.account_balance_rounded, "School", 'school'),
-                      _navItem(Icons.settings_rounded, "Settings", 'settings'),
+                      _navItem(Icons.settings_rounded, "Account Settings", 'settings'),
                     ],
                   ),
                 ),
@@ -312,6 +319,22 @@ final Map<String, dynamic> _adminData = {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       child: Row(
         children: [
+       // header
+        Padding(
+  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+  child: Align(
+    alignment: Alignment.centerLeft,
+    child: Text(
+  _navTitles[_selectedNav] ?? 'Welcome Back, Admin!',
+  style: const TextStyle(
+    color: Colors.white,
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.2,
+  ),
+),
+  ),
+),
           const Spacer(),
           Container(
             padding: const EdgeInsets.all(8),
@@ -327,54 +350,42 @@ final Map<String, dynamic> _adminData = {
             ),
           ),
           const SizedBox(width: 16),
-           MouseRegion(
-          cursor: SystemMouseCursors.click,
-          onEnter: (_) => setState(() => _profileHovered = true),
-          onExit:  (_) => setState(() => _profileHovered = false),
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedNav = 'settings'),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: _profileHovered ? const Color(0xFF1A1A1A) : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: _profileHovered ? accent.withOpacity(0.4) : Colors.transparent,
-                ),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: borderColor,
-                    child: const Icon(Icons.person, color: accent, size: 20),
-                  ),
-                  const SizedBox(width: 10),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Admin Mc",
-                        style: TextStyle(
-                          color: textMain,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        "id: admin_08",
-                        style: TextStyle(color: textMuted, fontSize: 11),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 6),
-                  const Icon(Icons.chevron_right_rounded, color: textMuted, size: 18),
-                ],
-              ),
+           // AFTER
+Container(
+  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+  decoration: BoxDecoration(
+    color: Colors.transparent,
+    borderRadius: BorderRadius.circular(10),
+    border: Border.all(color: Colors.transparent),
+  ),
+  child: Row(
+    children: [
+      CircleAvatar(
+        radius: 18,
+        backgroundColor: borderColor,
+        child: const Icon(Icons.person, color: accent, size: 20),
+      ),
+      const SizedBox(width: 10),
+      const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Admin Mc",
+            style: TextStyle(
+              color: textMain,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
             ),
           ),
-        ),
+          Text(
+            "id: admin_08",
+            style: TextStyle(color: textMuted, fontSize: 11),
+          ),
+        ],
+      ),
+    ],
+  ),
+),
         ],
       ),
     );

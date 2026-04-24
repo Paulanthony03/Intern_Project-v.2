@@ -183,16 +183,16 @@ class _AdminSchoolsState extends State<AdminSchools> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Header ────────────────────────────────────
-       Padding(
+ Padding(
   padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
   child: Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
       Text(
-        'Our Partnered Schools! (${_schools.length})',
+        'Schools (${_schools.length})',
         style: const TextStyle(
           color: textMain,
-          fontSize: 24,
+          fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
       ),
