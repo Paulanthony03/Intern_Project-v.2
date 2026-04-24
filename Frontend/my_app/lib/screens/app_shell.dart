@@ -29,6 +29,8 @@ class _AppShellState extends State<AppShell> {
 
   bool _adminMenuExpanded = true;
   String _selectedNav = 'dashboard';
+   bool _profileHovered = false;  
+  String? _hoveredNav; 
 
   // ── SHARED STATE ──────────────────────────────────────
   List<dynamic>? _users;   // null = still loading
@@ -266,38 +268,56 @@ final Map<String, dynamic> _adminData = {
   }
 
   Widget _navItem(IconData icon, String label, String key) {
-    final bool selected = _selectedNav == key;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+  final bool selected = _selectedNav == key;
+  final bool hovered  = _hoveredNav == key;
+
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+    child: MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hoveredNav = key),
+      onExit:  (_) => setState(() => _hoveredNav = null),
       child: GestureDetector(
         onTap: () => setState(() => _selectedNav = key),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
-            color: selected ? accent.withOpacity(0.15) : Colors.transparent,
+            color: selected
+                ? accent.withOpacity(0.15)
+                : hovered
+                    ? const Color(0xFF222222)
+                    : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
-            border: selected
-                ? Border.all(color: accent.withOpacity(0.4))
-                : Border.all(color: Colors.transparent),
+            border: Border.all(
+              color: selected
+                  ? accent.withOpacity(0.4)
+                  : hovered
+                      ? accent.withOpacity(0.2)
+                      : Colors.transparent,
+            ),
           ),
           child: Row(
             children: [
-              Icon(icon, size: 17, color: selected ? accent : textMuted),
+              Icon(icon,
+                  size: 17,
+                  color: selected || hovered ? accent : textMuted),
               const SizedBox(width: 10),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                  color: selected ? accent : textMuted,
+                  color: selected || hovered ? accent : textMuted,
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ════════════════════════════════════════════════════════
   //  TOP BAR
@@ -331,43 +351,54 @@ final Map<String, dynamic> _adminData = {
             ),
           ),
           const SizedBox(width: 16),
-          GestureDetector(
-            onTap: () => Navigator.pushNamed(
-              context,
-              '/admin-profile',
-              arguments: {"name": "Admin Mc"},
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: borderColor,
-                  child: const Icon(Icons.person, color: accent, size: 20),
+           MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _profileHovered = true),
+          onExit:  (_) => setState(() => _profileHovered = false),
+          child: GestureDetector(
+            onTap: () => setState(() => _selectedNav = 'settings'),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: _profileHovered ? const Color(0xFF1A1A1A) : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: _profileHovered ? accent.withOpacity(0.4) : Colors.transparent,
                 ),
-                const SizedBox(width: 10),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Admin Mc",
-                      style: TextStyle(
-                        color: textMain,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: borderColor,
+                    child: const Icon(Icons.person, color: accent, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Admin Mc",
+                        style: TextStyle(
+                          color: textMain,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    Text(
-                      "id: admin_08",
-                      style: TextStyle(color: textMuted, fontSize: 11),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 6),
-                const Icon(Icons.chevron_right_rounded,
-                    color: textMuted, size: 18),
-              ],
+                      Text(
+                        "id: admin_08",
+                        style: TextStyle(color: textMuted, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.chevron_right_rounded, color: textMuted, size: 18),
+                ],
+              ),
             ),
           ),
+        ),
         ],
       ),
     );
