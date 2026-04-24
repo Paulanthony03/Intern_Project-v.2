@@ -12,7 +12,7 @@ class AdminDashboard extends StatefulWidget {
     Key? key,
     required this.token,
     this.users,
-    this.onRefresh,
+    required this.onRefresh,
   }) : super(key: key);
 
   @override
@@ -21,7 +21,7 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   // ─── STATE ───────────────────────────────────────────────
-  List<dynamic>? get users => widget.users;
+  List<dynamic>? users;
   String fullName = "";
   String currentUserId = "";
   String searchQuery = "";
@@ -46,6 +46,53 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   void initState() {
     super.initState();
+    loadUsers();
+  }
+
+  // ─── LOAD USERS ──────────────────────────────────────────
+  Future<void> loadUsers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("token");
+    final name =
+        prefs.getString("full_name") ??
+        prefs.getString("name") ??
+        prefs.getString("username") ??
+        "Admin";
+    final userId = prefs.getString("user_id") ?? "";
+    final savedDept = prefs.getInt("department_count");
+
+    if (token != null) {
+      final data = await ApiService.getUsers(token);
+
+      final seen = <String>{};
+      final deduped = data?.where((u) {
+        final id = u["id"]?.toString() ?? "";
+        return seen.add(id);
+      }).toList();
+
+      final internsOnly = deduped?.where((u) {
+        final role = (u["role"] ?? u["user_type"] ?? "")
+            .toString()
+            .toLowerCase();
+        return role != "admin";
+      }).toList();
+
+      setState(() {
+        users = internsOnly;
+        fullName = name;
+        currentUserId = userId;
+        if (savedDept != null) departmentCount = savedDept;
+      });
+    }
+  }
+
+  String timeAgo(DateTime time) {
+    final diff = DateTime.now().difference(time);
+
+    if (diff.inSeconds < 60) return "just now";
+    if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
+    if (diff.inHours < 24) return "${diff.inHours} hrs ago";
+    return "${diff.inDays} days ago";
   }
 
   // ─── COMPUTED ────────────────────────────────────────────
@@ -99,7 +146,33 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   List<dynamic> get recentUsers {
     if (users == null || users!.isEmpty) return [];
-    return List<dynamic>.from(users!).reversed.take(2).toList();
+
+    List<dynamic> sorted = List.from(users!);
+
+    sorted.sort((a, b) {
+      DateTime parseDate(dynamic val) {
+        try {
+          String raw = (val ?? "").toString();
+
+          raw = raw.replaceFirst(" ", "T");
+
+          if (raw.endsWith("+08")) {
+            raw = raw + ":00";
+          }
+
+          return DateTime.parse(raw);
+        } catch (_) {
+          return DateTime(2000);
+        }
+      }
+
+      final aDate = parseDate(a["created_at"]);
+      final bDate = parseDate(b["created_at"]);
+
+      return bDate.compareTo(aDate); // 🔥 newest FIRST
+    });
+
+    return sorted.take(2).toList();
   }
 
   // ════════════════════════════════════════════════════════
@@ -450,10 +523,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
           else
             ...recent.asMap().entries.map((e) {
               final user = e.value as Map<String, dynamic>;
+
               final name = user["name"] ?? "Unknown";
               final id = user["intern_id"] ?? user["id"] ?? "-";
               final photoUrl = user["photo_url"] as String?;
-              final daysAgo = e.key + 3;
+              final String? createdAt = user["created_at"];
+
+              DateTime time;
+
+              try {
+                String raw = (createdAt ?? "").toString();
+
+                raw = raw.replaceFirst(" ", "T");
+
+                if (raw.endsWith("+08")) {
+                  raw = raw + ":00";
+                }
+
+                time = DateTime.parse(raw);
+              } catch (e) {
+                print("Invalid date: $createdAt");
+                time = DateTime.now();
+              }
+
               return Column(
                 children: [
                   Row(
@@ -469,6 +561,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             : null,
                       ),
                       const SizedBox(width: 12),
+
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -481,19 +574,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+
                             Text(
-                              "$daysAgo days ago",
+                              timeAgo(time),
                               style: TextStyle(color: textMuted, fontSize: 11),
                             ),
                           ],
                         ),
                       ),
+
                       Text(
                         "id: $id",
                         style: TextStyle(color: textMuted, fontSize: 11),
                       ),
                     ],
                   ),
+
                   if (e.key < recent.length - 1)
                     Divider(color: borderColor, height: 20),
                 ],
