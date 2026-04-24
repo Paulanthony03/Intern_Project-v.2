@@ -12,7 +12,7 @@ class AdminDashboard extends StatefulWidget {
     Key? key,
     required this.token,
     this.users,
-    required this.onRefresh,
+    this.onRefresh,
   }) : super(key: key);
 
   @override
@@ -21,7 +21,7 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   // ─── STATE ───────────────────────────────────────────────
-  List<dynamic>? users;
+  List<dynamic>? get users => widget.users;
   String fullName = "";
   String currentUserId = "";
   String searchQuery = "";
@@ -46,53 +46,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   void initState() {
     super.initState();
-    loadUsers();
   }
 
-  // ─── LOAD USERS ──────────────────────────────────────────
   Future<void> loadUsers() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("token");
+
     final name =
         prefs.getString("full_name") ??
         prefs.getString("name") ??
         prefs.getString("username") ??
         "Admin";
+
     final userId = prefs.getString("user_id") ?? "";
     final savedDept = prefs.getInt("department_count");
 
-    if (token != null) {
-      final data = await ApiService.getUsers(token);
+    setState(() {
+      fullName = name;
+      currentUserId = userId;
 
-      final seen = <String>{};
-      final deduped = data?.where((u) {
-        final id = u["id"]?.toString() ?? "";
-        return seen.add(id);
-      }).toList();
-
-      final internsOnly = deduped?.where((u) {
-        final role = (u["role"] ?? u["user_type"] ?? "")
-            .toString()
-            .toLowerCase();
-        return role != "admin";
-      }).toList();
-
-      setState(() {
-        users = internsOnly;
-        fullName = name;
-        currentUserId = userId;
-        if (savedDept != null) departmentCount = savedDept;
-      });
-    }
-  }
-
-  String timeAgo(DateTime time) {
-    final diff = DateTime.now().difference(time);
-
-    if (diff.inSeconds < 60) return "just now";
-    if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
-    if (diff.inHours < 24) return "${diff.inHours} hrs ago";
-    return "${diff.inDays} days ago";
+      if (savedDept != null) {
+        departmentCount = savedDept;
+      }
+    });
   }
 
   // ─── COMPUTED ────────────────────────────────────────────
@@ -146,33 +121,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   List<dynamic> get recentUsers {
     if (users == null || users!.isEmpty) return [];
-
-    List<dynamic> sorted = List.from(users!);
-
-    sorted.sort((a, b) {
-      DateTime parseDate(dynamic val) {
-        try {
-          String raw = (val ?? "").toString();
-
-          raw = raw.replaceFirst(" ", "T");
-
-          if (raw.endsWith("+08")) {
-            raw = raw + ":00";
-          }
-
-          return DateTime.parse(raw);
-        } catch (_) {
-          return DateTime(2000);
-        }
-      }
-
-      final aDate = parseDate(a["created_at"]);
-      final bDate = parseDate(b["created_at"]);
-
-      return bDate.compareTo(aDate); // 🔥 newest FIRST
-    });
-
-    return sorted.take(2).toList();
+    return List<dynamic>.from(users!).take(2).toList();
   }
 
   // ════════════════════════════════════════════════════════
@@ -444,6 +393,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
       ],
     );
+  }
+
+  String timeAgo(DateTime dateTime) {
+    final Duration diff = DateTime.now().difference(dateTime);
+
+    if (diff.inDays > 365) {
+      return '${(diff.inDays / 365).floor()} year${(diff.inDays / 365).floor() > 1 ? 's' : ''} ago';
+    } else if (diff.inDays > 30) {
+      return '${(diff.inDays / 30).floor()} month${(diff.inDays / 30).floor() > 1 ? 's' : ''} ago';
+    } else if (diff.inDays > 0) {
+      return '${diff.inDays} day${diff.inDays > 1 ? 's' : ''} ago';
+    } else if (diff.inHours > 0) {
+      return '${diff.inHours} hour${diff.inHours > 1 ? 's' : ''} ago';
+    } else if (diff.inMinutes > 0) {
+      return '${diff.inMinutes} minute${diff.inMinutes > 1 ? 's' : ''} ago';
+    } else {
+      return 'just now';
+    }
   }
 
   // ════════════════════════════════════════════════════════
@@ -967,22 +934,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       builder: (context, constraints) {
         return Column(
           children: [
-            // header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Welcome Back, Admin!',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ),
-            ),
             // Fixed upper sections
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -1103,8 +1054,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            onPressed: () =>
-                                Navigator.pushNamed(context, '/register'),
+                            onPressed: () async {
+                              await Navigator.pushNamed(context, '/register');
+                              await widget.onRefresh?.call();
+                            },
                           ),
                         ),
                       ),

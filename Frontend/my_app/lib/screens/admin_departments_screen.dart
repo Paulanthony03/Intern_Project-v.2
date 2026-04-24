@@ -11,15 +11,12 @@ class AdminDepartments extends StatefulWidget {
 }
 
 class _AdminDepartmentsState extends State<AdminDepartments> {
-  // ── THEME COLORS ──────────────────────────────────────
   static const cardBg = Color(0xFF1A1A1A);
   static const borderColor = Color(0xFF2A2A2A);
   static const accent = Color.fromARGB(255, 212, 226, 74);
   static const textMain = Color(0xFFFFFFFF);
   static const textMuted = Color(0xFF888888);
-  static const redBtn = Color(0xFF8B1A1A);
 
-  // ── DEPARTMENTS DATA ──────────────────────────────────
   final List<Map<String, dynamic>> _departments = [
     {
       "name": "Development Unit",
@@ -82,7 +79,6 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
     }).toList();
   }
 
-  // ── STATUS BADGE ──────────────────────────────────────
   Widget _statusBadge(String status) {
     final isOngoing = status == 'ongoing';
     return Container(
@@ -103,6 +99,151 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
     );
   }
 
+  // ── DETAIL POPUP ──────────────────────────────────────
+  void _showDepartmentDialog(Map<String, dynamic> dept) {
+    final name = (dept['name'] ?? 'Unknown').toString();
+    final supervisor = (dept['supervisor'] ?? '').toString();
+    final role = (dept['role'] ?? '').toString();
+    final supervisorId = (dept['supervisor_id'] ?? '').toString();
+    final activeInterns = (dept['active_interns'] as int?) ?? 0;
+    final status = (dept['status'] ?? 'ongoing').toString();
+
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: 420,
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
+          ),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: const TextStyle(
+                              color: textMain,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _statusBadge(status),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+                    const Divider(color: borderColor),
+                    const SizedBox(height: 16),
+
+                    // Supervisor
+                    Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFF2A2A2A),
+                            border: Border.all(color: borderColor),
+                          ),
+                          child: const Icon(
+                            Icons.person_rounded,
+                            color: textMuted,
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$supervisor ($role)',
+                              style: const TextStyle(
+                                color: textMain,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'ID: $supervisorId',
+                              style: const TextStyle(
+                                color: textMuted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Active Interns count box
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF111111),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: borderColor),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Active Interns',
+                            style: TextStyle(color: textMuted, fontSize: 13),
+                          ),
+                          Text(
+                            activeInterns.toString().padLeft(2, '0'),
+                            style: const TextStyle(
+                              color: textMain,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Close button
+              Positioned(
+                top: 12,
+                right: 14,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const Icon(Icons.close, color: textMuted, size: 20),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── DEPARTMENT CARD ───────────────────────────────────
   Widget _buildDepartmentCard(Map<String, dynamic> dept) {
     final name = (dept['name'] ?? 'Unknown').toString();
@@ -112,203 +253,98 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
     final activeInterns = (dept['active_interns'] as int?) ?? 0;
     final status = (dept['status'] ?? 'ongoing').toString();
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Card Header ───────────────────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  name,
-                  style: const TextStyle(
-                    color: textMain,
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
+    return _HoverCard(
+      onTap: () => _showDepartmentDialog(dept),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    name,
+                    style: const TextStyle(
+                      color: textMain,
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(width: 8),
-              _statusBadge(status),
-            ],
-          ),
+                const SizedBox(width: 8),
+                _statusBadge(status),
+              ],
+            ),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // ── Supervisor Row ────────────────────────
-          Row(
-            children: [
-              // Avatar circle
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF2A2A2A),
-                  border: Border.all(color: borderColor),
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF2A2A2A),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: const Icon(
+                    Icons.person_rounded,
+                    color: textMuted,
+                    size: 22,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.person_rounded,
-                  color: textMuted,
-                  size: 22,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$supervisor ($role)',
+                        style: const TextStyle(
+                          color: textMain,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'ID: $supervisorId',
+                        style: const TextStyle(color: textMuted, fontSize: 12),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '$supervisor ($role)',
+                      activeInterns.toString().padLeft(2, '0'),
                       style: const TextStyle(
                         color: textMain,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'ID: $supervisorId',
-                      style: const TextStyle(color: textMuted, fontSize: 12),
+                    const Text(
+                      'Active Interns',
+                      style: TextStyle(color: textMuted, fontSize: 11),
                     ),
                   ],
                 ),
-              ),
-              // Active Interns count
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    activeInterns.toString().padLeft(2, '0'),
-                    style: const TextStyle(
-                      color: textMain,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Text(
-                    'Active Interns',
-                    style: TextStyle(color: textMuted, fontSize: 11),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // ── Action Buttons ────────────────────────
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accent,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: () {
-                    // TODO: navigate to edit screen
-                  },
-                  child: const Text(
-                    'Edit',
-                    style: TextStyle(
-                      color: Color(0xFF111111),
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent.withOpacity(0.16),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    elevation: 0,
-                  ),
-                  icon: const Icon(
-                    Icons.delete_outline_rounded,
-                    color: Colors.redAccent,
-                    size: 16,
-                  ),
-                  label: const Text(
-                    'Trash/Archive',
-                    style: TextStyle(
-                      color: Colors.redAccent,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  onPressed: () {
-                    _showArchiveDialog(name);
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── ARCHIVE CONFIRM DIALOG ────────────────────────────
-  void _showArchiveDialog(String deptName) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: cardBg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: borderColor),
-        ),
-        title: const Text(
-          'Archive Department?',
-          style: TextStyle(color: textMain, fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          'Are you sure you want to archive "$deptName"?',
-          style: const TextStyle(color: textMuted),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: textMuted)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: redBtn,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+              ],
             ),
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Archive',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -323,28 +359,10 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Header ────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
-          child: Text(
-            'Departments Overview',
-            style: const TextStyle(
-              color: textMain,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
-        // ── Search + Add Button Row ────────────────────
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Row(
             children: [
-              // Search bar
               Expanded(
                 child: Container(
                   height: 48,
@@ -377,7 +395,6 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
 
               const SizedBox(width: 14),
 
-              // Add Department button
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accent,
@@ -413,7 +430,6 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
 
         const SizedBox(height: 20),
 
-        // ── Cards Grid ────────────────────────────────
         Expanded(
           child: filtered.isEmpty
               ? const Center(
@@ -428,44 +444,56 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                     crossAxisCount: 2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
-                    childAspectRatio: 3.0, // ← adjust height here
+                    childAspectRatio: 3.0,
                   ),
                   itemCount: filtered.length,
                   itemBuilder: (_, i) => _buildDepartmentCard(filtered[i]),
                 ),
         ),
-        // ── View Detailed Logs Button ──────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
-          child: Center(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1F1F1F),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 14,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  side: const BorderSide(color: borderColor),
-                ),
-                elevation: 0,
-              ),
-              onPressed: () {
-                // TODO: navigate to detailed logs
-              },
-              child: const Text(
-                'View Detailed Logs',
-                style: TextStyle(
-                  color: textMain,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-        ),
       ],
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  HOVER CARD WRAPPER
+// ════════════════════════════════════════════════════════
+class _HoverCard extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  const _HoverCard({required this.child, required this.onTap});
+
+  @override
+  State<_HoverCard> createState() => _HoverCardState();
+}
+
+class _HoverCardState extends State<_HoverCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: _hovered
+                ? [
+                    BoxShadow(
+                      color: const Color.fromARGB(255, 212, 226, 74),
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : [],
+          ),
+          child: Opacity(opacity: _hovered ? 0.85 : 1.0, child: widget.child),
+        ),
+      ),
     );
   }
 }
