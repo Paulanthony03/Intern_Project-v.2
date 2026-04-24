@@ -35,23 +35,6 @@ class _AppShellState extends State<AppShell> {
   // ── SHARED STATE ──────────────────────────────────────
   List<dynamic>? _users;   // null = still loading
   String? _token;
-  final List<Map<String, dynamic>> _schools = [
-  {
-    "name": "Pamantasan ng Lungsod ng San Pablo",
-    "since": "2022",
-    "logo_url": "assets/images/schools/plsp.png",
-  },
-  {
-    "name": "CARD-MRI Development Institute",
-    "since": "2022",
-    "logo_url": "assets/images/schools/cmdi.png",
-  },
-  {
-    "name": "Laguna State Polytechnic University",
-    "since": "2024",
-    "logo_url": "assets/images/schools/lspu.png",
-  },
-];
 final Map<String, dynamic> _adminData = {
   'name':           'Admin Mc',
   'admin_id':       'admin_08',
@@ -468,7 +451,7 @@ final Map<String, dynamic> _adminData = {
                         onView: (user, index) => _showProfileDialog(user, index + 1),
                         onDelete: (user) => _showDeleteDialog(user), ),          // index 1
                       const Placeholder(),                 // index 2
-                      AdminSchools(schools: _schools),      // index 3
+                      AdminSchools(),      // index 3
                       AdminSettings(adminData: _adminData),     // index 4
                     ],
                   ),

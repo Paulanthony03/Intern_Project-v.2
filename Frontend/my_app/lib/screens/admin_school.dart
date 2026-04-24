@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 //  SCHOOLS SCREEN
 // ════════════════════════════════════════════════════════
 class AdminSchools extends StatefulWidget {
-  final List<dynamic> schools; // Expecting a list of maps with keys like 'name', 'since', 'logo_url'
-
-  const AdminSchools({super.key, required this.schools});
+  const AdminSchools({super.key}); // ← no parameter needed, data is hardcoded
 
   @override
   State<AdminSchools> createState() => _AdminSchoolsState();
@@ -14,12 +12,30 @@ class AdminSchools extends StatefulWidget {
 
 class _AdminSchoolsState extends State<AdminSchools> {
   // ── THEME COLORS ──────────────────────────────────────
-  static const pageBg      = Color(0xFF111111);
   static const cardBg      = Color(0xFF1A1A1A);
   static const borderColor = Color(0xFF2A2A2A);
   static const accent      = Color.fromARGB(255, 212, 226, 74);
   static const textMain    = Color(0xFFFFFFFF);
   static const textMuted   = Color(0xFF888888);
+
+  // ── HARDCODED SCHOOLS DATA ────────────────────────────
+  final List<Map<String, dynamic>> _schools = [
+    {
+      "name": "Pamantasan ng Lungsod ng San Pablo",
+      "since": "2022",
+      "logo_url": "assets/images/plsp.png",
+    },
+    {
+      "name": "CARD-MRI Development Institute",
+      "since": "2022",
+      "logo_url": "assets/images/cmdi.png",
+    },
+    {
+      "name": "Laguna State Polytechnic University",
+      "since": "2024",
+      "logo_url": "assets/images/lspu.png",
+    },
+  ];
 
   // Avatar background colors (cycles through the list)
   static const List<Color> _avatarColors = [
@@ -31,9 +47,6 @@ class _AdminSchoolsState extends State<AdminSchools> {
   ];
 
   int? _hoveredIndex;
-
-  // ── HELPERS ───────────────────────────────────────────
-  List<dynamic> get _schools => widget.schools;
 
   /// Returns up to 4 uppercase initials from the school name.
   String _initials(String name) {
@@ -50,9 +63,9 @@ class _AdminSchoolsState extends State<AdminSchools> {
   //  SCHOOL CARD
   // ════════════════════════════════════════════════════════
   Widget _buildSchoolCard(Map<String, dynamic> school, int index) {
-    final name     = (school['name']     ?? 'Unknown School').toString();
-    final since    = (school['since']    ?? '').toString();
-    final logoUrl  = school['logo_url']  as String?;
+    final name      = (school['name']    ?? 'Unknown School').toString();
+    final since     = (school['since']   ?? '').toString();
+    final logoUrl   = school['logo_url'] as String?;
     final isHovered = _hoveredIndex == index;
     final avatarBg  = _avatarColors[index % _avatarColors.length];
 
@@ -60,86 +73,79 @@ class _AdminSchoolsState extends State<AdminSchools> {
       onEnter: (_) => setState(() => _hoveredIndex = index),
       onExit:  (_) => setState(() => _hoveredIndex = null),
       cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => Navigator.pushNamed(
-          context,
-          '/school-detail',
-          arguments: school,
-        ),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          decoration: BoxDecoration(
-            color: isHovered ? const Color(0xFF222222) : cardBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isHovered ? accent.withOpacity(0.45) : borderColor,
-            ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        decoration: BoxDecoration(
+          color: isHovered ? const Color(0xFF222222) : cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isHovered ? accent.withOpacity(0.45) : borderColor,
           ),
-          child: Row(
-            children: [
-              // ── Logo / Avatar ────────────────────────
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: avatarBg,
-                  border: Border.all(color: borderColor),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: logoUrl != null && logoUrl.isNotEmpty
-                    ? Image.network(
-                        logoUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            _initialsWidget(name, avatarBg),
-                      )
-                    : _initialsWidget(name, avatarBg),
+        ),
+        child: Row(
+          children: [
+            // ── Logo ──────────────────────────────────
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: avatarBg,
+                border: Border.all(color: borderColor),
               ),
+              clipBehavior: Clip.antiAlias,
+              child: logoUrl != null && logoUrl.isNotEmpty
+                  ? Image.asset(                        // ← Image.asset, not Image.network
+                      logoUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          _initialsWidget(name, avatarBg),
+                    )
+                  : _initialsWidget(name, avatarBg),
+            ),
 
-              const SizedBox(width: 20),
+            const SizedBox(width: 20),
 
-              // ── Text ─────────────────────────────────
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            // ── Text ──────────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name.toUpperCase(),
+                    style: const TextStyle(
+                      color: textMain,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                  if (since.isNotEmpty) ...[
+                    const SizedBox(height: 6),
                     Text(
-                      name.toUpperCase(),
+                      'since $since',
                       style: const TextStyle(
-                        color: textMain,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.4,
+                        color: textMuted,
+                        fontSize: 13,
                       ),
                     ),
-                    if (since.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        'since $since',
-                        style: const TextStyle(
-                          color: textMuted,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
                   ],
-                ),
+                ],
               ),
+            ),
 
-              // ── Chevron ──────────────────────────────
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 180),
-                opacity: isHovered ? 1.0 : 0.3,
-                child: const Icon(
-                  Icons.chevron_right_rounded,
-                  color: textMuted,
-                  size: 22,
-                ),
+            // ── Chevron ───────────────────────────────
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              opacity: isHovered ? 1.0 : 0.3,
+              child: const Icon(
+                Icons.chevron_right_rounded,
+                color: textMuted,
+                size: 22,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -164,7 +170,6 @@ class _AdminSchoolsState extends State<AdminSchools> {
   // ════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    // ── Empty ──────────────────────────────────────────
     if (_schools.isEmpty) {
       return const Center(
         child: Text(
@@ -177,44 +182,44 @@ class _AdminSchoolsState extends State<AdminSchools> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Header row ────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Schools (${_schools.length})',
-                style: const TextStyle(
-                  color: textMain,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accent,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                icon: const Icon(Icons.add, color: pageBg, size: 20),
-                label: const Text(
-                  'Add School',
-                  style: TextStyle(
-                    color: pageBg,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                onPressed: () =>
-                    Navigator.pushNamed(context, '/add-school'),
-              ),
-            ],
+        // ── Header ────────────────────────────────────
+       Padding(
+  padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(
+        'Schools (${_schools.length})',
+        style: const TextStyle(
+          color: textMain,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accent,
+          padding: const EdgeInsets.symmetric(
+              horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
         ),
+        icon: const Icon(Icons.add, color: Color(0xFF111111), size: 20),
+        label: const Text(
+          'Add School',
+          style: TextStyle(
+            color: Color(0xFF111111),
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        onPressed: () =>
+            Navigator.pushNamed(context, '/add-school'),
+      ),
+    ],
+  ),
+),
 
         const SizedBox(height: 20),
 
@@ -224,11 +229,7 @@ class _AdminSchoolsState extends State<AdminSchools> {
             padding: const EdgeInsets.fromLTRB(28, 0, 28, 28),
             itemCount: _schools.length,
             separatorBuilder: (_, __) => const SizedBox(height: 14),
-            itemBuilder: (_, i) => _buildSchoolCard(
-              Map<String, dynamic>.from(_schools[i]),
-              i,
-            ),
-            
+            itemBuilder: (_, i) => _buildSchoolCard(_schools[i], i),
           ),
         ),
       ],
