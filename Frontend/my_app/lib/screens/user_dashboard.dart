@@ -1037,7 +1037,6 @@ class _UserDashboardState extends State<UserDashboard> {
   // ════════════════════════════════════════════════════════
   Widget buildTopBar() {
     final name = userProfile?["name"] ?? "User";
-    final internId = userProfile?["intern_id"] ?? userProfile?["id"] ?? "-";
     final String? photoUrl = userProfile?["photo_url"];
 
     return Container(
@@ -1069,42 +1068,28 @@ class _UserDashboardState extends State<UserDashboard> {
           ),
           const SizedBox(width: 16),
           // Own profile shortcut
-          GestureDetector(
-            onTap: showEditOwnProfileDialog,
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: borderColor,
-                  backgroundImage: photoUrl != null && photoUrl.isNotEmpty
-                      ? NetworkImage(photoUrl)
-                      : null,
-                  child: photoUrl == null || photoUrl.isEmpty
-                      ? Icon(Icons.person, color: accent, size: 20)
-                      : null,
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: borderColor,
+                backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                    ? NetworkImage(photoUrl)
+                    : null,
+                child: photoUrl == null || photoUrl.isEmpty
+                    ? Icon(Icons.person, color: accent, size: 20)
+                    : null,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                name,
+                style: TextStyle(
+                  color: textMain,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                        color: textMain,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      "id: $internId",
-                      style: TextStyle(color: textMuted, fontSize: 11),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 6),
-                Icon(Icons.chevron_right_rounded, color: textMuted, size: 18),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
