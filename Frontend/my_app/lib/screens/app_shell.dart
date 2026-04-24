@@ -4,6 +4,7 @@ import '../services/api_service.dart';
 import 'admin_dashboard.dart';
 import 'admin_interns.dart';
 import 'admin_school.dart';
+import 'admin_settings.dart';
 
 // ════════════════════════════════════════════════════════
 //  APP SHELL — Shared sidebar + top bar wrapper
@@ -49,6 +50,14 @@ class _AppShellState extends State<AppShell> {
     "logo_url": "assets/images/schools/lspu.png",
   },
 ];
+final Map<String, dynamic> _adminData = {
+  'name':           'Admin Mc',
+  'admin_id':       'admin_08',
+  'email':          'admin@test.com',
+  'contact_number': '',
+  'username':       'admin@test.com',
+  'password':       '',
+};
 
   final List<String> _navKeys = [
     'dashboard',
@@ -57,6 +66,7 @@ class _AppShellState extends State<AppShell> {
     'school',
     'settings',
   ];
+  
 
   int get _selectedIndex => _navKeys.indexOf(_selectedNav);
 
@@ -425,11 +435,10 @@ class _AppShellState extends State<AppShell> {
                       AdminDashboard(token: _token ?? '', users: _users, onRefresh: _loadUsers),  // index 0
                       AdminInterns(users: _users,
                         onView: (user, index) => _showProfileDialog(user, index + 1),
-                        onDelete: (user) => _showDeleteDialog(user),
-                        ),          // index 1
-                      const Placeholder(),                  // index 2
+                        onDelete: (user) => _showDeleteDialog(user), ),          // index 1
+                      const Placeholder(),                 // index 2
                       AdminSchools(schools: _schools),      // index 3
-                      const Placeholder(),                   // index 4
+                      AdminSettings(adminData: _adminData),     // index 4
                     ],
                   ),
                 ),

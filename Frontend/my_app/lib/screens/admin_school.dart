@@ -228,6 +228,7 @@ class _AdminSchoolsState extends State<AdminSchools> {
               Map<String, dynamic>.from(_schools[i]),
               i,
             ),
+            
           ),
         ),
       ],
