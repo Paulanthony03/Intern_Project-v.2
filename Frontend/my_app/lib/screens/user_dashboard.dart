@@ -143,20 +143,46 @@ class _UserDashboardState extends State<UserDashboard> {
 
   List<dynamic> get filteredUsers {
     if (allUsers == null) return [];
-    return allUsers!.where((u) {
+    var list = allUsers!.where((u) {
       final name = (u["name"] ?? "").toLowerCase();
       final id = (u["intern_id"] ?? u["id"] ?? "").toString().toLowerCase();
       final matchSearch =
           searchQuery.isEmpty ||
           name.contains(searchQuery.toLowerCase()) ||
           id.contains(searchQuery.toLowerCase());
-      final dept = (u["department"] ?? u["dept"] ?? "").toString().trim();
-      final matchDept =
-          selectedDepartment == null || dept == selectedDepartment;
       final school = (u["school"] ?? "").toString().trim();
       final matchSchool = selectedSchool == null || school == selectedSchool;
-      return matchSearch && matchDept && matchSchool;
+      return matchSearch && matchSchool;
     }).toList();
+
+    switch (selectedDepartment) {
+      case "name_asc":
+        list.sort((a, b) => (a["name"] ?? "").compareTo(b["name"] ?? ""));
+        break;
+      case "name_desc":
+        list.sort((a, b) => (b["name"] ?? "").compareTo(a["name"] ?? ""));
+        break;
+      case "id_asc":
+        list.sort((a, b) {
+          final aId =
+              int.tryParse((a["intern_id"] ?? a["id"] ?? "").toString()) ?? 0;
+          final bId =
+              int.tryParse((b["intern_id"] ?? b["id"] ?? "").toString()) ?? 0;
+          return aId.compareTo(bId);
+        });
+        break;
+      case "id_desc":
+        list.sort((a, b) {
+          final aId =
+              int.tryParse((a["intern_id"] ?? a["id"] ?? "").toString()) ?? 0;
+          final bId =
+              int.tryParse((b["intern_id"] ?? b["id"] ?? "").toString()) ?? 0;
+          return bId.compareTo(aId);
+        });
+        break;
+    }
+
+    return list;
   }
 
   List<dynamic> get recentUsers {
@@ -167,6 +193,14 @@ class _UserDashboardState extends State<UserDashboard> {
   int get schoolCount {
     if (allUsers == null) return 0;
     return allUsers!.map((u) => (u["school"] ?? "")).toSet().length;
+  }
+
+  int get departmentCount {
+    return departments.length;
+  }
+
+  String get internshipDuration {
+    return "450 hours";
   }
 
   // ─── SAVE PROFILE ────────────────────────────────────────
@@ -188,19 +222,24 @@ class _UserDashboardState extends State<UserDashboard> {
       "department": _departmentController.text.trim(),
     };
 
+    print("=== SAVING PROFILE ===");
+    print("userId: $userId");
+    print("token: $token");
+    print("updated: $updated");
+
     try {
-      await ApiService.updateUser(token, userId, updated);
-      await prefs.setString("full_name", _nameController.text.trim());
+      print("=== SAVING PROFILE ===");
+      print("userId: $userId");
+      print("token: $token");
+      print("updated: $updated");
+
+      await ApiService.updateProfile(token, updated);
+      print("=== UPDATE DONE ===");
+
       await loadData();
-      setState(() => isSaving = false);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Profile updated successfully."),
-          backgroundColor: accent,
-        ),
-      );
+      print("=== PROFILE AFTER RELOAD: $userProfile ===");
     } catch (e) {
+      print("=== SAVE ERROR: $e ===");
       setState(() => isSaving = false);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -537,8 +576,8 @@ class _UserDashboardState extends State<UserDashboard> {
   }
 
   // ─── EDIT OWN PROFILE DIALOG ─────────────────────────────
-  void showEditOwnProfileDialog() {
-    showDialog(
+  Future<void> showEditOwnProfileDialog() async {
+    await showDialog(
       context: context,
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
@@ -757,14 +796,14 @@ class _UserDashboardState extends State<UserDashboard> {
       return Center(child: CircularProgressIndicator(color: accent));
     }
 
-    final name = userProfile?["name"] ?? "User";
-    final email = userProfile?["email"] ?? "-";
-    final school = userProfile?["school"] ?? "-";
+    final name = userProfile!["name"] ?? "User";
+    final email = userProfile!["email"] ?? "-";
+    final school = userProfile!["school"] ?? "-";
     final department =
-        userProfile?["department"] ?? userProfile?["dept"] ?? "-";
+        userProfile!["department"] ?? userProfile!["dept"] ?? "-";
     final contact =
-        userProfile?["contact"] ?? userProfile?["contact_no"] ?? "-";
-    final String? photoUrl = userProfile?["photo_url"];
+        userProfile!["contact"] ?? userProfile!["contact_no"] ?? "-";
+    final String? photoUrl = userProfile!["photo_url"];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
@@ -839,7 +878,10 @@ class _UserDashboardState extends State<UserDashboard> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onPressed: showEditOwnProfileDialog,
+              onPressed: () async {
+                await showEditOwnProfileDialog();
+                if (mounted) setState(() {});
+              },
               child: Text(
                 "Edit Profile",
                 style: TextStyle(color: pageBg, fontWeight: FontWeight.bold),
@@ -1259,34 +1301,6 @@ class _UserDashboardState extends State<UserDashboard> {
   //  DROPDOWNS
   // ════════════════════════════════════════════════════════
   Widget _buildDepartmentDropdown() {
-    return _styledDropdown<String?>(
-      value: selectedDepartment,
-      hint: "All Departments",
-      items: [
-        DropdownMenuItem<String?>(
-          value: null,
-          child: Text(
-            "All Departments",
-            style: TextStyle(color: textMain, fontSize: 13),
-          ),
-        ),
-        ...allDepartments.map(
-          (d) => DropdownMenuItem<String?>(
-            value: d,
-            child: Text(d, style: TextStyle(color: textMain, fontSize: 13)),
-          ),
-        ),
-      ],
-      onChanged: (val) => setState(() => selectedDepartment = val),
-    );
-  }
-
-  Widget _styledDropdown<T>({
-    required T value,
-    required String hint,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
-  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
@@ -1295,15 +1309,47 @@ class _UserDashboardState extends State<UserDashboard> {
         border: Border.all(color: borderColor),
       ),
       child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          hint: Text(hint, style: TextStyle(color: textMain, fontSize: 13)),
+        child: DropdownButton<String>(
+          value: selectedDepartment,
+          hint: Text(
+            "Sort By",
+            style: TextStyle(color: textMain, fontSize: 13),
+          ),
           dropdownColor: const Color(0xFF2A2A2A),
           iconEnabledColor: textMuted,
           iconSize: 20,
           style: TextStyle(color: textMain, fontSize: 13),
-          items: items,
-          onChanged: onChanged,
+          items: [
+            DropdownMenuItem(
+              value: "name_asc",
+              child: Text(
+                "Name (A-Z)",
+                style: TextStyle(color: textMain, fontSize: 13),
+              ),
+            ),
+            DropdownMenuItem(
+              value: "name_desc",
+              child: Text(
+                "Name (Z-A)",
+                style: TextStyle(color: textMain, fontSize: 13),
+              ),
+            ),
+            DropdownMenuItem(
+              value: "id_asc",
+              child: Text(
+                "ID (Ascending)",
+                style: TextStyle(color: textMain, fontSize: 13),
+              ),
+            ),
+            DropdownMenuItem(
+              value: "id_desc",
+              child: Text(
+                "ID (Descending)",
+                style: TextStyle(color: textMain, fontSize: 13),
+              ),
+            ),
+          ],
+          onChanged: (val) => setState(() => selectedDepartment = val),
         ),
       ),
     );
@@ -1375,6 +1421,17 @@ class _UserDashboardState extends State<UserDashboard> {
                 (allUsers?.length ?? 0).toString().padLeft(2, '0'),
                 "Total Interns",
                 Icons.people_alt_rounded,
+              ),
+              buildStatCard(
+                departmentCount.toString().padLeft(2, '0'),
+                "Total Depts.",
+                Icons.folder_rounded,
+              ),
+              buildStatCard(
+                internshipDuration,
+                "Duration",
+                Icons.timer_rounded,
+                isLast: true,
               ),
             ],
           ),

@@ -71,6 +71,35 @@ func GetUsers(c *gin.Context) {
 
 	c.JSON(200, users)
 }
+func UpdateProfile(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	var input struct {
+		Name       string `json:"name"`
+		Email      string `json:"email"`
+		Contact    string `json:"contact"`
+		School     string `json:"school"`
+		Department string `json:"department"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, err := DB.Exec(
+		"UPDATE users SET name=$1, email=$2, contact=$3, school=$4, department=$5 WHERE id=$6",
+		input.Name, input.Email, input.Contact, input.School, input.Department, userID,
+	)
+
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to update profile: " + err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Profile updated successfully"})
+
+}
 func CreateUser(c *gin.Context) {
 	var user models.User
 

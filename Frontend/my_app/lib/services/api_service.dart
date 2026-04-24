@@ -136,6 +136,9 @@ class ApiService {
     dynamic id,
     Map<String, dynamic> data,
   ) async {
+    print("=== UPDATE URL: $baseUrl/users/$id ===");
+    print("=== UPDATE BODY: ${jsonEncode(data)} ===");
+
     final response = await http.put(
       Uri.parse('$baseUrl/users/$id'),
       headers: {
@@ -145,8 +148,11 @@ class ApiService {
       body: jsonEncode(data),
     );
 
+    print("=== UPDATE STATUS: ${response.statusCode} ===");
+    print("=== UPDATE RESPONSE: ${response.body} ===");
+
     if (response.statusCode != 200) {
-      throw Exception('Failed to update user');
+      throw Exception('Failed to update user: ${response.body}');
     }
   }
 
@@ -193,6 +199,29 @@ class ApiService {
 
     if (response.statusCode != 200) {
       throw Exception("Failed to delete user");
+    }
+  }
+
+  static Future<void> updateProfile(
+    String token,
+    Map<String, dynamic> data,
+  ) async {
+    print("=== UPDATE URL: $baseUrl/profile ===");
+
+    final response = await http.put(
+      Uri.parse('$baseUrl/profile'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(data),
+    );
+
+    print("=== UPDATE STATUS: ${response.statusCode} ===");
+    print("=== UPDATE RESPONSE: ${response.body} ===");
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update profile: ${response.body}');
     }
   }
 }

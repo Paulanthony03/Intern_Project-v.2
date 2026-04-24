@@ -23,6 +23,7 @@ func SetupRoutes(r *gin.Engine) {
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
 	{
+		protected.PUT("/profile", handlers.UpdateProfile)
 		protected.GET("/profile", handlers.GetProfile)
 		protected.POST("/users", handlers.CreateUser)
 		protected.DELETE("/users/:id", handlers.DeleteUser)
