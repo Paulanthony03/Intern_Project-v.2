@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'department_page.dart';
+import 'user_department_page.dart';
 
 class UserDashboard extends StatefulWidget {
   final String token;
@@ -26,11 +26,36 @@ class _UserDashboardState extends State<UserDashboard> {
   }
 
   List<Map<String, dynamic>> departments = [
-    {"name": "Development Unit", "status": "Ongoing", "grade": 90},
-    {"name": "Tech Support", "status": "Finished", "grade": 85},
-    {"name": "QA", "status": "Finished", "grade": 88},
-    {"name": "PMO", "status": "Finished", "grade": 87},
-    {"name": "BRM", "status": "Finished", "grade": 89},
+    {
+      "name": "Development Unit",
+      "status": "Ongoing",
+      "grade": 90,
+      "supervisor": "Lery Villanueva",
+    },
+    {
+      "name": "Tech Support",
+      "status": "Finished",
+      "grade": 85,
+      "supervisor": "Rayven Dela Cruz",
+    },
+    {
+      "name": "QA",
+      "status": "Finished",
+      "grade": 88,
+      "supervisor": "Renzy Rivera",
+    },
+    {
+      "name": "PMO",
+      "status": "Finished",
+      "grade": 87,
+      "supervisor": "Lea Rose Arellano-Rosario",
+    },
+    {
+      "name": "BRM",
+      "status": "Finished",
+      "grade": 89,
+      "supervisor": "Raymond Villapando",
+    },
   ];
 
   String searchQuery = "";

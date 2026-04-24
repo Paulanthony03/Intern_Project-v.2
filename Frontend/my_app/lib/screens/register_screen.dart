@@ -58,10 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => isLoading = false);
 
     if (result == "success") {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen()));
     } else {
       ScaffoldMessenger.of(
         context,
@@ -408,9 +405,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                   }
 
                                                   if (!RegExp(
-                                                    r'^[0-9]+$',
+                                                    r'^[0-9-]+$',
                                                   ).hasMatch(value)) {
-                                                    return "Intern ID must contain numbers only";
+                                                    return "Intern ID must contain numbers and hyphens only";
                                                   }
 
                                                   return null;

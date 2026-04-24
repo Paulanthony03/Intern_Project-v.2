@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"net/http"
+	"time"
 
 	"student-system/models"
 	"student-system/utils"
@@ -51,16 +52,39 @@ func Register(c *gin.Context) {
 	user.Password = string(hash)
 	user.Role = "user"
 
+	now := time.Now()
+
 	_, err = DB.Exec(
-		"INSERT INTO users (name, email, password, role, created_at) VALUES ($1, $2, $3, $4, $5)",
+		`INSERT INTO users (
+			name,
+			email,
+			password,
+			intern_id,
+			school,
+			reset_token,
+			token_expiry,
+			role,
+			role_id,
+			created_at,
+			updated_at
+		)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+
 		user.Name,
 		user.Email,
 		user.Password,
+		user.InternID,
+		user.School,
+		nil, // reset_token
+		nil, // token_expiry
 		user.Role,
+		1, // role_id (default user role)
+		now,
+		now,
 	)
 
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Failed to register user"})
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 

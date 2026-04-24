@@ -5,8 +5,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AdminDashboard extends StatefulWidget {
   final String token;
+  final List<dynamic>? users;
+  final Future<void> Function()? onRefresh;
 
-  const AdminDashboard({Key? key, required this.token}) : super(key: key);
+  const AdminDashboard({
+    Key? key,
+    required this.token,
+    this.users,
+    required this.onRefresh,
+  }) : super(key: key);
 
   @override
   _AdminDashboardState createState() => _AdminDashboardState();
@@ -21,11 +28,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
   int departmentCount = 5;
   int? hoveredIndex;
 
-  // Sidebar: is the Admin dropdown expanded?
-  bool _adminMenuExpanded = true;
-  // Which nav item is highlighted
-  String _selectedNav = 'dashboard';
-
   // ─── FILTER STATE ────────────────────────────────────────
   String? selectedDepartment;
   String? selectedSchool;
@@ -35,7 +37,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   final Color sidebarBg = const Color(0xFF111111);
   final Color headerBg = const Color(0xFF1E1E1E);
   final Color cardBg = const Color(0xFF222222);
-  final Color accent = const Color(0xFFBFCF33);
+  final Color accent = const Color.fromARGB(255, 212, 226, 74);
   final Color textMain = Colors.white;
   final Color textMuted = const Color(0xFF888888);
   final Color borderColor = const Color(0xFF2E2E2E);
@@ -144,7 +146,33 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   List<dynamic> get recentUsers {
     if (users == null || users!.isEmpty) return [];
-    return List<dynamic>.from(users!).reversed.take(2).toList();
+
+    List<dynamic> sorted = List.from(users!);
+
+    sorted.sort((a, b) {
+      DateTime parseDate(dynamic val) {
+        try {
+          String raw = (val ?? "").toString();
+
+          raw = raw.replaceFirst(" ", "T");
+
+          if (raw.endsWith("+08")) {
+            raw = raw + ":00";
+          }
+
+          return DateTime.parse(raw);
+        } catch (_) {
+          return DateTime(2000);
+        }
+      }
+
+      final aDate = parseDate(a["created_at"]);
+      final bDate = parseDate(b["created_at"]);
+
+      return bDate.compareTo(aDate); // 🔥 newest FIRST
+    });
+
+    return sorted.take(2).toList();
   }
 
   // ════════════════════════════════════════════════════════
@@ -367,7 +395,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               Navigator.pop(ctx);
               try {
                 await ApiService.deleteUser(widget.token, userId.toString());
-                await loadUsers();
+                await widget.onRefresh?.call();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text("$name has been deleted."),
@@ -415,305 +443,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: Text(value, style: TextStyle(color: textMain, fontSize: 13)),
         ),
       ],
-    );
-  }
-
-  // ════════════════════════════════════════════════════════
-  //  SIDEBAR — Admin tile is a real animated dropdown
-  // ════════════════════════════════════════════════════════
-  Widget buildSidebar() {
-    return Container(
-      width: 210,
-      color: sidebarBg,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Logo + brand
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: Row(
-              children: [
-                Image.asset('../assets/images/mylogo.png', height: 36),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Blacky",
-                      style: TextStyle(
-                        color: textMain,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          Divider(color: borderColor, height: 1),
-          const SizedBox(height: 12),
-
-          // ── Admin dropdown tile ──────────────────────
-          _buildAdminDropdownTile(),
-
-          const SizedBox(height: 8),
-          Divider(color: borderColor, height: 1),
-          const SizedBox(height: 8),
-
-          // ── Nav items (shown always, but can be inside dropdown) ──
-          // Per the request: the Admin dropdown contains all items below it.
-          // We show them as an animated expanding section.
-          AnimatedSize(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeInOut,
-            child: ClipRect(
-              child: Align(
-                alignment: Alignment.topCenter,
-                heightFactor: _adminMenuExpanded ? 1.0 : 0.0,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 150),
-                  opacity: _adminMenuExpanded ? 1 : 0,
-                  child: Column(
-                    children: [
-                      _navItem(
-                        Icons.dashboard_rounded,
-                        "Dashboard",
-                        'dashboard',
-                      ),
-                      _navItem(Icons.people_alt_rounded, "Interns", 'interns'),
-                      _navItem(
-                        Icons.folder_rounded,
-                        "Departments",
-                        'departments',
-                      ),
-                      _navItem(
-                        Icons.account_balance_rounded,
-                        "School",
-                        'school',
-                      ),
-                      _navItem(Icons.settings_rounded, "Settings", 'settings'),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          const Spacer(),
-
-          // ── Logout button ────────────────────────────
-          Padding(
-            padding: const EdgeInsets.only(bottom: 24, left: 12, right: 12),
-            child: GestureDetector(
-              onTap: showLogoutDialog, // shows confirm dialog → then /login
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.redAccent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.logout, color: Colors.redAccent, size: 18),
-                    const SizedBox(width: 10),
-                    const Text(
-                      "Logout",
-                      style: TextStyle(
-                        color: Colors.redAccent,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Admin dropdown trigger tile ──────────────────────────
-  Widget _buildAdminDropdownTile() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: GestureDetector(
-        onTap: () => setState(() => _adminMenuExpanded = !_adminMenuExpanded),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(10),
-            border: _adminMenuExpanded
-                ? Border.all(color: accent.withOpacity(0.4))
-                : Border.all(color: Colors.transparent),
-          ),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: borderColor,
-                child: Icon(Icons.person, size: 16, color: accent),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Admin",
-                      style: TextStyle(
-                        color: textMain,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      "profile",
-                      style: TextStyle(color: textMuted, fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-              AnimatedRotation(
-                turns: _adminMenuExpanded ? 0.5 : 0.0,
-                duration: const Duration(milliseconds: 200),
-                child: Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: _adminMenuExpanded ? accent : textMuted,
-                  size: 18,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Individual nav item ──────────────────────────────────
-  Widget _navItem(IconData icon, String label, String key) {
-    final bool selected = _selectedNav == key;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: GestureDetector(
-        onTap: () {
-          setState(() => _selectedNav = key);
-          if (key == 'interns') Navigator.pushNamed(context, '/interns');
-          if (key == 'departments')
-            Navigator.pushNamed(context, '/departments');
-          if (key == 'school') Navigator.pushNamed(context, '/schools');
-          if (key == 'settings') Navigator.pushNamed(context, '/settings');
-          // 'dashboard' stays on this page
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          decoration: BoxDecoration(
-            color: selected ? accent.withOpacity(0.15) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            border: selected
-                ? Border.all(color: accent.withOpacity(0.4))
-                : Border.all(color: Colors.transparent),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 17, color: selected ? accent : textMuted),
-              const SizedBox(width: 10),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                  color: selected ? accent : textMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ════════════════════════════════════════════════════════
-  //  TOP BAR
-  // ════════════════════════════════════════════════════════
-  Widget buildTopBar() {
-    return Container(
-      color: headerBg,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-      child: Row(
-        children: [
-          Text(
-            "Welcome Back, Admin!",
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: textMain,
-            ),
-          ),
-          const Spacer(),
-          // Notification bell
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: cardBg,
-              shape: BoxShape.circle,
-              border: Border.all(color: borderColor),
-            ),
-            child: Icon(
-              Icons.notifications_none_rounded,
-              color: textMuted,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 16),
-          // Admin info
-          GestureDetector(
-            onTap: () => Navigator.pushNamed(
-              context,
-              '/admin-profile',
-              arguments: {"name": fullName},
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: borderColor,
-                  child: Icon(Icons.person, color: accent, size: 20),
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      fullName.isEmpty ? "Admin Mc" : fullName,
-                      style: TextStyle(
-                        color: textMain,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      "id: admin_08",
-                      style: TextStyle(color: textMuted, fontSize: 11),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 6),
-                Icon(Icons.chevron_right_rounded, color: textMuted, size: 18),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1202,23 +931,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
     required List<DropdownMenuItem<T>> items,
     required ValueChanged<T?> onChanged,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: borderColor),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          hint: Text(hint, style: TextStyle(color: textMain, fontSize: 13)),
-          dropdownColor: const Color(0xFF2A2A2A),
-          iconEnabledColor: textMuted,
-          iconSize: 20,
-          style: TextStyle(color: textMain, fontSize: 13),
-          items: items,
-          onChanged: onChanged,
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: borderColor),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<T>(
+            value: value,
+            hint: Text(hint, style: TextStyle(color: textMain, fontSize: 13)),
+            dropdownColor: const Color(0xFF2A2A2A),
+            iconEnabledColor: textMuted,
+            iconSize: 20,
+            style: TextStyle(color: textMain, fontSize: 13),
+            items: items,
+            onChanged: onChanged,
+          ),
         ),
       ),
     );
@@ -1231,210 +963,202 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget build(BuildContext context) {
     final filtered = filteredUsers;
 
-    return Scaffold(
-      backgroundColor: pageBg,
-      body: users == null
-          ? Center(child: CircularProgressIndicator(color: accent))
-          : Row(
-              children: [
-                // ── SIDEBAR ──────────────────────────────
-                buildSidebar(),
-
-                // ── MAIN CONTENT ─────────────────────────
-                Expanded(
-                  child: Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Column(
+          children: [
+            // header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Welcome Back, Admin!',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            ),
+            // Fixed upper sections
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              child: Column(
+                children: [
+                  // Stat cards
+                  Row(
                     children: [
-                      // Fixed top bar
-                      buildTopBar(),
+                      buildStatCard(
+                        (users?.length ?? 0).toString().padLeft(2, '0'),
+                        "Total Interns",
+                        Icons.people_alt_rounded,
+                      ),
+                      buildStatCard(
+                        departmentCount.toString().padLeft(2, '0'),
+                        "Total Depts.",
+                        Icons.folder_rounded,
+                      ),
+                      buildStatCard(
+                        schoolCount.toString().padLeft(2, '0'),
+                        "Partner Schools",
+                        Icons.account_balance_rounded,
+                      ),
+                    ],
+                  ),
 
-                      // Fixed upper sections
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                        child: Column(
+                  const SizedBox(height: 20),
+
+                  // Middle row
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 8, child: buildRecentPanel()),
+                      const SizedBox(width: 16),
+                      Expanded(flex: 4, child: buildDepartmentOverview()),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Search + filter row
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 6,
+                        child: Row(
                           children: [
-                            // Stat cards (all read-only)
-                            Row(
-                              children: [
-                                buildStatCard(
-                                  users!.length.toString().padLeft(2, '0'),
-                                  "Total Interns",
-                                  Icons.people_alt_rounded,
+                            Expanded(
+                              child: Container(
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: cardBg,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: borderColor),
                                 ),
-                                buildStatCard(
-                                  departmentCount.toString().padLeft(2, '0'),
-                                  "Total Depts.",
-                                  Icons.folder_rounded,
-                                ),
-                                buildStatCard(
-                                  schoolCount.toString().padLeft(2, '0'),
-                                  "Partner Schools",
-                                  Icons.account_balance_rounded,
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Middle row
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(flex: 8, child: buildRecentPanel()),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  flex: 4,
-                                  child: buildDepartmentOverview(),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Search + filter row
-                            Row(
-                              children: [
-                                Expanded(
-                                  flex: 5,
-                                  child: Container(
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      color: cardBg,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: borderColor),
+                                child: TextField(
+                                  cursorColor: const Color.fromARGB(
+                                    114,
+                                    114,
+                                    114,
+                                    114,
+                                  ),
+                                  onChanged: (val) =>
+                                      setState(() => searchQuery = val),
+                                  style: TextStyle(
+                                    color: textMain,
+                                    fontSize: 13,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText:
+                                        "Search for intern name or id....",
+                                    hintStyle: TextStyle(
+                                      fontSize: 12,
+                                      color: textMuted,
                                     ),
-                                    child: TextField(
-                                      cursorColor: Color.fromARGB(
-                                        114,
-                                        114,
-                                        114,
-                                        114,
-                                      ),
-                                      onChanged: (val) =>
-                                          setState(() => searchQuery = val),
-                                      style: TextStyle(
-                                        color: textMain,
-                                        fontSize: 13,
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText:
-                                            "Search for intern name or id....",
-                                        hintStyle: TextStyle(
-                                          fontSize: 12,
-                                          color: textMuted,
-                                        ),
-                                        prefixIcon: Icon(
-                                          Icons.search,
-                                          color: textMuted,
-                                          size: 18,
-                                        ),
-                                        border: InputBorder.none,
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              vertical: 13,
-                                            ),
-                                      ),
+                                    prefixIcon: Icon(
+                                      Icons.search,
+                                      color: textMuted,
+                                      size: 18,
+                                    ),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 13,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 14),
-                                _buildDepartmentDropdown(),
-                                const SizedBox(width: 14),
-                                _buildSchoolDropdown(),
-                                const SizedBox(width: 14),
-
-                                Expanded(
-                                  flex: 4, // 👈 matches 1/3 like the stat cards
-                                  child: SizedBox(
-                                    height: 44, // 👈 matches search bar height
-                                    child: ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: accent,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 12,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                        ),
-                                      ),
-                                      icon: Icon(
-                                        Icons.add,
-                                        color: pageBg,
-                                        size: 20,
-                                      ),
-                                      label: Text(
-                                        "Add Intern",
-                                        style: TextStyle(
-                                          color: pageBg,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      onPressed: () => Navigator.pushNamed(
-                                        context,
-                                        '/register',
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(width: 14),
+                            _buildDepartmentDropdown(),
+                            const SizedBox(width: 14),
+                            _buildSchoolDropdown(),
                           ],
                         ),
                       ),
-
-                      // ── SCROLLABLE INTERN GRID + FIXED RIGHT PANEL ──
+                      const SizedBox(width: 14),
                       Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Only intern grid scrolls
-                              Expanded(
-                                flex: 8,
-                                child: filtered.isEmpty
-                                    ? Center(
-                                        child: Text(
-                                          "No interns found.",
-                                          style: TextStyle(
-                                            color: textMuted,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      )
-                                    : GridView.builder(
-                                        gridDelegate:
-                                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 2,
-                                              crossAxisSpacing: 12,
-                                              mainAxisSpacing: 12,
-                                              childAspectRatio: 1.9,
-                                            ),
-                                        itemCount: filtered.length,
-                                        itemBuilder: (_, i) => buildProfileCard(
-                                          filtered[i] as Map<String, dynamic>,
-                                          i,
-                                        ),
-                                      ),
+                        flex: 3,
+                        child: SizedBox(
+                          height: 44,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: accent,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
                               ),
-
-                              const SizedBox(width: 16),
-
-                              // Recent Activity panel is fixed (not scrolling)
-                              Expanded(flex: 4, child: buildRecentActivity()),
-                            ],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: Icon(Icons.add, color: pageBg, size: 20),
+                            label: Text(
+                              "Add Intern",
+                              style: TextStyle(
+                                color: pageBg,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            onPressed: () =>
+                                Navigator.pushNamed(context, '/register'),
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
+
+            // ── SCROLLABLE INTERN GRID + FIXED RIGHT PANEL ──
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 8,
+                      child: filtered.isEmpty
+                          ? Center(
+                              child: Text(
+                                "No interns found.",
+                                style: TextStyle(
+                                  color: textMuted,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            )
+                          : GridView.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                    childAspectRatio: 1.9,
+                                  ),
+                              itemCount: filtered.length,
+                              itemBuilder: (_, i) => buildProfileCard(
+                                filtered[i] as Map<String, dynamic>,
+                                i,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(flex: 4, child: buildRecentActivity()),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

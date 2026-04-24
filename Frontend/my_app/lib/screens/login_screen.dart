@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'admin_dashboard.dart';
-import 'user_dashboard.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 import 'landing_screen.dart';
@@ -59,21 +57,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (result != null) {
       final prefs = await SharedPreferences.getInstance();
-      final token = result["token"];
 
       await prefs.setString("token", result["token"]);
       await prefs.setString("role", result["role"]);
 
       if (result["role"].toString().toLowerCase() == "admin") {
-        Navigator.push(
+        Navigator.pushReplacementNamed(
           context,
-          MaterialPageRoute(builder: (_) => AdminDashboard(token: token)),
-        );
+          '/admin',
+        ); // 👈 goes through AppShell
       } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => UserDashboard(token: token)),
-        );
+        Navigator.pushReplacementNamed(context, '/user');
       }
     }
     if (result == null) {
