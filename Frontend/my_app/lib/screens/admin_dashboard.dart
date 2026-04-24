@@ -869,7 +869,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return LayoutBuilder(
     builder: (context, constraints) {
     return Column(
-                children: [
+      children: [
+        // header
+        Padding(
+  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+  child: Align(
+    alignment: Alignment.centerLeft,
+    child: Text(
+      'Welcome Back, Admin!',
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.2,
+      ),
+    ),
+  ),
+),
                   // Fixed upper sections
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),

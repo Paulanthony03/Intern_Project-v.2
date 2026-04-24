@@ -5,6 +5,7 @@ import 'admin_dashboard.dart';
 import 'admin_interns.dart';
 import 'admin_school.dart';
 import 'admin_settings.dart';
+import 'admin_departments.dart';
 
 // ════════════════════════════════════════════════════════
 //  APP SHELL — Shared sidebar + top bar wrapper
@@ -311,14 +312,6 @@ final Map<String, dynamic> _adminData = {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       child: Row(
         children: [
-          const Text(
-            "Welcome Back, Admin!",
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: textMain,
-            ),
-          ),
           const Spacer(),
           Container(
             padding: const EdgeInsets.all(8),
@@ -450,7 +443,7 @@ final Map<String, dynamic> _adminData = {
                       AdminInterns(users: _users,
                         onView: (user, index) => _showProfileDialog(user, index + 1),
                         onDelete: (user) => _showDeleteDialog(user), ),          // index 1
-                      const Placeholder(),                 // index 2
+                      AdminDepartments(),                 // index 2
                       AdminSchools(),      // index 3
                       AdminSettings(adminData: _adminData),     // index 4
                     ],

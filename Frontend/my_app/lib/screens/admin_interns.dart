@@ -302,15 +302,31 @@ class _AdminInternsState extends State<AdminInterns> {
         child: CircularProgressIndicator(color: accent),
       );
     }
+    
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
+          child: Text(
+            'Meet our Interns!',
+            style: const TextStyle(
+              color: textMain,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
         // ── SEARCH + FILTER + ADD INTERN ROW ──────────
         Padding(
           padding: const EdgeInsets.fromLTRB(28, 20, 28, 0),
           child: Row(
             children: [
+               
+         const SizedBox(height: 20),
               Expanded(
                 flex: 8,
                 child: Row(

@@ -1,12 +1,48 @@
 import 'package:flutter/material.dart';
 
 // ════════════════════════════════════════════════════════
+//  HOVER EDIT BUTTON
+// ════════════════════════════════════════════════════════
+class _HoverEditButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _HoverEditButton({required this.onTap});
+
+  @override
+  State<_HoverEditButton> createState() => _HoverEditButtonState();
+}
+
+class _HoverEditButtonState extends State<_HoverEditButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit:  (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Text(
+          'Edit',
+          style: TextStyle(
+            color: _hovered
+                ? const Color.fromARGB(255, 212, 226, 74)
+                : const Color(0xFF888888),
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════
 //  SETTINGS SCREEN
 // ════════════════════════════════════════════════════════
 class AdminSettings extends StatefulWidget {
-  final Map<String, dynamic>? adminData;  // make it nullable
-
-  const AdminSettings({super.key, this.adminData}); 
+  final Map<String, dynamic>? adminData;
+  const AdminSettings({super.key, this.adminData});
 
   @override
   State<AdminSettings> createState() => _AdminSettingsState();
@@ -28,148 +64,146 @@ class _AdminSettingsState extends State<AdminSettings>
   late Map<String, String> _personalInfo;
   late Map<String, String> _loginInfo;
 
-  // Which field is currently being edited
   String? _editingField;
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, FocusNode> _focusNodes = {};
 
+  // ── CHANGE PASSWORD DIALOG ────────────────────────────
   void _showChangePasswordDialog() {
-  final currentCtrl = TextEditingController();
-  final newCtrl     = TextEditingController();
-  final confirmCtrl = TextEditingController();
-  bool obscureCurrent = true;
-  bool obscureNew     = true;
-  bool obscureConfirm = true;
+    final currentCtrl = TextEditingController();
+    final newCtrl     = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    bool obscureCurrent = true;
+    bool obscureNew     = true;
+    bool obscureConfirm = true;
 
-  showDialog(
-    context: context,
-    builder: (ctx) => StatefulBuilder(
-      builder: (ctx, setLocal) => AlertDialog(
-        backgroundColor: cardBg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Change Password',
-          style: TextStyle(color: textMain, fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _passwordField(
-              controller: currentCtrl,
-              label: 'Current Password',
-              obscure: obscureCurrent,
-              onToggle: () => setLocal(() => obscureCurrent = !obscureCurrent),
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          backgroundColor: cardBg,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Change Password',
+            style: TextStyle(color: textMain, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _passwordField(
+                controller: currentCtrl,
+                label: 'Current Password',
+                obscure: obscureCurrent,
+                onToggle: () => setLocal(() => obscureCurrent = !obscureCurrent),
+              ),
+              const SizedBox(height: 16),
+              _passwordField(
+                controller: newCtrl,
+                label: 'New Password',
+                obscure: obscureNew,
+                onToggle: () => setLocal(() => obscureNew = !obscureNew),
+              ),
+              const SizedBox(height: 16),
+              _passwordField(
+                controller: confirmCtrl,
+                label: 'Confirm New Password',
+                obscure: obscureConfirm,
+                onToggle: () => setLocal(() => obscureConfirm = !obscureConfirm),
+              ),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel', style: TextStyle(color: textMuted)),
             ),
-            const SizedBox(height: 16),
-            _passwordField(
-              controller: newCtrl,
-              label: 'New Password',
-              obscure: obscureNew,
-              onToggle: () => setLocal(() => obscureNew = !obscureNew),
-            ),
-            const SizedBox(height: 16),
-            _passwordField(
-              controller: confirmCtrl,
-              label: 'Confirm New Password',
-              obscure: obscureConfirm,
-              onToggle: () => setLocal(() => obscureConfirm = !obscureConfirm),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accent,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () {
+                if (newCtrl.text != confirmCtrl.text) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('New passwords do not match.'),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                  return;
+                }
+                setState(() => _loginInfo['password'] = newCtrl.text);
+                Navigator.pop(ctx);
+              },
+              child: const Text(
+                'Save',
+                style: TextStyle(color: pageBg, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: textMuted)),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: accent,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () {
-              if (newCtrl.text != confirmCtrl.text) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('New passwords do not match.'),
-                    backgroundColor: Colors.redAccent,
-                  ),
-                );
-                return;
-              }
-              setState(() => _loginInfo['password'] = newCtrl.text);
-              Navigator.pop(ctx);
-            },
-            child: const Text(
-              'Save',
-              style: TextStyle(
-                  color: pageBg, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
       ),
-    ),
-  );
-}
+    );
+  }
 
-Widget _passwordField({
-  required TextEditingController controller,
-  required String label,
-  required bool obscure,
-  required VoidCallback onToggle,
-}) {
-  return TextField(
-    controller: controller,
-    obscureText: obscure,
-    style: const TextStyle(color: textMain, fontSize: 14),
-    cursorColor: accent,
-    decoration: InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: textMuted, fontSize: 13),
-      filled: true,
-      fillColor: const Color(0xFF111111),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: borderColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: accent.withOpacity(0.6)),
-      ),
-      suffixIcon: GestureDetector(
-        onTap: onToggle,
-        child: Icon(
-          obscure ? Icons.visibility_off : Icons.visibility,
-          color: textMuted,
-          size: 18,
+  Widget _passwordField({
+    required TextEditingController controller,
+    required String label,
+    required bool obscure,
+    required VoidCallback onToggle,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      style: const TextStyle(color: textMain, fontSize: 14),
+      cursorColor: accent,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: textMuted, fontSize: 13),
+        filled: true,
+        fillColor: const Color(0xFF111111),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: borderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: accent.withOpacity(0.6)),
+        ),
+        suffixIcon: GestureDetector(
+          onTap: onToggle,
+          child: Icon(
+            obscure ? Icons.visibility_off : Icons.visibility,
+            color: textMuted,
+            size: 18,
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
-void initState() {
-  super.initState();
-  _tabController = TabController(length: 2, vsync: this);
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
 
-  final data = widget.adminData ?? {};  // ← null fallback
+    final data = widget.adminData ?? {};
 
-  _personalInfo = {
-    'name':           (data['name']           ?? 'Admin').toString(),
-    'admin_id':       (data['admin_id']       ?? 'admin_08').toString(),
-    'email':          (data['email']          ?? 'admin@test.com').toString(),
-    'contact_number': (data['contact_number'] ?? '').toString(),
-  };
+    _personalInfo = {
+      'name':           (data['name']           ?? 'Admin').toString(),
+      'admin_id':       (data['admin_id']       ?? 'admin_08').toString(),
+      'email':          (data['email']          ?? 'admin@test.com').toString(),
+      'contact_number': (data['contact_number'] ?? '').toString(),
+    };
 
-  _loginInfo = {
-    'username': (data['username'] ?? 'admin@test.com').toString(),
-    'password': (data['password'] ?? '').toString(),
-  };
+    _loginInfo = {
+      'username': (data['username'] ?? 'admin@test.com').toString(),
+      'password': (data['password'] ?? '').toString(),
+    };
 
-    // Pre-create controllers & focus nodes for every field
     for (final key in [..._personalInfo.keys, ..._loginInfo.keys]) {
       _controllers[key] = TextEditingController();
       _focusNodes[key]  = FocusNode();
@@ -190,7 +224,6 @@ void initState() {
       _editingField = field;
       _controllers[field]!.text = currentValue;
     });
-    // Focus after frame so the text field is rendered
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNodes[field]?.requestFocus();
     });
@@ -242,17 +275,7 @@ void initState() {
 
               // Edit / Save / Cancel
               if (!isEditing)
-                GestureDetector(
-                  onTap: () => _startEdit(field, value),
-                  child: const Text(
-                    'Edit',
-                    style: TextStyle(
-                      color: accent,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )
+                _HoverEditButton(onTap: () => _startEdit(field, value))
               else
                 Row(
                   children: [
@@ -322,7 +345,6 @@ void initState() {
             ),
           ),
 
-        // Divider
         const Divider(color: borderColor, thickness: 1, height: 1),
       ],
     );
@@ -337,10 +359,9 @@ void initState() {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Avatar
           const SizedBox(height: 24),
-         Align(
-          alignment: Alignment.centerLeft,
+          Align(
+            alignment: Alignment.centerLeft,
             child: Stack(
               children: [
                 Container(
@@ -351,11 +372,7 @@ void initState() {
                     color: cardBg,
                     border: Border.all(color: accent.withOpacity(0.6), width: 2),
                   ),
-                  child: const Icon(
-                    Icons.person,
-                    color: textMuted,
-                    size: 56,
-                  ),
+                  child: const Icon(Icons.person, color: textMuted, size: 56),
                 ),
                 Positioned(
                   bottom: 2,
@@ -372,11 +389,7 @@ void initState() {
                         shape: BoxShape.circle,
                         border: Border.all(color: pageBg, width: 2),
                       ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        color: pageBg,
-                        size: 15,
-                      ),
+                      child: const Icon(Icons.camera_alt, color: pageBg, size: 15),
                     ),
                   ),
                 ),
@@ -386,7 +399,6 @@ void initState() {
 
           const SizedBox(height: 8),
 
-          // Fields
           _buildFieldRow(
             label: 'Name',
             field: 'name',
@@ -426,48 +438,41 @@ void initState() {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildFieldRow(
-            label: 'username',
+            label: 'Username',
             field: 'username',
             value: _loginInfo['username']!,
             isPersonal: false,
           ),
           Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    Padding(
-      padding: const EdgeInsets.fromLTRB(0, 20, 0, 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'password',
-            style: TextStyle(
-              color: textMain,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          GestureDetector(
-            onTap: _showChangePasswordDialog,
-            child: const Text(
-              'Edit',
-              style: TextStyle(
-                color: accent,
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 20, 0, 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Password',
+                      style: TextStyle(
+                        color: textMain,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    _HoverEditButton(onTap: _showChangePasswordDialog),
+                  ],
+                ),
               ),
-            ),
+              const Padding(
+                padding: EdgeInsets.only(left: 8, bottom: 8),
+                child: Text(
+                  '•••••••••',
+                  style: TextStyle(color: textMuted, fontSize: 14),
+                ),
+              ),
+              const Divider(color: borderColor, thickness: 1, height: 1),
+            ],
           ),
-        ],
-      ),
-    ),
-    const Padding(
-      padding: EdgeInsets.only(left: 8, bottom: 8),
-      child: Text('•••••••••', style: TextStyle(color: textMuted, fontSize: 14)),
-    ),
-    const Divider(color: borderColor, thickness: 1, height: 1),
-  ],
-),
         ],
       ),
     );
@@ -481,7 +486,19 @@ void initState() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Tab Bar ───────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
+          child: Text(
+            'Account Settings',
+            style: const TextStyle(
+              color: textMain,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+
         TabBar(
           controller: _tabController,
           labelColor: accent,
@@ -502,10 +519,8 @@ void initState() {
           ],
         ),
 
-        // Thin separator
         const Divider(color: borderColor, height: 1, thickness: 1),
 
-        // ── Tab Views ─────────────────────────────────
         Expanded(
           child: TabBarView(
             controller: _tabController,

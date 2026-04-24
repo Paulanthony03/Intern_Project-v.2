@@ -189,10 +189,10 @@ class _AdminSchoolsState extends State<AdminSchools> {
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
       Text(
-        'Schools (${_schools.length})',
+        'Our Partnered Schools! (${_schools.length})',
         style: const TextStyle(
           color: textMain,
-          fontSize: 20,
+          fontSize: 24,
           fontWeight: FontWeight.bold,
         ),
       ),
