@@ -16,9 +16,9 @@ func GetProfile(c *gin.Context) {
 	var user models.User
 
 	err := DB.QueryRow(
-		"SELECT id, name, email, password, role FROM users WHERE id=$1",
+		"SELECT id, name, email, password, role, intern_id, school, contact, department FROM users WHERE id=$1",
 		userID,
-	).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Role)
+	).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Role, &user.InternID, &user.School, &user.Contact, &user.Department)
 
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
@@ -37,7 +37,7 @@ func GetProfile(c *gin.Context) {
 }
 func GetUsers(c *gin.Context) {
 	rows, err := DB.Query(`
-		SELECT id, name, email, password, role, created_at 
+		SELECT id, name, email, password, role, created_at, intern_id, school, contact, department
 		FROM users
 		WHERE is_deleted = false
 		ORDER BY created_at DESC
@@ -52,10 +52,10 @@ func GetUsers(c *gin.Context) {
 
 	for rows.Next() {
 		var id int
-		var name, email, password, role string
+		var name, email, password, role, internID, school, contact, department string
 		var createdAt time.Time
 
-		err := rows.Scan(&id, &name, &email, &password, &role, &createdAt)
+		err := rows.Scan(&id, &name, &email, &password, &role, &createdAt, &internID, &school, &contact, &department)
 		if err != nil {
 			continue
 		}
@@ -66,6 +66,10 @@ func GetUsers(c *gin.Context) {
 			"email":      email,
 			"role":       role,
 			"created_at": createdAt,
+			"intern_id":  internID,
+			"school":     school,
+			"contact":    contact,
+			"department": department,
 		})
 	}
 
@@ -97,8 +101,19 @@ func UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"message": "Profile updated successfully"})
+	// Fetch updated user to return in response
+	var user models.User
+	err = DB.QueryRow(
+		"SELECT id, name, email, role, intern_id, school, contact, department FROM users WHERE id=$1",
+		userID,
+	).Scan(&user.ID, &user.Name, &user.Email, &user.Role, &user.InternID, &user.School, &user.Contact, &user.Department)
 
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Profile updated but failed to fetch updated data"})
+		return
+	}
+
+	c.JSON(200, user)
 }
 func CreateUser(c *gin.Context) {
 	var user models.User

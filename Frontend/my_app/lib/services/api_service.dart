@@ -202,7 +202,7 @@ class ApiService {
     }
   }
 
-  static Future<void> updateProfile(
+  static Future<Map<String, dynamic>> updateProfile(
     String token,
     Map<String, dynamic> data,
   ) async {
@@ -223,5 +223,7 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Failed to update profile: ${response.body}');
     }
+
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 }

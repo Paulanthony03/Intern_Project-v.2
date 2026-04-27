@@ -9,6 +9,8 @@ type User struct {
 	Password    string    `json:"password"`
 	InternID    string    `json:"intern_id"`
 	School      string    `json:"school"`
+	Contact     string    `json:"contact"`
+	Department  string    `json:"department"`
 	Role        string    `json:"role" gorm:"default:user"`
 	ResetToken  string    `json:"reset_token"`
 	TokenExpiry time.Time `json:"token_expiry"`

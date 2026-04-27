@@ -61,6 +61,8 @@ func Register(c *gin.Context) {
 			password,
 			intern_id,
 			school,
+			contact,
+			department,
 			reset_token,
 			token_expiry,
 			role,
@@ -68,13 +70,15 @@ func Register(c *gin.Context) {
 			created_at,
 			updated_at
 		)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
 
 		user.Name,
 		user.Email,
 		user.Password,
 		user.InternID,
 		user.School,
+		"",  // contact
+		"",  // department
 		nil, // reset_token
 		nil, // token_expiry
 		user.Role,
@@ -101,9 +105,9 @@ func Login(c *gin.Context) {
 
 	// fetch user
 	err := DB.QueryRow(
-		"SELECT id, name, email, password, role FROM users WHERE email=$1",
+		"SELECT id, name, email, password, role, intern_id, school, contact, department FROM users WHERE email=$1",
 		input.Email,
-	).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Role)
+	).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Role, &user.InternID, &user.School, &user.Contact, &user.Department)
 
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
@@ -131,10 +135,14 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"token": token,
 		"user": gin.H{
-			"id":    user.ID,
-			"name":  user.Name,
-			"email": user.Email,
-			"role":  user.Role,
+			"id":         user.ID,
+			"name":       user.Name,
+			"email":      user.Email,
+			"role":       user.Role,
+			"intern_id":  user.InternID,
+			"school":     user.School,
+			"contact":    user.Contact,
+			"department": user.Department,
 		},
 	})
 }

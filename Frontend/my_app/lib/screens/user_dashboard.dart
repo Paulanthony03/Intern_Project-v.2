@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'user_department_page.dart';
+import 'calendar_page.dart';
 
 class UserDashboard extends StatefulWidget {
   final String token;
@@ -63,6 +65,7 @@ class _UserDashboardState extends State<UserDashboard> {
   String? selectedSchool;
   int? hoveredIndex;
   String _selectedNav = 'dashboard';
+  int _presentCount = 0;
 
   // Edit controllers
   late TextEditingController _nameController;
@@ -132,8 +135,23 @@ class _UserDashboardState extends State<UserDashboard> {
         allUsers = internsOnly;
         isLoading = false;
       });
+      await _loadPresentCount();
     } catch (e) {
       setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _loadPresentCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = userProfile?["name"] ?? "intern";
+    final raw = prefs.getString('attendance_$name');
+    if (raw != null) {
+      final attendance = Map<String, String>.from(jsonDecode(raw));
+      setState(() {
+        _presentCount = attendance.values.where((v) => v == 'present').length;
+      });
+    } else {
+      setState(() => _presentCount = 0);
     }
   }
 
@@ -228,6 +246,14 @@ class _UserDashboardState extends State<UserDashboard> {
     return "450 hours";
   }
 
+  String get hoursRemaining {
+    final totalHours = 450;
+    final hoursPerDay = 8;
+    final completed = _presentCount * hoursPerDay;
+    final remaining = totalHours - completed;
+    return "${remaining}h";
+  }
+
   // ─── SAVE PROFILE ────────────────────────────────────────
   Future<void> saveProfile() async {
     setState(() => isSaving = true);
@@ -253,14 +279,37 @@ class _UserDashboardState extends State<UserDashboard> {
     print("updated: $updated");
 
     try {
-      print("=== SAVING PROFILE ===");
-      print("userId: $userId");
-      print("token: $token");
-      print("updated: $updated");
-
-      await ApiService.updateProfile(token, updated);
+      final updatedProfile = await ApiService.updateProfile(token, updated);
       print("=== UPDATE DONE ===");
 
+      final myId = updatedProfile["id"]?.toString() ?? "";
+
+      // Real-time UI update: update both userProfile and allUsers instantly
+      setState(() {
+        userProfile = updatedProfile;
+        isSaving = false;
+
+        // Also update this user's entry in the intern list so Dashboard shows new data immediately
+        if (allUsers != null && myId.isNotEmpty) {
+          final idx = allUsers!.indexWhere(
+            (u) => (u["id"]?.toString() ?? "") == myId,
+          );
+          if (idx != -1) {
+            allUsers![idx] = updatedProfile;
+          }
+        }
+      });
+      _populateControllers(updatedProfile);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Profile updated successfully"),
+          backgroundColor: Color(0xFF4CAF50),
+        ),
+      );
+
+      // Background server refresh to keep everything in sync
       await loadData();
       print("=== PROFILE AFTER RELOAD: $userProfile ===");
     } catch (e) {
@@ -1018,6 +1067,12 @@ class _UserDashboardState extends State<UserDashboard> {
           _navItem(Icons.dashboard_rounded, "Dashboard", 'dashboard'),
           _navItem(Icons.person_rounded, "My Profile", 'profile'),
           _navItem(Icons.person_rounded, "Departments", 'departments'),
+          _navItem(
+            Icons.calendar_month_rounded,
+            "My Calendar",
+            'calendar',
+            onTap: () => _loadPresentCount(),
+          ),
 
           const Spacer(),
 
@@ -1456,6 +1511,11 @@ class _UserDashboardState extends State<UserDashboard> {
                 internshipDuration,
                 "Duration",
                 Icons.timer_rounded,
+              ),
+              buildStatCard(
+                hoursRemaining,
+                "Hours Left",
+                Icons.hourglass_bottom_rounded,
                 isLast: true,
               ),
             ],
@@ -1559,22 +1619,20 @@ class _UserDashboardState extends State<UserDashboard> {
 
                 // MAIN CONTENT
                 Expanded(
-                  child: Column(
-                    children: [
-                      buildTopBar(),
-                      Expanded(
-                        child: _selectedNav == 'dashboard'
-                            ? buildDashboard()
-                            : _selectedNav == 'profile'
-                            ? buildMyProfile()
-                            : DepartmentPage(
-                                departments: departments,
-                                isAdmin: isAdmin,
-                                onEditGrade: showEditGradeDialog,
-                              ),
-                      ),
-                    ],
-                  ),
+                  child: _selectedNav == 'dashboard'
+                      ? buildDashboard()
+                      : _selectedNav == 'profile'
+                      ? buildMyProfile()
+                      : _selectedNav == 'calendar'
+                      ? CalendarPage(
+                          isAdmin: false,
+                          internName: userProfile?["name"] ?? "intern",
+                        )
+                      : DepartmentPage(
+                          departments: departments,
+                          isAdmin: isAdmin,
+                          onEditGrade: showEditGradeDialog,
+                        ),
                 ),
               ],
             ),
