@@ -53,6 +53,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       passwordController.text,
       internIdController.text,
       schoolController.text,
+      programController.text,
     );
 
     setState(() => isLoading = false);

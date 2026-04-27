@@ -178,10 +178,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
   // ─── VIEW PROFILE DIALOG ─────────────────────────────────
   void showProfileDialog(Map<String, dynamic> user, int internNumber) {
     final String name = (user["name"] ?? "Unknown").toUpperCase();
-    final String school = user["school"] ?? "-";
-    final String email = user["email"] ?? "-";
-    final String contact = user["contact"] ?? user["contact_no"] ?? "-";
     final String? photoUrl = user["photo_url"];
+
+    final List<Map<String, String>> fields = [
+      {"label": "Intern ID", "value": user["intern_id"]?.toString() ?? "-"},
+      {"label": "Email", "value": user["email"]?.toString() ?? "-"},
+      {"label": "School", "value": user["school"]?.toString() ?? "-"},
+      {"label": "Program", "value": user["program"]?.toString() ?? "-"},
+    ];
 
     showDialog(
       context: context,
@@ -251,14 +255,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 24),
                     Divider(color: borderColor),
                     const SizedBox(height: 16),
-                    _infoRow("School:", school),
-                    const SizedBox(height: 12),
-                    _infoRow("Email:", email),
-                    const SizedBox(height: 12),
-                    _infoRow("Contact No.:", contact),
+
+                    // Dynamic fields
+                    ...fields.map(
+                      (f) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _infoRow(f["label"]!, f["value"]!),
+                      ),
+                    ),
+
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
@@ -291,6 +300,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ],
                 ),
               ),
+
               // Close button
               Positioned(
                 top: 12,

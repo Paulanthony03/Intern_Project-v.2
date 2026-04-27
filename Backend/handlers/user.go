@@ -37,11 +37,11 @@ func GetProfile(c *gin.Context) {
 }
 func GetUsers(c *gin.Context) {
 	rows, err := DB.Query(`
-		SELECT id, name, email, password, role, created_at 
-		FROM users
-		WHERE is_deleted = false
-		ORDER BY created_at DESC
-	`)
+        SELECT id, name, email, role, intern_id, school, program, created_at 
+        FROM users
+        WHERE is_deleted = false
+        ORDER BY created_at DESC
+    `)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to fetch users"})
 		return
@@ -52,10 +52,11 @@ func GetUsers(c *gin.Context) {
 
 	for rows.Next() {
 		var id int
-		var name, email, password, role string
+		var name, email, role string
+		var internId, school, program sql.NullString // NullString handles NULL values safely
 		var createdAt time.Time
 
-		err := rows.Scan(&id, &name, &email, &password, &role, &createdAt)
+		err := rows.Scan(&id, &name, &email, &role, &internId, &school, &program, &createdAt)
 		if err != nil {
 			continue
 		}
@@ -65,6 +66,9 @@ func GetUsers(c *gin.Context) {
 			"name":       name,
 			"email":      email,
 			"role":       role,
+			"intern_id":  internId.String,
+			"school":     school.String,
+			"program":    program.String,
 			"created_at": createdAt,
 		})
 	}

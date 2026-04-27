@@ -61,6 +61,7 @@ func Register(c *gin.Context) {
 			password,
 			intern_id,
 			school,
+			program,
 			reset_token,
 			token_expiry,
 			role,
@@ -68,13 +69,14 @@ func Register(c *gin.Context) {
 			created_at,
 			updated_at
 		)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
 
 		user.Name,
 		user.Email,
 		user.Password,
 		user.InternID,
 		user.School,
+		user.Program,
 		nil, // reset_token
 		nil, // token_expiry
 		user.Role,

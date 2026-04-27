@@ -13,6 +13,7 @@ class ApiService {
     String password,
     String internId,
     String school,
+    String program,
   ) async {
     final response = await http.post(
       Uri.parse('$baseUrl/register'),
@@ -23,6 +24,7 @@ class ApiService {
         "password": password,
         "intern_id": internId,
         "school": school,
+        "program": program, // Add program field with a default value
       }),
     );
 
