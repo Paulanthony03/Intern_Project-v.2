@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/form_persistence_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'user_department_page.dart';
@@ -66,6 +67,15 @@ class _UserDashboardState extends State<UserDashboard> {
   int? hoveredIndex;
   String _selectedNav = 'dashboard';
   int _presentCount = 0;
+  // ─── FORM PERSISTENCE KEYS ───────────────────────────────
+  static const String _profileScreenKey = 'user_profile';
+  static const List<String> _profileFieldKeys = [
+    'name',
+    'email',
+    'contact',
+    'school',
+    'department',
+  ];
 
   // Edit controllers
   late TextEditingController _nameController;
@@ -104,6 +114,31 @@ class _UserDashboardState extends State<UserDashboard> {
     _schoolController.dispose();
     _departmentController.dispose();
     super.dispose();
+  }
+
+  // ─── FORM PERSISTENCE ────────────────────────────────────
+  Future<void> _loadProfileDrafts() async {
+    final drafts = await FormPersistenceService.loadAllDrafts(
+      _profileScreenKey,
+      _profileFieldKeys,
+    );
+    setState(() {
+      if (drafts.containsKey('name')) _nameController.text = drafts['name']!;
+      if (drafts.containsKey('email')) _emailController.text = drafts['email']!;
+      if (drafts.containsKey('contact')) {
+        _contactController.text = drafts['contact']!;
+      }
+      if (drafts.containsKey('school')) {
+        _schoolController.text = drafts['school']!;
+      }
+      if (drafts.containsKey('department')) {
+        _departmentController.text = drafts['department']!;
+      }
+    });
+  }
+
+  void _onProfileFieldChanged(String fieldKey, String value) {
+    FormPersistenceService.saveDraft(_profileScreenKey, fieldKey, value);
   }
 
   // ─── LOAD DATA ───────────────────────────────────────────
@@ -300,6 +335,12 @@ class _UserDashboardState extends State<UserDashboard> {
         }
       });
       _populateControllers(updatedProfile);
+
+      // Clear drafts after successful save
+      await FormPersistenceService.clearDraft(
+        _profileScreenKey,
+        _profileFieldKeys,
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -651,6 +692,7 @@ class _UserDashboardState extends State<UserDashboard> {
 
   // ─── EDIT OWN PROFILE DIALOG ─────────────────────────────
   Future<void> showEditOwnProfileDialog() async {
+    await _loadProfileDrafts();
     await showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -690,26 +732,35 @@ class _UserDashboardState extends State<UserDashboard> {
                       "Full Name",
                       _nameController,
                       Icons.person_rounded,
+                      'name',
                     ),
                     const SizedBox(height: 14),
-                    _editField("Email", _emailController, Icons.email_rounded),
+                    _editField(
+                      "Email",
+                      _emailController,
+                      Icons.email_rounded,
+                      'email',
+                    ),
                     const SizedBox(height: 14),
                     _editField(
                       "Contact No.",
                       _contactController,
                       Icons.phone_rounded,
+                      'contact',
                     ),
                     const SizedBox(height: 14),
                     _editField(
                       "School",
                       _schoolController,
                       Icons.account_balance_rounded,
+                      'school',
                     ),
                     const SizedBox(height: 14),
                     _editField(
                       "Department",
                       _departmentController,
                       Icons.folder_rounded,
+                      'department',
                     ),
                     const SizedBox(height: 24),
                     Row(
@@ -803,6 +854,7 @@ class _UserDashboardState extends State<UserDashboard> {
     String label,
     TextEditingController controller,
     IconData icon,
+    String fieldKey,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -826,6 +878,7 @@ class _UserDashboardState extends State<UserDashboard> {
           child: TextField(
             controller: controller,
             style: TextStyle(color: textMain, fontSize: 13),
+            onChanged: (v) => _onProfileFieldChanged(fieldKey, v),
             decoration: InputDecoration(
               prefixIcon: Icon(icon, size: 16, color: accent),
               border: InputBorder.none,

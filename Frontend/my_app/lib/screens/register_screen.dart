@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/form_persistence_service.dart';
 import 'login_screen.dart';
 import 'landing_screen.dart';
 
@@ -22,9 +23,68 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  static const _screenKey = 'register';
+  static const _fieldKeys = [
+    'firstName',
+    'lastName',
+    'email',
+    'school',
+    'program',
+    'internId',
+    'password',
+    'confirmPassword',
+  ];
+
   bool obscurePassword = true;
   bool obscureConfirm = true;
   bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDrafts();
+  }
+
+  @override
+  void dispose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    emailController.dispose();
+    schoolController.dispose();
+    programController.dispose();
+    internIdController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadDrafts() async {
+    final drafts = await FormPersistenceService.loadAllDrafts(
+      _screenKey,
+      _fieldKeys,
+    );
+    setState(() {
+      if (drafts.containsKey('firstName'))
+        firstNameController.text = drafts['firstName']!;
+      if (drafts.containsKey('lastName'))
+        lastNameController.text = drafts['lastName']!;
+      if (drafts.containsKey('email')) emailController.text = drafts['email']!;
+      if (drafts.containsKey('school'))
+        schoolController.text = drafts['school']!;
+      if (drafts.containsKey('program'))
+        programController.text = drafts['program']!;
+      if (drafts.containsKey('internId'))
+        internIdController.text = drafts['internId']!;
+      if (drafts.containsKey('password'))
+        passwordController.text = drafts['password']!;
+      if (drafts.containsKey('confirmPassword'))
+        confirmPasswordController.text = drafts['confirmPassword']!;
+    });
+  }
+
+  void _onFieldChanged(String fieldKey, String value) {
+    FormPersistenceService.saveDraft(_screenKey, fieldKey, value);
+  }
 
   InputDecoration inputStyle(String hint) {
     return InputDecoration(
@@ -58,6 +118,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => isLoading = false);
 
     if (result == "success") {
+      await FormPersistenceService.clearDraft(_screenKey, _fieldKeys);
+      if (!mounted) return;
       Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen()));
     } else {
       ScaffoldMessenger.of(
@@ -249,6 +311,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                 decoration: inputStyle(
                                                   "Enter your First Name",
                                                 ),
+                                                onChanged: (v) =>
+                                                    _onFieldChanged(
+                                                      'firstName',
+                                                      v,
+                                                    ),
                                                 validator: (v) => v!.isEmpty
                                                     ? "First name is required"
                                                     : null,
@@ -293,6 +360,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                 decoration: inputStyle(
                                                   "Enter your Last Name",
                                                 ),
+                                                onChanged: (v) =>
+                                                    _onFieldChanged(
+                                                      'lastName',
+                                                      v,
+                                                    ),
                                                 validator: (v) => v!.isEmpty
                                                     ? "Last name is required"
                                                     : null,
@@ -342,6 +414,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                 decoration: inputStyle(
                                                   "Enter your email",
                                                 ),
+                                                onChanged: (v) =>
+                                                    _onFieldChanged('email', v),
                                                 validator: (value) {
                                                   if (value == null ||
                                                       value.isEmpty) {
@@ -398,6 +472,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                 decoration: inputStyle(
                                                   "Enter your Intern ID",
                                                 ),
+                                                onChanged: (v) =>
+                                                    _onFieldChanged(
+                                                      'internId',
+                                                      v,
+                                                    ),
                                                 validator: (value) {
                                                   if (value == null ||
                                                       value.isEmpty) {
@@ -451,6 +530,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       decoration: inputStyle(
                                         "Enter School Name",
                                       ),
+                                      onChanged: (v) =>
+                                          _onFieldChanged('school', v),
                                       validator: (v) => v!.isEmpty
                                           ? "School name is required"
                                           : null,
@@ -488,6 +569,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       decoration: inputStyle(
                                         "Enter your College Program",
                                       ),
+                                      onChanged: (v) =>
+                                          _onFieldChanged('program', v),
                                       validator: (v) => v!.isEmpty
                                           ? "Program is required"
                                           : null,
@@ -561,6 +644,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                             minHeight: 30,
                                                             minWidth: 30,
                                                           ),
+                                                    ),
+                                                onChanged: (v) =>
+                                                    _onFieldChanged(
+                                                      'password',
+                                                      v,
                                                     ),
                                                 validator: (value) {
                                                   if (value == null ||
@@ -644,6 +732,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                             minHeight: 30,
                                                             minWidth: 30,
                                                           ),
+                                                    ),
+                                                onChanged: (v) =>
+                                                    _onFieldChanged(
+                                                      'confirmPassword',
+                                                      v,
                                                     ),
                                                 validator: (value) {
                                                   if (value == null ||

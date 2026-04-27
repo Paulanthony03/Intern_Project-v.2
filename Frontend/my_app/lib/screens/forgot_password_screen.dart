@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/form_persistence_service.dart';
 
 const Color pageBg = Color(0xFF1A1A1A);
 const Color cardBg = Color(0xFF222222);
@@ -16,6 +17,37 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController emailController = TextEditingController();
   bool isLoading = false;
   String error = "";
+
+  static const _screenKey = 'forgot_password';
+  static const _emailField = 'email';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEmailDraft();
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadEmailDraft() async {
+    final draft = await FormPersistenceService.loadDraft(
+      _screenKey,
+      _emailField,
+    );
+    if (draft != null && draft.isNotEmpty) {
+      setState(() {
+        emailController.text = draft;
+      });
+    }
+  }
+
+  void _onEmailChanged(String value) {
+    FormPersistenceService.saveDraft(_screenKey, _emailField, value);
+  }
 
   bool isValidEmail(String email) {
     final regex = RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
@@ -46,6 +78,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(res["message"])));
+
+      // Clear draft after OTP sent
+      await FormPersistenceService.clearField(_screenKey, _emailField);
 
       // go to OTP screen
       Navigator.pushNamed(context, '/verify-otp', arguments: email);
@@ -103,6 +138,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   errorText: error.isEmpty ? null : error,
                 ),
+                onChanged: (v) => _onEmailChanged(v),
               ),
               const SizedBox(height: 20),
               SizedBox(

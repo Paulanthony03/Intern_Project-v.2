@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/form_persistence_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
@@ -21,8 +22,40 @@ class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
+  static const _screenKey = 'login';
+  static const _emailField = 'email';
+
   bool isLoading = false;
   bool obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEmailDraft();
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadEmailDraft() async {
+    final draft = await FormPersistenceService.loadDraft(
+      _screenKey,
+      _emailField,
+    );
+    if (draft != null && draft.isNotEmpty) {
+      setState(() {
+        emailController.text = draft;
+      });
+    }
+  }
+
+  void _onEmailChanged(String value) {
+    FormPersistenceService.saveDraft(_screenKey, _emailField, value);
+  }
 
   InputDecoration inputStyle(String hint) {
     return InputDecoration(
@@ -34,13 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
       contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
       isDense: true,
     );
-  }
-
-  @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.dispose();
   }
 
   Future<void> loginUser() async {
@@ -60,6 +86,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       await prefs.setString("token", result["token"]);
       await prefs.setString("role", result["role"]);
+
+      // Clear email draft on successful login
+      await FormPersistenceService.clearField(_screenKey, _emailField);
 
       if (result["role"].toString().toLowerCase() == "admin") {
         Navigator.pushReplacementNamed(
@@ -311,6 +340,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                   horizontal: 15,
                                                 ),
                                           ),
+                                          onChanged: (v) => _onEmailChanged(v),
                                           validator: (value) {
                                             if (value == null ||
                                                 value.isEmpty) {
