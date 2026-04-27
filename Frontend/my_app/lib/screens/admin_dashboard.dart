@@ -6,12 +6,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AdminDashboard extends StatefulWidget {
   final String token;
   final List<dynamic>? users;
+  final List<Map<String, dynamic>> departments;
   final Future<void> Function()? onRefresh;
 
   const AdminDashboard({
     Key? key,
     required this.token,
     this.users,
+    required this.departments,
     this.onRefresh,
   }) : super(key: key);
 
@@ -25,7 +27,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   String fullName = "";
   String currentUserId = "";
   String searchQuery = "";
-  int departmentCount = 5;
+  int get departmentCount => widget.departments.length;
   int? hoveredIndex;
 
   // ─── FILTER STATE ────────────────────────────────────────
@@ -58,15 +60,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
         "Admin";
 
     final userId = prefs.getString("user_id") ?? "";
-    final savedDept = prefs.getInt("department_count");
 
     setState(() {
       fullName = name;
       currentUserId = userId;
-
-      if (savedDept != null) {
-        departmentCount = savedDept;
-      }
     });
   }
 
@@ -581,6 +578,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
   //  DEPARTMENT OVERVIEW
   // ════════════════════════════════════════════════════════
   Widget buildDepartmentOverview() {
+    final now = DateTime.now();
+    final ongoing = widget.departments.where((d) {
+      final start = d['start_date'] as DateTime;
+      final end = d['end_date'] as DateTime;
+      return !now.isBefore(start) && !now.isAfter(end);
+    }).toList();
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -591,86 +595,142 @@ class _AdminDashboardState extends State<AdminDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Department Overview",
-            style: TextStyle(
-              color: textMain,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Text(
+                "Department Overview",
+                style: TextStyle(
+                  color: textMain,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              // ongoing count badge
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: accent.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Icon(
-                  Icons.check_circle_rounded,
-                  color: accent,
-                  size: 24,
+                child: Text(
+                  '${ongoing.length} ongoing',
+                  style: TextStyle(
+                    color: accent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Development Unit",
-                    style: TextStyle(
-                      color: textMain,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    "ongoing",
-                    style: TextStyle(color: accent, fontSize: 11),
-                  ),
-                ],
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          Divider(color: borderColor, height: 1),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: borderColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.person_outline_rounded,
-                  color: textMuted,
-                  size: 24,
-                ),
+          const SizedBox(height: 16),
+
+          if (ongoing.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'No ongoing departments.',
+                style: TextStyle(color: textMuted, fontSize: 13),
               ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            )
+          else
+            ...ongoing.asMap().entries.map((e) {
+              final dept = e.value;
+              final name = (dept['name'] ?? '').toString();
+              final supervisor = (dept['supervisor'] ?? '').toString();
+              final role = (dept['role'] ?? 'Supervisor').toString();
+              final isLast = e.key == ongoing.length - 1;
+
+              return Column(
                 children: [
-                  Text(
-                    "Mr. Lery Villanueva",
-                    style: TextStyle(
-                      color: textMain,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  // Dept name row
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: accent.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.check_circle_rounded,
+                          color: accent,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: TextStyle(
+                                color: textMain,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'ongoing',
+                              style: TextStyle(color: accent, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    "supervisor",
-                    style: TextStyle(color: accent, fontSize: 11),
+                  const SizedBox(height: 10),
+
+                  // Supervisor row
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: borderColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.person_outline_rounded,
+                          color: textMuted,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              supervisor,
+                              style: TextStyle(
+                                color: textMain,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              role.toLowerCase(),
+                              style: TextStyle(color: textMuted, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
+
+                  if (!isLast) ...[
+                    const SizedBox(height: 14),
+                    Divider(color: borderColor, height: 1),
+                    const SizedBox(height: 14),
+                  ],
                 ],
-              ),
-            ],
-          ),
+              );
+            }).toList(),
         ],
       ),
     );

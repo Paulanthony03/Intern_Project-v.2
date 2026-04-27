@@ -41,8 +41,8 @@ class _AppShellState extends State<AppShell> {
   String? _hoveredNav;
 
   // ── SHARED STATE ──────────────────────────────────────
-  List<dynamic>? _users; // null = still loading
-  String? _token;
+  List<dynamic>? _users;
+  String? _token; // null = still loading
   final Map<String, dynamic> _adminData = {
     'name': 'Admin Mc',
     'admin_id': 'admin_08',
@@ -59,6 +59,8 @@ class _AppShellState extends State<AppShell> {
     'school',
     'settings',
   ];
+
+  final List<Map<String, dynamic>> _departments = [];
 
   int get _selectedIndex => _navKeys.indexOf(_selectedNav);
 
@@ -472,6 +474,7 @@ class _AppShellState extends State<AppShell> {
                       AdminDashboard(
                         token: _token ?? '',
                         users: _users,
+                        departments: _departments,
                         onRefresh: _loadUsers,
                       ), // index 0
                       AdminInterns(
@@ -480,7 +483,10 @@ class _AppShellState extends State<AppShell> {
                             _showProfileDialog(user, index + 1),
                         onDelete: (user) => _showDeleteDialog(user),
                       ), // index 1
-                      AdminDepartments(), // index 2
+                      AdminDepartments(
+                        departments: _departments,
+                        onDepartmentsChanged: () => setState(() {}),
+                      ), // index 2
                       AdminSchools(), // index 3
                       AdminSettings(adminData: _adminData), // index 4
                     ],

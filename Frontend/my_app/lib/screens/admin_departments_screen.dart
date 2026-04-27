@@ -4,7 +4,14 @@ import 'package:flutter/material.dart';
 //  DEPARTMENTS SCREEN
 // ════════════════════════════════════════════════════════
 class AdminDepartments extends StatefulWidget {
-  const AdminDepartments({super.key});
+  final List<Map<String, dynamic>> departments;
+  final VoidCallback onDepartmentsChanged;
+
+  const AdminDepartments({
+    super.key,
+    required this.departments,
+    required this.onDepartmentsChanged,
+  });
 
   @override
   State<AdminDepartments> createState() => _AdminDepartmentsState();
@@ -16,7 +23,6 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
   static const accent = Color.fromARGB(255, 212, 226, 74);
   static const textMain = Color(0xFFFFFFFF);
   static const textMuted = Color(0xFF888888);
-
   // ── Helpers ───────────────────────────────────────────
 
   /// Derives status purely from the current date vs the range.
@@ -36,54 +42,7 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
       '${d.day.toString().padLeft(2, '0')}/'
       '${d.year}';
 
-  // ── Seed data ─────────────────────────────────────────
-  final List<Map<String, dynamic>> _departments = [
-    {
-      "name": "Development Unit",
-      "supervisor": "Mr. Lery Villanueva",
-      "role": "Supervisor",
-      "supervisor_id": "super_01",
-      "active_interns": 12,
-      "start_date": DateTime(2025, 1, 6),
-      "end_date": DateTime(2025, 4, 30),
-    },
-    {
-      "name": "Technical Support",
-      "supervisor": "Mr. Rayven Dela Cruz",
-      "role": "Supervisor",
-      "supervisor_id": "super_04",
-      "active_interns": 0,
-      "start_date": DateTime(2024, 6, 1),
-      "end_date": DateTime(2024, 9, 30),
-    },
-    {
-      "name": "Quality Assurance",
-      "supervisor": "Mr. Renzy Rivera",
-      "role": "Supervisor",
-      "supervisor_id": "super_03",
-      "active_interns": 0,
-      "start_date": DateTime(2024, 3, 1),
-      "end_date": DateTime(2024, 6, 30),
-    },
-    {
-      "name": "Project Management Office",
-      "supervisor": "Mrs. Lea Rose Arellano-Rosario",
-      "role": "Supervisor",
-      "supervisor_id": "super_02",
-      "active_interns": 0,
-      "start_date": DateTime(2024, 1, 8),
-      "end_date": DateTime(2024, 4, 30),
-    },
-    {
-      "name": "Business Relation Management",
-      "supervisor": "Mr. Raymond R. Villapando",
-      "role": "Supervisor",
-      "supervisor_id": "super_01",
-      "active_interns": 0,
-      "start_date": DateTime(2023, 6, 1),
-      "end_date": DateTime(2023, 10, 31),
-    },
-  ];
+  List<Map<String, dynamic>> get _departments => widget.departments;
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -177,140 +136,407 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
 
   // ── DETAIL POPUP ──────────────────────────────────────
   void _showDepartmentDialog(Map<String, dynamic> dept) {
-    final name = (dept['name'] ?? 'Unknown').toString();
-    final supervisor = (dept['supervisor'] ?? '').toString();
-    final role = (dept['role'] ?? '').toString();
-    final supervisorId = (dept['supervisor_id'] ?? '').toString();
-    final activeInterns = (dept['active_interns'] as int?) ?? 0;
-    final start = dept['start_date'] as DateTime;
-    final end = dept['end_date'] as DateTime;
-    final status = _computeStatus(start, end);
+    final nameCtrl = TextEditingController(
+      text: (dept['name'] ?? '').toString(),
+    );
+    final supervisorCtrl = TextEditingController(
+      text: (dept['supervisor'] ?? '').toString(),
+    );
+    final roleCtrl = TextEditingController(
+      text: (dept['role'] ?? '').toString(),
+    );
+    final supervisorIdCtrl = TextEditingController(
+      text: (dept['supervisor_id'] ?? '').toString(),
+    );
+    final internsCtrl = TextEditingController(
+      text: ((dept['active_interns'] as int?) ?? 0).toString(),
+    );
+
+    bool isEditing = false;
+    DateTime editStart = dept['start_date'] as DateTime;
+    DateTime editEnd = dept['end_date'] as DateTime;
 
     showDialog(
       context: context,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          width: 440,
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: borderColor),
-          ),
-          child: Stack(
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final status = _computeStatus(editStart, editEnd);
+
+          Widget _fieldBox(
+            String label,
+            TextEditingController ctrl, {
+            TextInputType keyboardType = TextInputType.text,
+          }) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(28),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            name,
-                            style: const TextStyle(
-                              color: textMain,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+              Text(
+                label,
+                style: const TextStyle(color: textMuted, fontSize: 11),
+              ),
+              const SizedBox(height: 4),
+              TextField(
+                controller: ctrl,
+                enabled: isEditing,
+                keyboardType: keyboardType,
+                style: const TextStyle(
+                  color: textMain,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                decoration: InputDecoration(
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  filled: true,
+                  fillColor: isEditing
+                      ? const Color(0xFF111111)
+                      : Colors.transparent,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: isEditing
+                        ? const BorderSide(color: accent, width: 1.5)
+                        : BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: accent, width: 1.5),
+                  ),
+                  disabledBorder: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
+          );
+
+          Widget _dateTile(
+            String label,
+            DateTime value, {
+            DateTime? firstDate,
+            DateTime? lastDate,
+            required Function(DateTime) onPicked,
+          }) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(color: textMuted, fontSize: 11),
+              ),
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: isEditing
+                    ? () async {
+                        final picked = await _pickDate(
+                          ctx,
+                          value,
+                          firstDate: firstDate,
+                          lastDate: lastDate,
+                        );
+                        if (picked != null)
+                          setDialogState(() => onPicked(picked));
+                      }
+                    : null,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isEditing
+                        ? const Color(0xFF111111)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    border: isEditing
+                        ? Border.all(color: accent, width: 1.5)
+                        : Border.all(color: Colors.transparent),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        color: isEditing ? accent : textMuted,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _fmt(value),
+                        style: TextStyle(
+                          color: isEditing ? textMain : textMuted,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
-                        const SizedBox(width: 8),
-                        _statusBadge(status),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _dateRangeRow(start, end),
-                    const SizedBox(height: 20),
-                    const Divider(color: borderColor),
-                    const SizedBox(height: 16),
-                    Row(
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            child: Container(
+              width: 460,
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isEditing ? accent.withOpacity(0.5) : borderColor,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: const Color(0xFF2A2A2A),
-                            border: Border.all(color: borderColor),
-                          ),
-                          child: const Icon(
-                            Icons.person_rounded,
-                            color: textMuted,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        // ── Header: name + status ──
+                        Row(
                           children: [
-                            Text(
-                              '$supervisor ($role)',
-                              style: const TextStyle(
-                                color: textMain,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                            Expanded(
+                              child: _fieldBox('Department Name', nameCtrl),
+                            ),
+                            const SizedBox(width: 12),
+                            _statusBadge(status),
+                          ],
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // ── Dates ──
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _dateTile(
+                                'Start Date',
+                                editStart,
+                                lastDate: editEnd,
+                                onPicked: (d) => editStart = d,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'ID: $supervisorId',
-                              style: const TextStyle(
-                                color: textMuted,
-                                fontSize: 12,
+                            const Padding(
+                              padding: EdgeInsets.only(
+                                top: 18,
+                                left: 10,
+                                right: 10,
+                              ),
+                              child: Text(
+                                '→',
+                                style: TextStyle(
+                                  color: textMuted,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: _dateTile(
+                                'End Date',
+                                editEnd,
+                                firstDate: editStart,
+                                onPicked: (d) => editEnd = d,
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF111111),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: borderColor),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Active Interns',
-                            style: TextStyle(color: textMuted, fontSize: 13),
+
+                        const SizedBox(height: 20),
+                        const Divider(color: borderColor),
+                        const SizedBox(height: 16),
+
+                        // ── Supervisor ──
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(0xFF2A2A2A),
+                                border: Border.all(color: borderColor),
+                              ),
+                              child: const Icon(
+                                Icons.person_rounded,
+                                color: textMuted,
+                                size: 26,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  _fieldBox('Supervisor Name', supervisorCtrl),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _fieldBox('Role', roleCtrl),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: _fieldBox(
+                                          'Supervisor ID',
+                                          supervisorIdCtrl,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // ── Active Interns ──
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
                           ),
-                          Text(
-                            activeInterns.toString().padLeft(2, '0'),
-                            style: const TextStyle(
-                              color: textMain,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF111111),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: borderColor),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Active Interns',
+                                style: TextStyle(
+                                  color: textMuted,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              SizedBox(
+                                width: 80,
+                                child: TextField(
+                                  controller: internsCtrl,
+                                  enabled: isEditing,
+                                  keyboardType: TextInputType.number,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: textMain,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // ── Save button (only in edit mode) ──
+                        if (isEditing) ...[
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: accent,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.check_rounded,
+                                color: Color(0xFF111111),
+                                size: 18,
+                              ),
+                              label: const Text(
+                                'Save Changes',
+                                style: TextStyle(
+                                  color: Color(0xFF111111),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              onPressed: () {
+                                final parsed = int.tryParse(
+                                  internsCtrl.text.trim(),
+                                );
+                                setState(() {
+                                  dept['name'] = nameCtrl.text.trim();
+                                  dept['supervisor'] = supervisorCtrl.text
+                                      .trim();
+                                  dept['role'] = roleCtrl.text.trim();
+                                  dept['supervisor_id'] = supervisorIdCtrl.text
+                                      .trim();
+                                  dept['active_interns'] =
+                                      parsed ?? dept['active_interns'];
+                                  dept['start_date'] = editStart;
+                                  dept['end_date'] = editEnd;
+                                });
+                                widget.onDepartmentsChanged();
+                                setDialogState(() => isEditing = false);
+                              },
                             ),
                           ),
                         ],
+                      ],
+                    ),
+                  ),
+
+                  // ── Close button ──
+                  Positioned(
+                    top: 12,
+                    right: 14,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: const Icon(
+                        Icons.close,
+                        color: textMuted,
+                        size: 20,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+
+                  // ── Edit toggle button ──
+                  Positioned(
+                    top: 12,
+                    right: 42,
+                    child: GestureDetector(
+                      onTap: () => setDialogState(() => isEditing = !isEditing),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        child: isEditing
+                            ? const Icon(
+                                Icons.edit_off_rounded,
+                                key: ValueKey('off'),
+                                color: accent,
+                                size: 20,
+                              )
+                            : const Icon(
+                                Icons.edit_rounded,
+                                key: ValueKey('on'),
+                                color: textMuted,
+                                size: 20,
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Positioned(
-                top: 12,
-                right: 14,
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.close, color: textMuted, size: 20),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -694,8 +920,8 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                                     });
 
                                     if (textValid && datesValid) {
-                                      setState(
-                                        () => _departments.add({
+                                      setState(() {
+                                        widget.departments.add({
                                           "name": nameCtrl.text.trim(),
                                           "supervisor": supervisorCtrl.text
                                               .trim(),
@@ -707,8 +933,9 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                                           ),
                                           "start_date": startDate!,
                                           "end_date": endDate!,
-                                        }),
-                                      );
+                                        });
+                                      });
+                                      widget.onDepartmentsChanged();
                                       Navigator.pop(ctx);
                                     }
                                   },
