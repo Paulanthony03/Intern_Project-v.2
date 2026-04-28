@@ -1678,7 +1678,31 @@ class _UserDashboardState extends State<UserDashboard> {
                       : _selectedNav == 'profile'
                       ? MyProfilePage(
                           user: userProfile ?? {},
-                          onEditPressed: showEditOwnProfileDialog,
+                          onSave: (updated) async {
+                            // 1. Push updated values into controllers so saveProfile() picks them up
+                            _nameController.text =
+                                updated["name"] ?? _nameController.text;
+                            _emailController.text =
+                                updated["email"] ?? _emailController.text;
+                            _contactController.text =
+                                updated["contact"] ??
+                                updated["contact_no"] ??
+                                _contactController.text;
+                            _schoolController.text =
+                                updated["school"] ?? _schoolController.text;
+                            _departmentController.text =
+                                updated["department"] ??
+                                updated["dept"] ??
+                                _departmentController.text;
+
+                            // 2. Optimistic UI update
+                            setState(
+                              () => userProfile = {...?userProfile, ...updated},
+                            );
+
+                            // 3. Save to server
+                            await saveProfile();
+                          },
                         )
                       : _selectedNav == 'calendar'
                       ? CalendarPage(

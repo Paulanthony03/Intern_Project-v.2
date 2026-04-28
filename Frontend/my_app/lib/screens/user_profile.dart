@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class MyProfilePage extends StatefulWidget {
   final Map<String, dynamic> user;
-  final VoidCallback? onEditPressed;
+  final Future<void> Function(Map<String, dynamic> updated)? onSave;
 
-  const MyProfilePage({super.key, required this.user, this.onEditPressed});
+  const MyProfilePage({super.key, required this.user, this.onSave});
 
   @override
   State<MyProfilePage> createState() => _MyProfilePageState();
 }
 
 class _MyProfilePageState extends State<MyProfilePage> {
-  int _selectedTab = 0; // 0 = Personal Info, 1 = Login & Security
+  int _selectedTab = 0;
 
-  // ─── COLORS ──────────────────────────────────────────────
   static const Color pageBg = Color(0xFF1A1A1A);
   static const Color cardBg = Color(0xFF222222);
   static const Color accent = Color(0xFFBFCF33);
@@ -21,13 +22,51 @@ class _MyProfilePageState extends State<MyProfilePage> {
   static const Color textMuted = Color(0xFF888888);
   static const Color borderColor = Color(0xFF2E2E2E);
 
-  // ─── PASSWORD CONTROLLERS ────────────────────────────────
+  // ─── LOCAL COPY of user data (updates in real-time) ──────
+  late Map<String, dynamic> _localUser;
+
+  // ─── PASSWORD ────────────────────────────────────────────
   final _currentPassController = TextEditingController();
   final _newPassController = TextEditingController();
   final _confirmPassController = TextEditingController();
   bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+
+  File? _pickedImage;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked != null) {
+      setState(() => _pickedImage = File(picked.path));
+
+      // Push to onSave so dashboard/API gets the new photo path
+      if (widget.onSave != null) {
+        final updated = Map<String, dynamic>.from(_localUser);
+        updated["photo_local"] = picked.path; // flag for your API service
+        await widget.onSave!(updated);
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _localUser = Map<String, dynamic>.from(widget.user);
+  }
+
+  @override
+  void didUpdateWidget(MyProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Sync if parent pushes new data
+    if (oldWidget.user != widget.user) {
+      setState(() => _localUser = Map<String, dynamic>.from(widget.user));
+    }
+  }
 
   @override
   void dispose() {
@@ -37,17 +76,155 @@ class _MyProfilePageState extends State<MyProfilePage> {
     super.dispose();
   }
 
+  // ─── EDIT A FIELD ────────────────────────────────────────
+  void _showEditFieldDialog(
+    String label,
+    String fieldKey,
+    String currentValue,
+  ) {
+    final controller = TextEditingController(text: currentValue);
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: 400,
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: borderColor),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Edit $label",
+                  style: const TextStyle(
+                    color: accent,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2A2A2A),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: accent.withOpacity(0.4)),
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    autofocus: true,
+                    style: const TextStyle(color: textMain, fontSize: 13),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(color: textMuted),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                        ),
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                final newValue = controller.text.trim();
+                                if (newValue.isEmpty) return;
+
+                                setDialog(() => isSaving = true);
+
+                                // ── 1. Update locally RIGHT AWAY ──
+                                setState(() => _localUser[fieldKey] = newValue);
+
+                                // ── 2. Persist to server ──────────
+                                if (widget.onSave != null) {
+                                  try {
+                                    await widget.onSave!(_localUser);
+                                  } catch (e) {
+                                    // Revert on failure
+                                    setState(
+                                      () => _localUser[fieldKey] = currentValue,
+                                    );
+                                    if (mounted) {
+                                      _snack(
+                                        "Failed to save: $e",
+                                        Colors.redAccent,
+                                      );
+                                    }
+                                  }
+                                }
+
+                                if (mounted) Navigator.pop(ctx);
+                              },
+                        child: isSaving
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.black,
+                                ),
+                              )
+                            : const Text(
+                                "Save",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════
+  //  BUILD
+  // ════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    final String name = widget.user["name"] ?? "Intern Name";
+    final String name = _localUser["name"] ?? "Intern Name";
     final String internId =
-        widget.user["intern_id"]?.toString() ??
-        widget.user["id"]?.toString() ??
+        _localUser["intern_id"]?.toString() ??
+        _localUser["id"]?.toString() ??
         "-";
-    final String email = widget.user["email"] ?? "-";
+    final String email = _localUser["email"] ?? "-";
     final String contact =
-        widget.user["contact"] ?? widget.user["contact_no"] ?? "-";
-    final String? photoUrl = widget.user["photo_url"] ?? widget.user["photo"];
+        _localUser["contact"] ?? _localUser["contact_no"] ?? "-";
+    final String? photoUrl = _localUser["photo_url"] ?? _localUser["photo"];
 
     return Container(
       color: pageBg,
@@ -70,7 +247,6 @@ class _MyProfilePageState extends State<MyProfilePage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // ── Tabs ──────────────────────────────────
                 Row(
                   children: [
                     _tab("Personal Info", 0),
@@ -82,7 +258,6 @@ class _MyProfilePageState extends State<MyProfilePage> {
             ),
           ),
 
-          // ── Content ───────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(30, 30, 30, 30),
@@ -97,7 +272,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
   }
 
   // ════════════════════════════════════════════════════════
-  //  TAB WIDGET
+  //  TAB
   // ════════════════════════════════════════════════════════
   Widget _tab(String label, int index) {
     final bool selected = _selectedTab == index;
@@ -125,7 +300,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
   }
 
   // ════════════════════════════════════════════════════════
-  //  PERSONAL INFO TAB
+  //  PERSONAL INFO
   // ════════════════════════════════════════════════════════
   Widget _buildPersonalInfo(
     String name,
@@ -137,84 +312,110 @@ class _MyProfilePageState extends State<MyProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Avatar with camera button ──────────────────────
-        Stack(
-          children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: borderColor,
-              backgroundImage: photoUrl != null && photoUrl.isNotEmpty
-                  ? NetworkImage(photoUrl)
-                  : null,
-              child: photoUrl == null || photoUrl.isEmpty
-                  ? Icon(Icons.person, size: 44, color: textMuted)
-                  : null,
-            ),
-            Positioned(
-              bottom: 2,
-              right: 2,
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: accent,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: pageBg, width: 2),
-                ),
-                child: const Icon(
-                  Icons.camera_alt_rounded,
-                  size: 14,
-                  color: Colors.black,
+        // Avatar
+        GestureDetector(
+          onTap: _pickImage,
+          child: Stack(
+            children: [
+              CircleAvatar(
+                radius: 50,
+                backgroundColor: borderColor,
+                backgroundImage: _pickedImage != null
+                    ? FileImage(_pickedImage!) as ImageProvider
+                    : ((_localUser["photo_url"] ?? _localUser["photo"]) !=
+                              null &&
+                          (_localUser["photo_url"] ?? _localUser["photo"])
+                              .toString()
+                              .isNotEmpty)
+                    ? NetworkImage(
+                        _localUser["photo_url"] ?? _localUser["photo"],
+                      )
+                    : null,
+                child:
+                    _pickedImage == null &&
+                        ((_localUser["photo_url"] ?? _localUser["photo"]) ==
+                                null ||
+                            (_localUser["photo_url"] ?? _localUser["photo"])
+                                .toString()
+                                .isEmpty)
+                    ? const Icon(Icons.person, size: 44, color: textMuted)
+                    : null,
+              ),
+              Positioned(
+                bottom: 2,
+                right: 2,
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: accent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: pageBg, width: 2),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt_rounded,
+                    size: 14,
+                    color: Colors.black,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
 
         const SizedBox(height: 32),
 
-        // ── Fields ────────────────────────────────────────
-        _fieldRow("Name", name),
-        _fieldRow("Intern ID", internId, editable: false),
-        _fieldRow("Email", email),
-        _fieldRow("Contact Number", contact),
+        // Clickable field rows
+        _fieldRow("Name", "name", name),
+        _fieldRow("Intern ID", "intern_id", internId, editable: false),
+        _fieldRow("Email", "email", email),
+        _fieldRow("Contact Number", "contact", contact),
       ],
     );
   }
 
-  Widget _fieldRow(String label, String value, {bool editable = true}) {
+  // ── Clickable field row ───────────────────────────────────
+  Widget _fieldRow(
+    String label,
+    String fieldKey,
+    String value, {
+    bool editable = true,
+  }) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        color: textMain,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+        InkWell(
+          onTap: editable
+              ? () => _showEditFieldDialog(label, fieldKey, value)
+              : null,
+          borderRadius: BorderRadius.circular(8),
+          hoverColor: editable ? accent.withOpacity(0.05) : Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          color: textMain,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      value,
-                      style: const TextStyle(color: textMuted, fontSize: 13),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        value.isEmpty ? "—" : value,
+                        style: const TextStyle(color: textMuted, fontSize: 13),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              if (editable)
-                GestureDetector(
-                  onTap: () => _showEditFieldDialog(label, value),
-                  child: const Text(
+                if (editable)
+                  const Text(
                     "Edit",
                     style: TextStyle(
                       color: textMuted,
@@ -222,8 +423,8 @@ class _MyProfilePageState extends State<MyProfilePage> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
         Divider(color: borderColor, height: 1),
@@ -232,7 +433,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
   }
 
   // ════════════════════════════════════════════════════════
-  //  LOGIN & SECURITY TAB
+  //  LOGIN & SECURITY
   // ════════════════════════════════════════════════════════
   Widget _buildLoginSecurity() {
     return Column(
@@ -252,7 +453,6 @@ class _MyProfilePageState extends State<MyProfilePage> {
           style: TextStyle(color: textMuted, fontSize: 13),
         ),
         const SizedBox(height: 28),
-
         _passwordField(
           "Current Password",
           _currentPassController,
@@ -273,9 +473,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
           _obscureConfirm,
           () => setState(() => _obscureConfirm = !_obscureConfirm),
         ),
-
         const SizedBox(height: 28),
-
         SizedBox(
           width: 180,
           child: ElevatedButton(
@@ -354,99 +552,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
   }
 
   // ════════════════════════════════════════════════════════
-  //  EDIT FIELD DIALOG
-  // ════════════════════════════════════════════════════════
-  void _showEditFieldDialog(String label, String currentValue) {
-    final controller = TextEditingController(text: currentValue);
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          width: 400,
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: borderColor),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Edit $label",
-                style: const TextStyle(
-                  color: accent,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: accent.withOpacity(0.4)),
-                ),
-                child: TextField(
-                  controller: controller,
-                  style: const TextStyle(color: textMain, fontSize: 13),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text(
-                        "Cancel",
-                        style: TextStyle(color: textMuted),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: accent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                      ),
-                      onPressed: () {
-                        // Hook into your save logic here
-                        Navigator.pop(ctx);
-                      },
-                      child: const Text(
-                        "Save",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ════════════════════════════════════════════════════════
-  //  CHANGE PASSWORD HANDLER
+  //  PASSWORD HANDLER
   // ════════════════════════════════════════════════════════
   void _handleChangePassword() {
     final current = _currentPassController.text.trim();
@@ -466,7 +572,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
       return;
     }
 
-    // TODO: wire up to ApiService.changePassword(token, current, newPass)
+    // TODO: wire to ApiService.changePassword(token, current, newPass)
     _snack("Password updated successfully!", const Color(0xFF4CAF50));
     _currentPassController.clear();
     _newPassController.clear();
