@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'user_department_page.dart';
 import 'calendar_page.dart';
+import 'user_profile.dart';
 
 class UserDashboard extends StatefulWidget {
   final String token;
@@ -1675,7 +1676,10 @@ class _UserDashboardState extends State<UserDashboard> {
                   child: _selectedNav == 'dashboard'
                       ? buildDashboard()
                       : _selectedNav == 'profile'
-                      ? buildMyProfile()
+                      ? MyProfilePage(
+                          user: userProfile ?? {},
+                          onEditPressed: showEditOwnProfileDialog,
+                        )
                       : _selectedNav == 'calendar'
                       ? CalendarPage(
                           isAdmin: false,
