@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/screens/landing_screen.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -122,7 +123,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   // ════════════════════════════════════════════════════════
-  //  LOGOUT — clears prefs and goes directly to /login
+  //  LOGOUT
   // ════════════════════════════════════════════════════════
   Future<void> Logout() async {
     final prefs = await SharedPreferences.getInstance();
@@ -203,7 +204,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Avatar + name row
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -257,7 +257,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     Divider(color: borderColor),
                     const SizedBox(height: 16),
 
-                    // Dynamic fields
                     ...fields.map(
                       (f) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
@@ -298,7 +297,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
               ),
 
-              // Close button
               Positioned(
                 top: 12,
                 right: 16,
@@ -421,7 +419,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   // ════════════════════════════════════════════════════════
-  //  STAT CARD — read-only, no edit on any card
+  //  STAT CARD
   // ════════════════════════════════════════════════════════
   Widget buildStatCard(String value, String label, IconData icon) {
     return Expanded(
@@ -462,6 +460,231 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ],
         ),
       ),
+    );
+  }
+
+  void showEditDialog(Map<String, dynamic> user) {
+    final nameCtrl = TextEditingController(text: user["name"] ?? "");
+    final emailCtrl = TextEditingController(text: user["email"] ?? "");
+    final schoolCtrl = TextEditingController(text: user["school"] ?? "");
+    final programCtrl = TextEditingController(text: user["program"] ?? "");
+    final deptCtrl = TextEditingController(
+      text: user["department"] ?? user["dept"] ?? "",
+    );
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: 420,
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: borderColor),
+            ),
+            child: Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(30),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Edit intern profile",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: textMain,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Changes will be saved to the server.",
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                      const SizedBox(height: 16),
+                      Divider(color: borderColor),
+                      const SizedBox(height: 16),
+
+                      _editField("Full name", nameCtrl),
+                      const SizedBox(height: 12),
+                      _editField("Email", emailCtrl),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(child: _editField("School", schoolCtrl)),
+                          const SizedBox(width: 12),
+                          Expanded(child: _editField("Program", programCtrl)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _editField("Department", deptCtrl),
+                      const SizedBox(height: 24),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: borderColor),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 13,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              onPressed: () => Navigator.pop(ctx),
+                              child: Text(
+                                "Cancel",
+                                style: TextStyle(
+                                  color: textMuted,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: accent,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 13,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              onPressed: isSaving
+                                  ? null
+                                  : () async {
+                                      setLocal(() => isSaving = true);
+                                      try {
+                                        final updatedData = {
+                                          "name": nameCtrl.text.trim(),
+                                          "email": emailCtrl.text.trim(),
+                                          "school": schoolCtrl.text.trim(),
+                                          "program": programCtrl.text.trim(),
+                                          "department": deptCtrl.text.trim(),
+                                        };
+                                        final userId =
+                                            user["id"]?.toString() ?? "";
+                                        await ApiService.updateUser(
+                                          widget.token,
+                                          userId,
+                                          updatedData,
+                                        );
+                                        await widget.onRefresh?.call();
+                                        Navigator.pop(ctx);
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              "${nameCtrl.text} updated successfully.",
+                                            ),
+                                            backgroundColor: accent,
+                                          ),
+                                        );
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text("Failed to save: $e"),
+                                            backgroundColor: Colors.redAccent,
+                                          ),
+                                        );
+                                      } finally {
+                                        setLocal(() => isSaving = false);
+                                      }
+                                    },
+                              child: isSaving
+                                  ? SizedBox(
+                                      height: 16,
+                                      width: 16,
+                                      child: CircularProgressIndicator(
+                                        color: pageBg,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      "Save changes",
+                                      style: TextStyle(
+                                        color: pageBg,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                Positioned(
+                  top: 12,
+                  right: 16,
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: Icon(Icons.close, color: textMuted, size: 20),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _editField(String label, TextEditingController ctrl) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: accent,
+          ),
+        ),
+        const SizedBox(height: 5),
+        TextField(
+          controller: ctrl,
+          style: TextStyle(color: textMain, fontSize: 13),
+          cursorColor: accent,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: pageBg,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: borderColor),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: borderColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: accent),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -507,13 +730,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
               try {
                 String raw = (createdAt ?? "").toString();
-
                 raw = raw.replaceFirst(" ", "T");
-
                 if (raw.endsWith("+08")) {
                   raw = raw + ":00";
                 }
-
                 time = DateTime.parse(raw);
               } catch (e) {
                 print("Invalid date: $createdAt");
@@ -548,7 +768,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-
                             Text(
                               timeAgo(time),
                               style: TextStyle(color: textMuted, fontSize: 11),
@@ -580,8 +799,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget buildDepartmentOverview() {
     final now = DateTime.now();
     final ongoing = widget.departments.where((d) {
-      final start = d['start_date'] as DateTime;
-      final end = d['end_date'] as DateTime;
+      final start = DateTime.parse(d['start_date']);
+      final end = DateTime.parse(d['end_date']);
       return !now.isBefore(start) && !now.isAfter(end);
     }).toList();
 
@@ -606,7 +825,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              // ongoing count badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -635,102 +853,110 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
             )
           else
-            ...ongoing.asMap().entries.map((e) {
-              final dept = e.value;
-              final name = (dept['name'] ?? '').toString();
-              final supervisor = (dept['supervisor'] ?? '').toString();
-              final role = (dept['role'] ?? 'Supervisor').toString();
-              final isLast = e.key == ongoing.length - 1;
+            SizedBox(
+              height: 97,
+              child: ListView.builder(
+                itemCount: ongoing.length,
+                itemBuilder: (context, index) {
+                  final dept = ongoing[index];
+                  final name = (dept['name'] ?? '').toString();
+                  final supervisor = (dept['supervisor'] ?? '').toString();
+                  final role = (dept['role'] ?? 'Supervisor').toString();
+                  final isLast = index == ongoing.length - 1;
 
-              return Column(
-                children: [
-                  // Dept name row
-                  Row(
+                  return Column(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: accent.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.check_circle_rounded,
-                          color: accent,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              style: TextStyle(
-                                color: textMain,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: accent.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            Text(
-                              'ongoing',
-                              style: TextStyle(color: accent, fontSize: 11),
+                            child: Icon(
+                              Icons.check_circle_rounded,
+                              color: accent,
+                              size: 20,
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: TextStyle(
+                                    color: textMain,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  'ongoing',
+                                  style: TextStyle(color: accent, fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
 
-                  // Supervisor row
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: borderColor,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.person_outline_rounded,
-                          color: textMuted,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              supervisor,
-                              style: TextStyle(
-                                color: textMain,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              role.toLowerCase(),
-                              style: TextStyle(color: textMuted, fontSize: 11),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                      const SizedBox(height: 10),
 
-                  if (!isLast) ...[
-                    const SizedBox(height: 14),
-                    Divider(color: borderColor, height: 1),
-                    const SizedBox(height: 14),
-                  ],
-                ],
-              );
-            }).toList(),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: borderColor,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              Icons.person_outline_rounded,
+                              color: textMuted,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  supervisor,
+                                  style: TextStyle(
+                                    color: textMain,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  role.toLowerCase(),
+                                  style: TextStyle(
+                                    color: textMuted,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      if (!isLast) ...[
+                        const SizedBox(height: 14),
+                        Divider(color: borderColor, height: 1),
+                        const SizedBox(height: 14),
+                      ],
+                    ],
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );
@@ -797,7 +1023,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Top: Avatar + name + id ───────────────
             Row(
               children: [
                 CircleAvatar(
@@ -838,10 +1063,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
             const Spacer(),
 
-            // ── Bottom: View Profile | edit | delete ──
             Row(
               children: [
-                // View Profile
                 GestureDetector(
                   onTap: () => showProfileDialog(user, index + 1),
                   child: Container(
@@ -866,13 +1089,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                 const Spacer(),
 
-                // Edit → /edit-profile
                 GestureDetector(
-                  onTap: () => Navigator.pushNamed(
-                    context,
-                    '/edit-profile',
-                    arguments: user,
-                  ),
+                  onTap: () => showEditDialog(user),
                   child: Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
@@ -886,7 +1104,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                 const SizedBox(width: 8),
 
-                // Delete → confirm dialog
                 GestureDetector(
                   onTap: () => showDeleteDialog(user),
                   child: Container(
@@ -914,7 +1131,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   // ════════════════════════════════════════════════════════
-  //  WORKING DROPDOWNS
+  //  DROPDOWNS
   // ════════════════════════════════════════════════════════
   Widget _buildDepartmentDropdown() {
     return _styledDropdown<String?>(
@@ -931,7 +1148,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ...allDepartments.map(
           (d) => DropdownMenuItem<String?>(
             value: d,
-            child: Text(d, style: TextStyle(color: textMain, fontSize: 13)),
+            child: Text(
+              d,
+              style: TextStyle(color: textMain, fontSize: 13),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
           ),
         ),
       ],
@@ -954,7 +1176,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ...allSchools.map(
           (s) => DropdownMenuItem<String?>(
             value: s,
-            child: Text(s, style: TextStyle(color: textMain, fontSize: 13)),
+            child: Text(
+              s,
+              style: TextStyle(color: textMain, fontSize: 13),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
           ),
         ),
       ],
@@ -978,15 +1205,38 @@ class _AdminDashboardState extends State<AdminDashboard> {
           border: Border.all(color: borderColor),
         ),
         child: DropdownButtonHideUnderline(
-          child: DropdownButton<T>(
+          child: DropdownButton2<T>(
+            isExpanded: true,
             value: value,
             hint: Text(hint, style: TextStyle(color: textMain, fontSize: 13)),
-            dropdownColor: const Color(0xFF2A2A2A),
-            iconEnabledColor: textMuted,
-            iconSize: 20,
             style: TextStyle(color: textMain, fontSize: 13),
             items: items,
             onChanged: onChanged,
+            buttonStyleData: const ButtonStyleData(
+              padding: EdgeInsets.zero,
+              height: 40,
+            ),
+            iconStyleData: IconStyleData(
+              icon: Icon(Icons.keyboard_arrow_down, color: textMuted, size: 20),
+            ),
+            dropdownStyleData: DropdownStyleData(
+              maxHeight: 400,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: const Color(0xFF2A2A2A),
+              ),
+              offset: const Offset(0, 0),
+              direction: DropdownDirection.textDirection,
+              scrollbarTheme: ScrollbarThemeData(
+                radius: const Radius.circular(40),
+                thickness: WidgetStateProperty.all(6),
+                thumbVisibility: WidgetStateProperty.all(true),
+              ),
+            ),
+            menuItemStyleData: const MenuItemStyleData(
+              height: 40,
+              padding: EdgeInsets.symmetric(horizontal: 14),
+            ),
           ),
         ),
       ),
@@ -1004,12 +1254,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
       builder: (context, constraints) {
         return Column(
           children: [
-            // Fixed upper sections
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
               child: Column(
                 children: [
-                  // Stat cards
                   Row(
                     children: [
                       buildStatCard(
@@ -1032,7 +1280,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                   const SizedBox(height: 20),
 
-                  // Middle row
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1044,7 +1291,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                   const SizedBox(height: 20),
 
-                  // Search + filter row
                   Row(
                     children: [
                       Expanded(
@@ -1093,9 +1339,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               ),
                             ),
                             const SizedBox(width: 14),
-                            _buildDepartmentDropdown(),
+                            SizedBox(
+                              width: 180,
+                              child: _buildDepartmentDropdown(),
+                            ),
                             const SizedBox(width: 14),
-                            _buildSchoolDropdown(),
+                            SizedBox(width: 180, child: _buildSchoolDropdown()),
                           ],
                         ),
                       ),
@@ -1125,8 +1374,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               ),
                             ),
                             onPressed: () async {
-                              await Navigator.pushNamed(context, '/register');
-                              await widget.onRefresh?.call();
+                              final result = await showDialog<bool>(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (context) => const AddInternDialog(),
+                              );
+                              if (result == true) {
+                                await widget.onRefresh?.call();
+                              }
                             },
                           ),
                         ),
@@ -1139,7 +1394,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
             ),
 
-            // ── SCROLLABLE INTERN GRID + FIXED RIGHT PANEL ──
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -1182,6 +1436,268 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ],
         );
       },
+    );
+  }
+} // ← END of _AdminDashboardState
+
+// ════════════════════════════════════════════════════════
+//  ADD INTERN DIALOG — outside of _AdminDashboardState
+// ════════════════════════════════════════════════════════
+class AddInternDialog extends StatefulWidget {
+  const AddInternDialog({super.key});
+
+  @override
+  State<AddInternDialog> createState() => _AddInternDialogState();
+}
+
+class _AddInternDialogState extends State<AddInternDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _isLoading = false;
+
+  final Color pageBg = const Color(0xFF1A1A1A);
+  final Color cardBg = const Color(0xFF222222);
+  final Color accent = const Color.fromARGB(255, 212, 226, 74);
+  final Color textMain = Colors.white;
+  final Color textMuted = const Color(0xFF888888);
+  final Color borderColor = const Color(0xFF2E2E2E);
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+    try {
+      // TODO: call your ApiService.register(...) here
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Widget _field(
+    String label,
+    TextEditingController ctrl, {
+    bool obscure = false,
+    Widget? suffix,
+    TextInputType? keyboard,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: accent,
+          ),
+        ),
+        const SizedBox(height: 5),
+        TextFormField(
+          controller: ctrl,
+          obscureText: obscure,
+          keyboardType: keyboard,
+          style: TextStyle(color: textMain, fontSize: 13),
+          cursorColor: accent,
+          decoration: InputDecoration(
+            suffixIcon: suffix,
+            filled: true,
+            fillColor: pageBg,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: borderColor),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: borderColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: accent),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.redAccent),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.redAccent),
+            ),
+          ),
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) return '$label is required';
+            if (label == 'Email' &&
+                !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim())) {
+              return 'Enter a valid email';
+            }
+            if (label == 'Password' && v.length < 6) {
+              return 'Minimum 6 characters';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 400,
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: borderColor),
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(30),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Add Intern',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: textMain,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Fill in the details for the new intern.',
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                    const SizedBox(height: 16),
+                    Divider(color: borderColor),
+                    const SizedBox(height: 16),
+
+                    _field(
+                      'Full Name',
+                      _nameController,
+                      keyboard: TextInputType.name,
+                    ),
+                    const SizedBox(height: 12),
+                    _field(
+                      'Email',
+                      _emailController,
+                      keyboard: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 12),
+                    _field(
+                      'Password',
+                      _passwordController,
+                      obscure: _obscurePassword,
+                      suffix: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: textMuted,
+                          size: 18,
+                        ),
+                        onPressed: () => setState(
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: borderColor),
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: () => Navigator.pop(context, false),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(color: textMuted, fontSize: 13),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: accent,
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: _isLoading ? null : _submit,
+                            child: _isLoading
+                                ? SizedBox(
+                                    height: 16,
+                                    width: 16,
+                                    child: CircularProgressIndicator(
+                                      color: pageBg,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    'Add Intern',
+                                    style: TextStyle(
+                                      color: pageBg,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              top: 12,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context, false),
+                child: Icon(Icons.close, color: textMuted, size: 20),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

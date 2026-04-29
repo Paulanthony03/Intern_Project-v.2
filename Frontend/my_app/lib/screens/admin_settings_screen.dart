@@ -255,6 +255,7 @@ class _AdminSettingsState extends State<AdminSettings>
     required String value,
     required bool isPersonal,
     bool obscure = false,
+    bool isLast = false,
   }) {
     final isEditing = _editingField == field;
 
@@ -358,61 +359,18 @@ class _AdminSettingsState extends State<AdminSettings>
   }
 
   // ════════════════════════════════════════════════════════
-  //  PERSONAL INFO TAB
+  //  PERSONAL INFO CONTENT (no scroll wrapper)
   // ════════════════════════════════════════════════════════
-  Widget _buildPersonalInfoTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(28, 0, 28, 40),
+  Widget _buildPersonalInfoContent() {
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 24),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Stack(
-              children: [
-                Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: cardBg,
-                    border: Border.all(
-                      color: accent.withOpacity(0.6),
-                      width: 2,
-                    ),
-                  ),
-                  child: const Icon(Icons.person, color: textMuted, size: 56),
-                ),
-                Positioned(
-                  bottom: 2,
-                  right: 2,
-                  child: GestureDetector(
-                    onTap: () {
-                      // TODO: image picker
-                    },
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: accent,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: pageBg, width: 2),
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        color: pageBg,
-                        size: 15,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
           _buildFieldRow(
             label: 'Name',
             field: 'name',
@@ -436,6 +394,7 @@ class _AdminSettingsState extends State<AdminSettings>
             field: 'contact_number',
             value: _personalInfo['contact_number']!,
             isPersonal: true,
+            isLast: true,
           ),
         ],
       ),
@@ -443,13 +402,17 @@ class _AdminSettingsState extends State<AdminSettings>
   }
 
   // ════════════════════════════════════════════════════════
-  //  LOGIN & SECURITY TAB
+  //  LOGIN & SECURITY CONTENT (no scroll wrapper)
   // ════════════════════════════════════════════════════════
-  Widget _buildLoginSecurityTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(28, 24, 28, 40),
+  Widget _buildLoginSecurityContent() {
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildFieldRow(
             label: 'Username',
@@ -457,6 +420,7 @@ class _AdminSettingsState extends State<AdminSettings>
             value: _loginInfo['username']!,
             isPersonal: false,
           ),
+          // Password row
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -478,13 +442,12 @@ class _AdminSettingsState extends State<AdminSettings>
                 ),
               ),
               const Padding(
-                padding: EdgeInsets.only(left: 8, bottom: 8),
+                padding: EdgeInsets.only(left: 8, bottom: 20),
                 child: Text(
                   '•••••••••',
                   style: TextStyle(color: textMuted, fontSize: 14),
                 ),
               ),
-              const Divider(color: borderColor, thickness: 1, height: 1),
             ],
           ),
         ],
@@ -497,38 +460,117 @@ class _AdminSettingsState extends State<AdminSettings>
   // ════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TabBar(
-          controller: _tabController,
-          labelColor: accent,
-          unselectedLabelColor: textMuted,
-          indicatorColor: accent,
-          indicatorWeight: 2,
-          labelStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.normal,
-          ),
-          tabs: const [
-            Tab(text: 'Personal Info'),
-            Tab(text: 'Login & Security'),
-          ],
-        ),
+    return SingleChildScrollView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1450),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 35),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // ── CENTERED AVATAR ──────────────────────
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 175,
+                        height: 175,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: cardBg,
+                          border: Border.all(
+                            color: accent.withOpacity(0.6),
+                            width: 3,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.person,
+                          color: textMuted,
+                          size: 68,
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 2,
+                        right: 2,
+                        child: GestureDetector(
+                          onTap: () {
+                            // TODO: image picker
+                          },
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: accent,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: pageBg, width: 2),
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: pageBg,
+                              size: 25,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
-        const Divider(color: borderColor, height: 1, thickness: 1),
+                const SizedBox(height: 32),
 
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [_buildPersonalInfoTab(), _buildLoginSecurityTab()],
+                // ── TWO COLUMNS ──────────────────────────
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left — Personal Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Personal Info',
+                            style: TextStyle(
+                              color: textMain,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          _buildPersonalInfoContent(),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 50),
+
+                    // Right — Login & Security
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Login & Security',
+                            style: TextStyle(
+                              color: textMain,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          _buildLoginSecurityContent(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 }

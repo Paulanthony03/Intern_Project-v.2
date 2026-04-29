@@ -31,6 +31,8 @@ dependencies:
   
   flutter:
     sdk: flutter
+
+  dropdown_button2: ^2.3.9
   
   flutter_secure_storage: ^9.0.0
 
@@ -45,6 +47,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   responsive_framework: ^1.5.1
+  provider: ^6.1.5+1
 
 dev_dependencies:
   flutter_test:

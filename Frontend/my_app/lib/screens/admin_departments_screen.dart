@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
 
 // ════════════════════════════════════════════════════════
 //  DEPARTMENTS SCREEN
@@ -23,6 +25,10 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
   static const accent = Color.fromARGB(255, 212, 226, 74);
   static const textMain = Color(0xFFFFFFFF);
   static const textMuted = Color(0xFF888888);
+
+  List<Map<String, dynamic>> _departmentList = [];
+  bool _loading = true;
+
   // ── Helpers ───────────────────────────────────────────
 
   /// Derives status purely from the current date vs the range.
@@ -42,7 +48,25 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
       '${d.day.toString().padLeft(2, '0')}/'
       '${d.year}';
 
-  List<Map<String, dynamic>> get _departments => widget.departments;
+  @override
+  void initState() {
+    super.initState();
+    _fetchDepartments();
+  }
+
+  Future<void> _fetchDepartments() async {
+    setState(() => _loading = true);
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("token");
+
+    final data = await ApiService.getDepartments(token!);
+
+    setState(() {
+      _departmentList = (data as List).cast<Map<String, dynamic>>();
+      _loading = false;
+    });
+  }
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -54,11 +78,14 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
   }
 
   List<Map<String, dynamic>> get _filteredDepartments {
-    if (_searchQuery.isEmpty) return _departments;
+    final list = widget.departments;
+    if (_searchQuery.isEmpty) return list;
+
     final q = _searchQuery.toLowerCase();
-    return _departments.where((d) {
-      final name = (d['name'] ?? '').toString().toLowerCase();
-      final supervisor = (d['supervisor'] ?? '').toString().toLowerCase();
+
+    return list.where((d) {
+      final name = (d['department_name'] ?? '').toString().toLowerCase();
+      final supervisor = (d['supervisor_name'] ?? '').toString().toLowerCase();
       return name.contains(q) || supervisor.contains(q);
     }).toList();
   }
@@ -137,10 +164,10 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
   // ── DETAIL POPUP ──────────────────────────────────────
   void _showDepartmentDialog(Map<String, dynamic> dept) {
     final nameCtrl = TextEditingController(
-      text: (dept['name'] ?? '').toString(),
+      text: (dept['department_name'] ?? '').toString(),
     );
     final supervisorCtrl = TextEditingController(
-      text: (dept['supervisor'] ?? '').toString(),
+      text: (dept['supervisor_name'] ?? '').toString(),
     );
     final roleCtrl = TextEditingController(
       text: (dept['role'] ?? '').toString(),
@@ -153,8 +180,8 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
     );
 
     bool isEditing = false;
-    DateTime editStart = dept['start_date'] as DateTime;
-    DateTime editEnd = dept['end_date'] as DateTime;
+    DateTime editStart = DateTime.parse(dept['start_date']);
+    DateTime editEnd = DateTime.parse(dept['end_date']);
 
     showDialog(
       context: context,
@@ -468,24 +495,34 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              onPressed: () {
-                                final parsed = int.tryParse(
-                                  internsCtrl.text.trim(),
-                                );
-                                setState(() {
-                                  dept['name'] = nameCtrl.text.trim();
-                                  dept['supervisor'] = supervisorCtrl.text
-                                      .trim();
-                                  dept['role'] = roleCtrl.text.trim();
-                                  dept['supervisor_id'] = supervisorIdCtrl.text
-                                      .trim();
-                                  dept['active_interns'] =
-                                      parsed ?? dept['active_interns'];
-                                  dept['start_date'] = editStart;
-                                  dept['end_date'] = editEnd;
-                                });
-                                widget.onDepartmentsChanged();
-                                setDialogState(() => isEditing = false);
+                              onPressed: () async {
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                final token = prefs.getString("token");
+
+                                final updated = {
+                                  "department_name": nameCtrl.text.trim(),
+                                  "supervisor_name": supervisorCtrl.text.trim(),
+                                  "role": roleCtrl.text.trim(),
+                                  "supervisor_id": supervisorIdCtrl.text.trim(),
+                                  "active_interns":
+                                      int.tryParse(internsCtrl.text.trim()) ??
+                                      0,
+                                  "start_date": editStart.toIso8601String(),
+                                  "end_date": editEnd.toIso8601String(),
+                                };
+
+                                final success =
+                                    await ApiService.updateDepartment(
+                                      token!,
+                                      dept["id"].toString(),
+                                      updated,
+                                    );
+
+                                if (success) {
+                                  await _fetchDepartments(); //  THIS is the real fix
+                                  Navigator.pop(ctx);
+                                }
                               },
                             ),
                           ),
@@ -902,40 +939,42 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
-                                  onPressed: () {
+                                  onPressed: () async {
                                     final textValid = formKey.currentState!
                                         .validate();
-                                    bool datesValid = true;
 
-                                    setDialogState(() {
-                                      startErr = startDate == null
-                                          ? 'Pick a start date'
-                                          : null;
-                                      endErr = endDate == null
-                                          ? 'Pick an end date'
-                                          : null;
-                                      if (startErr != null || endErr != null) {
-                                        datesValid = false;
-                                      }
-                                    });
+                                    if (!textValid ||
+                                        startDate == null ||
+                                        endDate == null)
+                                      return;
 
-                                    if (textValid && datesValid) {
-                                      setState(() {
-                                        widget.departments.add({
-                                          "name": nameCtrl.text.trim(),
-                                          "supervisor": supervisorCtrl.text
-                                              .trim(),
-                                          "role": roleCtrl.text.trim(),
-                                          "supervisor_id": supervisorIdCtrl.text
-                                              .trim(),
-                                          "active_interns": int.parse(
-                                            activeInternsCtrl.text.trim(),
-                                          ),
-                                          "start_date": startDate!,
-                                          "end_date": endDate!,
-                                        });
-                                      });
-                                      widget.onDepartmentsChanged();
+                                    final prefs =
+                                        await SharedPreferences.getInstance();
+                                    final token = prefs.getString("token");
+
+                                    final newDept = {
+                                      "department_name": nameCtrl.text.trim(),
+                                      "supervisor_name": supervisorCtrl.text
+                                          .trim(),
+                                      "role": roleCtrl.text.trim(),
+                                      "supervisor_id": supervisorIdCtrl.text
+                                          .trim(),
+                                      "active_interns": int.parse(
+                                        activeInternsCtrl.text.trim(),
+                                      ),
+                                      "start_date": startDate!
+                                          .toIso8601String(),
+                                      "end_date": endDate!.toIso8601String(),
+                                    };
+
+                                    final success =
+                                        await ApiService.createDepartment(
+                                          token!,
+                                          newDept,
+                                        );
+
+                                    if (success) {
+                                      await _fetchDepartments(); // refresh THIS screen's data
                                       Navigator.pop(ctx);
                                     }
                                   },
@@ -980,13 +1019,13 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
 
   // ── DEPARTMENT CARD ───────────────────────────────────
   Widget _buildDepartmentCard(Map<String, dynamic> dept) {
-    final name = (dept['name'] ?? 'Unknown').toString();
-    final supervisor = (dept['supervisor'] ?? '').toString();
+    final name = (dept['department_name'] ?? 'Unknown').toString();
+    final supervisor = (dept['supervisor_name'] ?? '').toString();
     final role = (dept['role'] ?? '').toString();
     final supervisorId = (dept['supervisor_id'] ?? '').toString();
     final activeInterns = (dept['active_interns'] as int?) ?? 0;
-    final start = dept['start_date'] as DateTime;
-    final end = dept['end_date'] as DateTime;
+    final start = DateTime.parse(dept['start_date']);
+    final end = DateTime.parse(dept['end_date']);
     final status = _computeStatus(start, end);
 
     return _HoverCard(

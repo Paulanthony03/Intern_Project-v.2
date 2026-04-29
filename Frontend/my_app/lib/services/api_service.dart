@@ -197,4 +197,49 @@ class ApiService {
       throw Exception("Failed to delete user");
     }
   }
+
+  // GET
+  static Future<List<dynamic>> getDepartments(String token) async {
+    final res = await http.get(
+      Uri.parse("$baseUrl/departments"),
+      headers: {"Authorization": "Bearer $token"},
+    );
+
+    return jsonDecode(res.body);
+  }
+
+  // CREATE
+  static Future<bool> createDepartment(
+    String token,
+    Map<String, dynamic> data,
+  ) async {
+    final res = await http.post(
+      Uri.parse("$baseUrl/departments"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode(data),
+    );
+
+    return res.statusCode == 200 || res.statusCode == 201;
+  }
+
+  // UPDATE
+  static Future<bool> updateDepartment(
+    String token,
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    final res = await http.put(
+      Uri.parse("$baseUrl/departments/$id"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode(data),
+    );
+
+    return res.statusCode == 200;
+  }
 }
