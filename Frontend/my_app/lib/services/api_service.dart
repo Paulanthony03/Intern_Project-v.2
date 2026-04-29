@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:typed_data';
 
 class ApiService {
   static const String baseUrl = "http://10.22.0.127:8080/api";
@@ -225,5 +226,27 @@ class ApiService {
     }
 
     return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> uploadPhotoBytes(
+    String token,
+    Uint8List bytes,
+    String filename,
+  ) async {
+    final uri = Uri.parse('http://10.22.0.127:8080/api/profile/picture');
+    final request = http.MultipartRequest('POST', uri);
+    request.headers['Authorization'] = 'Bearer $token';
+    request.files.add(
+      http.MultipartFile.fromBytes('photo', bytes, filename: filename),
+    );
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception('Photo upload failed: ${response.body}');
+    }
   }
 }

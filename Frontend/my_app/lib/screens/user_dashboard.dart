@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'user_department_page.dart';
 import 'calendar_page.dart';
 import 'user_profile.dart';
+import 'dart:typed_data';
 
 class UserDashboard extends StatefulWidget {
   final String token;
@@ -352,8 +353,6 @@ class _UserDashboardState extends State<UserDashboard> {
       );
 
       // Background server refresh to keep everything in sync
-      await loadData();
-      print("=== PROFILE AFTER RELOAD: $userProfile ===");
     } catch (e) {
       print("=== SAVE ERROR: $e ===");
       setState(() => isSaving = false);
@@ -1648,7 +1647,41 @@ class _UserDashboardState extends State<UserDashboard> {
                       ? MyProfilePage(
                           user: userProfile ?? {},
                           onSave: (updated) async {
-                            // 1. Push updated values into controllers so saveProfile() picks them up
+                            if (updated["photo_bytes"] != null) {
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              final token =
+                                  prefs.getString("token") ?? widget.token;
+                              try {
+                                final bytes =
+                                    updated["photo_bytes"] as Uint8List;
+                                final filename =
+                                    updated["photo_local"]
+                                        ?.toString()
+                                        .split('/')
+                                        .last ??
+                                    "photo.jpg";
+                                final result =
+                                    await ApiService.uploadPhotoBytes(
+                                      token,
+                                      bytes,
+                                      filename,
+                                    );
+                                updated["photo_url"] =
+                                    result["photo_url"] ?? "";
+                                updated.remove("photo_bytes");
+                                updated.remove("photo_local");
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Photo upload failed: $e"),
+                                    backgroundColor: Colors.redAccent,
+                                  ),
+                                );
+                                return;
+                              }
+                            }
+
                             _nameController.text =
                                 updated["name"] ?? _nameController.text;
                             _emailController.text =
@@ -1664,13 +1697,14 @@ class _UserDashboardState extends State<UserDashboard> {
                                 updated["dept"] ??
                                 _departmentController.text;
 
-                            // 2. Optimistic UI update
                             setState(
                               () => userProfile = {...?userProfile, ...updated},
                             );
 
-                            // 3. Save to server
-                            await saveProfile();
+                            if (updated["photo_bytes"] == null &&
+                                updated["photo_local"] == null) {
+                              await saveProfile();
+                            }
                           },
                         )
                       : _selectedNav == 'calendar'

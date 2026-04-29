@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'dart:typed_data';
 
 class MyProfilePage extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -33,7 +33,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
   bool _obscureNew = true;
   bool _obscureConfirm = true;
 
-  File? _pickedImage;
+  Uint8List? _pickedImageBytes;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -42,12 +42,15 @@ class _MyProfilePageState extends State<MyProfilePage> {
       imageQuality: 85,
     );
     if (picked != null) {
-      setState(() => _pickedImage = File(picked.path));
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _pickedImageBytes = bytes;
+      });
 
-      // Push to onSave so dashboard/API gets the new photo path
       if (widget.onSave != null) {
         final updated = Map<String, dynamic>.from(_localUser);
-        updated["photo_local"] = picked.path; // flag for your API service
+        updated["photo_local"] = picked.path;
+        updated["photo_bytes"] = bytes;
         await widget.onSave!(updated);
       }
     }
@@ -320,19 +323,19 @@ class _MyProfilePageState extends State<MyProfilePage> {
               CircleAvatar(
                 radius: 50,
                 backgroundColor: borderColor,
-                backgroundImage: _pickedImage != null
-                    ? FileImage(_pickedImage!) as ImageProvider
+                backgroundImage: _pickedImageBytes != null
+                    ? MemoryImage(_pickedImageBytes!) as ImageProvider
                     : ((_localUser["photo_url"] ?? _localUser["photo"]) !=
                               null &&
                           (_localUser["photo_url"] ?? _localUser["photo"])
                               .toString()
                               .isNotEmpty)
                     ? NetworkImage(
-                        _localUser["photo_url"] ?? _localUser["photo"],
+                        "http://10.22.0.127:8080${_localUser["photo_url"] ?? _localUser["photo"]}",
                       )
                     : null,
                 child:
-                    _pickedImage == null &&
+                    _pickedImageBytes == null &&
                         ((_localUser["photo_url"] ?? _localUser["photo"]) ==
                                 null ||
                             (_localUser["photo_url"] ?? _localUser["photo"])

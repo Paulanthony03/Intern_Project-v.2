@@ -19,10 +19,9 @@ func GetProfile(c *gin.Context) {
 	var user models.User
 
 	err := DB.QueryRow(
-		"SELECT id, name, email, password, role, intern_id, school, contact, department FROM users WHERE id=$1",
+		"SELECT id, name, email, password, role, intern_id, school, contact, department, photo_url FROM users WHERE id=$1",
 		userID,
-	).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Role, &user.InternID, &user.School, &user.Contact, &user.Department)
-
+	).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Role, &user.InternID, &user.School, &user.Contact, &user.Department, &user.PhotoURL)
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
@@ -45,6 +44,7 @@ func GetProfile(c *gin.Context) {
 		"school":     user.School,
 		"contact":    user.Contact,
 		"department": user.Department,
+		"photo_url":  user.PhotoURL,
 	})
 }
 func GetUsers(c *gin.Context) {
