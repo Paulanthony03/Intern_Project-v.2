@@ -6,12 +6,16 @@ import (
 	"student-system/controllers"
 	"student-system/handlers"
 	"student-system/routes"
+	"student-system/utils"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+
+	utils.TestMain()
+
 	db, err := config.ConnectDB()
 	if err != nil {
 		panic(err)

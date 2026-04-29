@@ -1118,7 +1118,12 @@ class _UserDashboardState extends State<UserDashboard> {
           Divider(color: borderColor, height: 1),
           const SizedBox(height: 12),
 
-          _navItem(Icons.dashboard_rounded, "Dashboard", 'dashboard'),
+          _navItem(
+            Icons.dashboard_rounded,
+            "Dashboard",
+            'dashboard',
+            onTap: () => _loadPresentCount(),
+          ),
           _navItem(Icons.person_rounded, "My Profile", 'profile'),
           _navItem(Icons.person_rounded, "Departments", 'departments'),
           _navItem(
@@ -1267,41 +1272,6 @@ class _UserDashboardState extends State<UserDashboard> {
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  // ════════════════════════════════════════════════════════
-  //  RECENT ACTIVITY
-  // ════════════════════════════════════════════════════════
-  Widget buildRecentActivity() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Recent Activity",
-            style: TextStyle(
-              color: textMain,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Divider(color: borderColor, height: 24),
-          Center(
-            child: Text(
-              "no new notifications",
-              style: TextStyle(color: textMuted, fontSize: 13),
-            ),
-          ),
-          const SizedBox(height: 8),
         ],
       ),
     );
@@ -1648,7 +1618,6 @@ class _UserDashboardState extends State<UserDashboard> {
                         ),
                 ),
                 const SizedBox(width: 16),
-                SizedBox(width: 260, child: buildRecentActivity()),
               ],
             ),
           ),

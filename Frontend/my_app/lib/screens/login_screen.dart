@@ -340,6 +340,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                                   horizontal: 15,
                                                 ),
                                           ),
+                                          onFieldSubmitted: (_) =>
+                                              FocusScope.of(
+                                                context,
+                                              ).nextFocus(),
                                           onChanged: (v) => _onEmailChanged(v),
                                           validator: (value) {
                                             if (value == null ||
@@ -393,6 +397,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                           ),
                                           obscureText: obscurePassword,
+                                          onFieldSubmitted: (_) =>
+                                              isLoading ? null : loginUser(),
 
                                           decoration:
                                               InputDecoration(

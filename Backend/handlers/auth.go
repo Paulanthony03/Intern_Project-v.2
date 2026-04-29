@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -18,6 +19,8 @@ func SetDB(database *sql.DB) {
 	DB = database
 }
 func Register(c *gin.Context) {
+	fmt.Println("=== REGISTER CALLED ===")
+
 	var user models.User
 
 	if err := c.BindJSON(&user); err != nil {

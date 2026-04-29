@@ -183,7 +183,7 @@ func CreateUser(c *gin.Context) {
 	).Scan(&user.ID)
 
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Registration failed"})
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 

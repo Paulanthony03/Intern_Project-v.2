@@ -304,6 +304,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                   114,
                                                 ),
                                                 controller: firstNameController,
+                                                textInputAction:
+                                                    TextInputAction.next,
+                                                onFieldSubmitted: (_) =>
+                                                    FocusScope.of(
+                                                      context,
+                                                    ).nextFocus(),
                                                 style: const TextStyle(
                                                   fontSize: 15,
                                                   color: Colors.white,
@@ -353,6 +359,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                   114,
                                                 ),
                                                 controller: lastNameController,
+                                                textInputAction:
+                                                    TextInputAction.next,
+                                                onFieldSubmitted: (_) =>
+                                                    FocusScope.of(
+                                                      context,
+                                                    ).nextFocus(),
                                                 style: const TextStyle(
                                                   fontSize: 15,
                                                   color: Colors.white,
@@ -407,6 +419,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                   114,
                                                 ),
                                                 controller: emailController,
+                                                textInputAction:
+                                                    TextInputAction.next,
+                                                onFieldSubmitted: (_) =>
+                                                    FocusScope.of(
+                                                      context,
+                                                    ).nextFocus(),
                                                 style: const TextStyle(
                                                   fontSize: 15,
                                                   color: Colors.white,
@@ -465,6 +483,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                   114,
                                                 ),
                                                 controller: internIdController,
+                                                textInputAction:
+                                                    TextInputAction.next,
+                                                onFieldSubmitted: (_) =>
+                                                    FocusScope.of(
+                                                      context,
+                                                    ).nextFocus(),
                                                 style: const TextStyle(
                                                   fontSize: 15,
                                                   color: Colors.white,
@@ -523,6 +547,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         114,
                                       ),
                                       controller: schoolController,
+                                      textInputAction: TextInputAction.next,
+                                      onFieldSubmitted: (_) =>
+                                          FocusScope.of(context).nextFocus(),
                                       style: const TextStyle(
                                         fontSize: 15,
                                         color: Colors.white,
@@ -562,6 +589,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         114,
                                       ),
                                       controller: programController,
+                                      textInputAction: TextInputAction.next,
+                                      onFieldSubmitted: (_) =>
+                                          FocusScope.of(context).nextFocus(),
                                       style: const TextStyle(
                                         fontSize: 15,
                                         color: Colors.white,
@@ -608,6 +638,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                   114,
                                                 ),
                                                 controller: passwordController,
+                                                textInputAction:
+                                                    TextInputAction.next,
+                                                onFieldSubmitted: (_) =>
+                                                    FocusScope.of(
+                                                      context,
+                                                    ).nextFocus(),
                                                 style: const TextStyle(
                                                   fontSize: 15,
                                                   color: Colors.white,
@@ -696,6 +732,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                 ),
                                                 controller:
                                                     confirmPasswordController,
+                                                textInputAction:
+                                                    TextInputAction.next,
+                                                onFieldSubmitted: (_) =>
+                                                    FocusScope.of(
+                                                      context,
+                                                    ).nextFocus(),
                                                 style: const TextStyle(
                                                   fontSize: 15,
                                                   color: Colors.white,
