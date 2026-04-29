@@ -10,7 +10,7 @@ import (
 )
 
 func ConnectDB() (*sql.DB, error) {
-	dsn := "host=localhost user=postgres password=postgres dbname=intern5-romabay port=5432 sslmode=disable"
+	dsn := "host=localhost user=postgres password=postgres dbname=Students port=5432 sslmode=disable"
 
 	gormDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -35,6 +35,6 @@ func ConnectDB() (*sql.DB, error) {
 		return nil, err
 	}
 
-	log.Println("✅ Database connected to 'intern5-romabay' and tables ready!")
+	log.Println("✅ Database connected to 'Students' and tables ready!")
 	return sqlDB, nil
 }
