@@ -6,14 +6,9 @@ import '../services/api_service.dart';
 //  DEPARTMENTS SCREEN
 // ════════════════════════════════════════════════════════
 class AdminDepartments extends StatefulWidget {
-  final List<Map<String, dynamic>> departments;
   final VoidCallback onDepartmentsChanged;
 
-  const AdminDepartments({
-    super.key,
-    required this.departments,
-    required this.onDepartmentsChanged,
-  });
+  const AdminDepartments({super.key, required this.onDepartmentsChanged});
 
   @override
   State<AdminDepartments> createState() => _AdminDepartmentsState();
@@ -78,12 +73,11 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
   }
 
   List<Map<String, dynamic>> get _filteredDepartments {
-    final list = widget.departments;
-    if (_searchQuery.isEmpty) return list;
+    if (_searchQuery.isEmpty) return _departmentList;
 
     final q = _searchQuery.toLowerCase();
 
-    return list.where((d) {
+    return _departmentList.where((d) {
       final name = (d['department_name'] ?? '').toString().toLowerCase();
       final supervisor = (d['supervisor_name'] ?? '').toString().toLowerCase();
       return name.contains(q) || supervisor.contains(q);
@@ -520,7 +514,9 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                                     );
 
                                 if (success) {
-                                  await _fetchDepartments(); //  THIS is the real fix
+                                  await _fetchDepartments();
+                                  widget
+                                      .onDepartmentsChanged(); //  THIS is the real fix
                                   Navigator.pop(ctx);
                                 }
                               },
@@ -974,7 +970,9 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                                         );
 
                                     if (success) {
-                                      await _fetchDepartments(); // refresh THIS screen's data
+                                      await _fetchDepartments();
+                                      widget
+                                          .onDepartmentsChanged(); // refresh THIS screen's data
                                       Navigator.pop(ctx);
                                     }
                                   },

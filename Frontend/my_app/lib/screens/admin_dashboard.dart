@@ -49,6 +49,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   void initState() {
     super.initState();
+    loadUsers();
   }
 
   Future<void> loadUsers() async {
@@ -856,11 +857,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
             SizedBox(
               height: 97,
               child: ListView.builder(
+                shrinkWrap: true,
                 itemCount: ongoing.length,
                 itemBuilder: (context, index) {
                   final dept = ongoing[index];
-                  final name = (dept['name'] ?? '').toString();
-                  final supervisor = (dept['supervisor'] ?? '').toString();
+                  final name = (dept['department_name'] ?? '').toString();
+                  final supervisor = (dept['supervisor_name'] ?? '').toString();
                   final role = (dept['role'] ?? 'Supervisor').toString();
                   final isLast = index == ongoing.length - 1;
 

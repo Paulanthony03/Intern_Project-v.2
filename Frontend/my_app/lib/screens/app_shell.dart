@@ -500,7 +500,6 @@ class _AppShellState extends State<AppShell> {
                       ), // index 1
                       AdminDepartments(
                         key: ValueKey(_departments.length),
-                        departments: _departments,
                         onDepartmentsChanged: _loadDepartments,
                       ), // index 2
                       AdminSchools(), // index 3
