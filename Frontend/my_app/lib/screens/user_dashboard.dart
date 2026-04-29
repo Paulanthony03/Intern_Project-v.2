@@ -45,19 +45,19 @@ class _UserDashboardState extends State<UserDashboard> {
     {
       "name": "QA",
       "status": "Finished",
-      "grade": 88,
+      "grade": 90,
       "supervisor": "Renzy Rivera",
     },
     {
       "name": "PMO",
       "status": "Finished",
-      "grade": 87,
+      "grade": 70,
       "supervisor": "Lea Rose Arellano-Rosario",
     },
     {
       "name": "BRM",
       "status": "Finished",
-      "grade": 89,
+      "grade": 91,
       "supervisor": "Raymond Villapando",
     },
   ];
