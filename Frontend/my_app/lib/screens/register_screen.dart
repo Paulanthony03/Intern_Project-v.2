@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
 import 'landing_screen.dart';
+import 'registration_otp_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -45,25 +46,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> registerUser() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (passwordController.text != confirmPasswordController.text) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Passwords do not match")));
+      return;
+    }
+
     setState(() => isLoading = true);
 
-    String? result = await ApiService.register(
-      "${firstNameController.text} ${lastNameController.text}",
-      emailController.text,
-      passwordController.text,
-      internIdController.text,
-      schoolController.text,
-      programController.text,
-    );
+    final email = emailController.text;
+
+    final res = await ApiService.sendRegistrationOtp(email);
 
     setState(() => isLoading = false);
 
-    if (result == "success") {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen()));
+    if (res != null && res["message"] != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RegistrationOtpScreen(
+            email: email,
+            name: "${firstNameController.text} ${lastNameController.text}",
+            password: passwordController.text,
+            internId: internIdController.text,
+            school: schoolController.text,
+            program: programController.text,
+          ),
+        ),
+      );
     } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(result ?? "Registration Failed")));
+      ).showSnackBar(SnackBar(content: Text("Failed to send OTP")));
     }
   }
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static const String baseUrl = "http://10.22.0.124:8080/api";
@@ -241,5 +242,49 @@ class ApiService {
     );
 
     return res.statusCode == 200;
+  }
+
+  static Future<bool> updateAdminProfile(Map<String, dynamic> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("token");
+
+    final res = await http.put(
+      Uri.parse("$baseUrl/admin/profile"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode(data),
+    );
+
+    return res.statusCode == 200;
+  }
+
+  static Future<Map<String, dynamic>?> sendRegistrationOtp(String email) async {
+    try {
+      final res = await http.post(
+        Uri.parse("$baseUrl/send-registration-otp"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email}),
+      );
+
+      return jsonDecode(res.body);
+    } catch (e) {
+      print("Send OTP error: $e");
+      return null;
+    }
+  }
+
+  static Future<http.Response> verifyRegistrationOtp(
+    String email,
+    String otp,
+  ) async {
+    final res = await http.post(
+      Uri.parse("$baseUrl/verify-registration-otp"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"email": email, "otp": otp}),
+    );
+
+    return res;
   }
 }

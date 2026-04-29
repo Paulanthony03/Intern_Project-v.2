@@ -163,7 +163,7 @@ class _AdminInternsState extends State<AdminInterns> {
                     const SizedBox(height: 12),
                     _infoRow(
                       "Department:",
-                      user["department"] ?? user["dept"] ?? "-",
+                      user["Department"] ?? user["dept"] ?? "-",
                     ),
                     const SizedBox(height: 24),
                     SizedBox(

@@ -1269,7 +1269,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       buildStatCard(
                         departmentCount.toString().padLeft(2, '0'),
-                        "Total Depts.",
+                        "Total Deptartmets",
                         Icons.folder_rounded,
                       ),
                       buildStatCard(

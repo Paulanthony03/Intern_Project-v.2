@@ -47,7 +47,6 @@ class _AppShellState extends State<AppShell> {
     'name': 'Admin Mc',
     'admin_id': 'admin_08',
     'email': 'admin@test.com',
-    'contact_number': '',
     'username': 'admin@test.com',
     'password': '',
   };
@@ -114,7 +113,7 @@ class _AppShellState extends State<AppShell> {
     if (!mounted) return;
 
     setState(() {
-      _departments = List<Map<String, dynamic>>.from(data ?? []);
+      _departments = List<Map<String, dynamic>>.from(data);
     });
   }
 
