@@ -18,6 +18,11 @@ func SetupRoutes(r *gin.Engine) {
 		public.POST("/forgot-password", controllers.ForgotPasswordHandler)
 		public.POST("/reset-password", controllers.ResetPasswordHandler)
 		public.POST("/verify-otp", controllers.VerifyOTPHandler)
+
+		public.POST("/departments", controllers.CreateDepartment)
+		public.GET("/departments", controllers.GetDepartments)
+		public.PUT("/departments/:id", controllers.UpdateDepartment)
+		public.DELETE("/departments/:id", controllers.DeleteDepartment)
 	}
 
 	protected := r.Group("/api")
