@@ -23,6 +23,10 @@ func SetupRoutes(r *gin.Engine) {
 		public.GET("/departments", controllers.GetDepartments)
 		public.PUT("/departments/:id", controllers.UpdateDepartment)
 		public.DELETE("/departments/:id", controllers.DeleteDepartment)
+
+		public.POST("/send-registration-otp", controllers.SendRegistrationOTP)
+		public.POST("/verify-registration-otp", controllers.VerifyRegistrationOTP)
+
 	}
 
 	protected := r.Group("/api")
@@ -32,4 +36,5 @@ func SetupRoutes(r *gin.Engine) {
 		protected.POST("/users", handlers.CreateUser)
 		protected.DELETE("/users/:id", handlers.DeleteUser)
 	}
+
 }

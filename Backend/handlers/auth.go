@@ -42,7 +42,22 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
+	var verified bool
 
+	err = DB.QueryRow(`
+	SELECT verified
+	FROM email_verifications
+	WHERE email=$1
+	ORDER BY id DESC
+	LIMIT 1
+`, user.Email).Scan(&verified)
+
+	if err != nil || !verified {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Email not verified",
+		})
+		return
+	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to hash password"})
@@ -67,9 +82,10 @@ func Register(c *gin.Context) {
 			role,
 			role_id,
 			created_at,
-			updated_at
+			updated_at,
+			department
 		)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
 
 		user.Name,
 		user.Email,
@@ -83,6 +99,7 @@ func Register(c *gin.Context) {
 		1, // role_id (default user role)
 		now,
 		now,
+		user.Department,
 	)
 
 	if err != nil {
@@ -168,4 +185,90 @@ func DeleteUser(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{"message": "User deleted successfully"})
+}
+
+func UpdateAdminProfile(c *gin.Context) {
+	id := c.Param("id")
+
+	var input struct {
+		Name       string `json:"name"`
+		AdminID    string `json:"admin_id"`
+		Email      string `json:"email"`
+		PhotoURL   string `json:"photo_url"`
+		Department string `json:"department"`
+	}
+
+	if err := c.BindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, err := DB.Exec(`
+		UPDATE users SET
+			name=$1,
+			admin_id=$2,
+			email=$3,
+			photo_url=$4,
+			department=$5,
+			updated_at=$6
+		WHERE id=$7
+	`,
+		input.Name,
+		input.AdminID,
+		input.Email,
+		input.PhotoURL,
+		input.Department,
+		time.Now(),
+		id,
+	)
+
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Profile updated"})
+}
+
+func UploadProfilePhoto(c *gin.Context) {
+	file, err := c.FormFile("photo")
+	if err != nil {
+		c.JSON(400, gin.H{"error": "No file uploaded"})
+		return
+	}
+
+	filename := time.Now().Format("20060102150405") + "_" + file.Filename
+	path := "./uploads/" + filename
+
+	if err := c.SaveUploadedFile(file, path); err != nil {
+		c.JSON(500, gin.H{"error": "Failed to save file"})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"photo_url": "/uploads/" + filename,
+	})
+}
+
+func UpdatePassword(c *gin.Context) {
+	id := c.Param("id")
+
+	var input struct {
+		Password string `json:"password"`
+	}
+
+	hash, _ := bcrypt.GenerateFromPassword([]byte(input.Password), 14)
+
+	_, err := DB.Exec(
+		"UPDATE users SET password=$1 WHERE id=$2",
+		string(hash),
+		id,
+	)
+
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to update password"})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Password updated"})
 }
