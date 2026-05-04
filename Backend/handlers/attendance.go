@@ -11,7 +11,7 @@ func GetAttendance(c *gin.Context) {
 	userID := c.GetUint("user_id")
 
 	rows, err := DB.Query(
-		"SELECT date, status FROM attendance WHERE user_id=$1",
+		"SELECT TO_CHAR(date, 'YYYY-MM-DD'), status FROM attendance WHERE user_id=$1",
 		userID,
 	)
 	if err != nil {
@@ -49,7 +49,7 @@ func MarkAttendance(c *gin.Context) {
 	// Empty status = toggle off = delete
 	if input.Status == "" {
 		_, err := DB.Exec(
-			"DELETE FROM attendance WHERE user_id=$1 AND date=$2",
+			"DELETE FROM attendance WHERE user_id=$1 AND date=$2::date",
 			userID, input.Date,
 		)
 		if err != nil {
@@ -62,7 +62,7 @@ func MarkAttendance(c *gin.Context) {
 
 	var exists bool
 	err := DB.QueryRow(
-		"SELECT EXISTS(SELECT 1 FROM attendance WHERE user_id=$1 AND date=$2)",
+		"SELECT EXISTS(SELECT 1 FROM attendance WHERE user_id=$1 AND date=$2::date)",
 		userID, input.Date,
 	).Scan(&exists)
 
@@ -73,13 +73,12 @@ func MarkAttendance(c *gin.Context) {
 
 	if exists {
 		_, err = DB.Exec(
-			"UPDATE attendance SET status=$1 WHERE user_id=$2 AND date=$3",
+			"UPDATE attendance SET status=$1 WHERE user_id=$2 AND date=$3::date",
 			input.Status, userID, input.Date,
 		)
 	} else {
-		// Remove created_at and updated_at from insert
 		_, err = DB.Exec(
-			"INSERT INTO attendance (user_id, date, status) VALUES ($1, $2, $3)",
+			"INSERT INTO attendance (user_id, date, status) VALUES ($1, $2::date, $3)",
 			userID, input.Date, input.Status,
 		)
 	}
