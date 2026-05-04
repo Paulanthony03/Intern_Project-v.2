@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 
 class CalendarPage extends StatefulWidget {
   final bool isAdmin;
   final String internName;
+  final String token;
+  final VoidCallback? onAttendanceChanged;
 
   const CalendarPage({
     Key? key,
     required this.isAdmin,
     required this.internName,
+    required this.token,
+    this.onAttendanceChanged,
   }) : super(key: key);
 
   @override
@@ -39,22 +43,34 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   // ─── PERSISTENCE ─────────────────────────────────────────
-  Future<void> _loadAttendance() async {
+  Future<String> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString('attendance_${widget.internName}');
-    if (raw != null) {
-      setState(() {
-        _attendance = Map<String, String>.from(jsonDecode(raw));
-      });
+    return prefs.getString("token") ?? widget.token;
+  }
+
+  Future<void> _loadAttendance() async {
+    try {
+      final token = await _getToken();
+      print("=== LOADING ATTENDANCE, token: $token ===");
+      final data = await ApiService.getAttendance(token);
+      print("=== ATTENDANCE DATA: $data ===");
+      setState(() => _attendance = data);
+    } catch (e) {
+      print("Failed to load attendance: $e");
     }
   }
 
-  Future<void> _saveAttendance() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      'attendance_${widget.internName}',
-      jsonEncode(_attendance),
-    );
+  Future<void> _saveAttendance(String date, String status) async {
+    try {
+      final token = await _getToken();
+      print(
+        "=== SAVING ATTENDANCE: date=$date status=$status token=$token ===",
+      );
+      await ApiService.markAttendance(token, date, status);
+      print("=== ATTENDANCE SAVED SUCCESSFULLY ===");
+    } catch (e) {
+      print("Failed to save attendance: $e");
+    }
   }
 
   // ─── HELPERS ─────────────────────────────────────────────
@@ -79,19 +95,23 @@ class _CalendarPageState extends State<CalendarPage> {
 
   // ─── MARK ATTENDANCE ─────────────────────────────────────
   void _markAttendance(DateTime day, String status) async {
-    if (widget.isAdmin) return; // admin view only
-    if (_isFuture(day)) return; // can't mark future
-    if (_isWeekend(day)) return; // no weekends
+    if (widget.isAdmin) return;
+    if (_isFuture(day)) return;
+    if (_isWeekend(day)) return;
 
     final key = _dateKey(day);
+    final isToggleOff = _attendance[key] == status;
+
     setState(() {
-      if (_attendance[key] == status) {
-        _attendance.remove(key); // toggle off
+      if (isToggleOff) {
+        _attendance.remove(key);
       } else {
         _attendance[key] = status;
       }
     });
-    await _saveAttendance();
+
+    await _saveAttendance(key, isToggleOff ? "" : status);
+    widget.onAttendanceChanged?.call();
   }
 
   void _showDayDialog(DateTime day) {

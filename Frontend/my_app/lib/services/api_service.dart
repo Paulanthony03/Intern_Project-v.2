@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 
 class ApiService {
-  static const String baseUrl = "http://10.22.0.124:8080/api";
+  static const String baseUrl = "http://10.22.0.127:8080/api";
 
   // =========================
   // REGISTER USER
@@ -247,6 +247,42 @@ class ApiService {
       return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
       throw Exception('Photo upload failed: ${response.body}');
+    }
+  }
+
+  static Future<Map<String, String>> getAttendance(String token) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/attendance'),
+        headers: {"Authorization": "Bearer $token"},
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data.map((k, v) => MapEntry(k, v.toString()));
+      }
+      return {};
+    } catch (e) {
+      print("Get Attendance Error: $e");
+      return {};
+    }
+  }
+
+  static Future<void> markAttendance(
+    String token,
+    String date,
+    String status,
+  ) async {
+    try {
+      await http.post(
+        Uri.parse('$baseUrl/attendance'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({"date": date, "status": status}),
+      );
+    } catch (e) {
+      print("Mark Attendance Error: $e");
     }
   }
 }

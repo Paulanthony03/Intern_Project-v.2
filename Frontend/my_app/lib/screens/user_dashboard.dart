@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/form_persistence_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'user_department_page.dart';
 import 'calendar_page.dart';
 import 'user_profile.dart';
@@ -180,14 +179,16 @@ class _UserDashboardState extends State<UserDashboard> {
 
   Future<void> _loadPresentCount() async {
     final prefs = await SharedPreferences.getInstance();
-    final name = userProfile?["name"] ?? "intern";
-    final raw = prefs.getString('attendance_$name');
-    if (raw != null) {
-      final attendance = Map<String, String>.from(jsonDecode(raw));
+    final token = prefs.getString("token") ?? widget.token;
+    try {
+      final attendance = await ApiService.getAttendance(token);
+      print("=== ATTENDANCE LOADED: $attendance ===");
       setState(() {
         _presentCount = attendance.values.where((v) => v == 'present').length;
+        print("=== PRESENT COUNT: $_presentCount ===");
       });
-    } else {
+    } catch (e) {
+      print("=== ATTENDANCE ERROR: $e ===");
       setState(() => _presentCount = 0);
     }
   }
@@ -1180,8 +1181,11 @@ class _UserDashboardState extends State<UserDashboard> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       child: GestureDetector(
-        onTap: () {
+        onTap: () async {
           setState(() => _selectedNav = key);
+          if (key == 'dashboard') {
+            await _loadPresentCount();
+          }
           onTap?.call();
         },
         child: Container(
@@ -1711,6 +1715,8 @@ class _UserDashboardState extends State<UserDashboard> {
                       ? CalendarPage(
                           isAdmin: false,
                           internName: userProfile?["name"] ?? "intern",
+                          token: widget.token,
+                          onAttendanceChanged: () => _loadPresentCount(),
                         )
                       : DepartmentPage(
                           departments: departments,

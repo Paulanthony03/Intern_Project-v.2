@@ -35,6 +35,12 @@ class _MyProfilePageState extends State<MyProfilePage> {
 
   Uint8List? _pickedImageBytes;
 
+  String _fullPhotoUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('http')) return url;
+    return 'http://10.22.0.127:8080$url';
+  }
+
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
@@ -331,7 +337,9 @@ class _MyProfilePageState extends State<MyProfilePage> {
                               .toString()
                               .isNotEmpty)
                     ? NetworkImage(
-                        "http://10.22.0.127:8080${_localUser["photo_url"] ?? _localUser["photo"]}",
+                        _fullPhotoUrl(
+                          _localUser["photo_url"] ?? _localUser["photo"],
+                        ),
                       )
                     : null,
                 child:
