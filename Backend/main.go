@@ -40,9 +40,11 @@ func main() {
 
 	routes.SetupRoutes(r)
 
+	r.Static("/uploads", "./uploads")
+
 	log.Println("Server is starting on port :8080...")
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
-	r.Static("/uploads", "./uploads")
+
 }

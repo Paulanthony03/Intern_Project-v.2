@@ -28,5 +28,9 @@ func SetupRoutes(r *gin.Engine) {
 		protected.POST("/users", handlers.CreateUser)
 		protected.DELETE("/users/:id", handlers.DeleteUser)
 		protected.POST("/profile/picture", handlers.UploadPhoto)
+
+		protected.GET("/attendance", handlers.GetAttendance)
+		protected.POST("/attendance", handlers.MarkAttendance)
+		protected.DELETE("/attendance/:date", handlers.DeleteAttendance)
 	}
 }

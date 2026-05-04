@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"student-system/models"
@@ -131,9 +132,9 @@ func UpdateProfile(c *gin.Context) {
 	// Fetch updated user to return in response
 	var user models.User
 	err = DB.QueryRow(
-		"SELECT id, name, email, role, intern_id, school, contact, department FROM users WHERE id=$1",
+		"SELECT id, name, email, role, intern_id, school, contact, department, photo_url FROM users WHERE id=$1",
 		userID,
-	).Scan(&user.ID, &user.Name, &user.Email, &user.Role, &user.InternID, &user.School, &user.Contact, &user.Department)
+	).Scan(&user.ID, &user.Name, &user.Email, &user.Role, &user.InternID, &user.School, &user.Contact, &user.Department, &user.PhotoURL)
 
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Profile updated but failed to fetch updated data"})
@@ -149,6 +150,7 @@ func UpdateProfile(c *gin.Context) {
 		"school":     user.School,
 		"contact":    user.Contact,
 		"department": user.Department,
+		"photo_url":  user.PhotoURL,
 	})
 }
 func CreateUser(c *gin.Context) {
@@ -203,7 +205,13 @@ func UploadPhoto(c *gin.Context) {
 		return
 	}
 
-	filename := fmt.Sprintf("uploads/%d_%s", userID, file.Filename)
+	// Generate unique filename with extension
+	ext := filepath.Ext(file.Filename)
+	if ext == "" {
+		ext = ".jpg" // default extension
+	}
+	filename := fmt.Sprintf("uploads/%d_%d%s", userID, time.Now().UnixNano(), ext)
+
 	if err := c.SaveUploadedFile(file, filename); err != nil {
 		c.JSON(500, gin.H{"error": "Failed to save file"})
 		return

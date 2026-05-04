@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,7 +11,7 @@ func GetAttendance(c *gin.Context) {
 	userID := c.GetUint("user_id")
 
 	rows, err := DB.Query(
-		"SELECT id, user_id, date, status, created_at, updated_at FROM attendances WHERE user_id=$1 ORDER BY date DESC",
+		"SELECT date, status FROM attendance WHERE user_id=$1",
 		userID,
 	)
 	if err != nil {
@@ -20,36 +20,25 @@ func GetAttendance(c *gin.Context) {
 	}
 	defer rows.Close()
 
-	var records []gin.H
+	attendance := map[string]string{}
 	for rows.Next() {
-		var id uint
-		var uid uint
 		var date, status string
-		var createdAt, updatedAt time.Time
-
-		if err := rows.Scan(&id, &uid, &date, &status, &createdAt, &updatedAt); err != nil {
+		if err := rows.Scan(&date, &status); err != nil {
 			continue
 		}
-
-		records = append(records, gin.H{
-			"id":         id,
-			"user_id":    uid,
-			"date":       date,
-			"status":     status,
-			"created_at": createdAt,
-			"updated_at": updatedAt,
-		})
+		attendance[date] = status
 	}
 
-	c.JSON(http.StatusOK, records)
+	c.JSON(http.StatusOK, attendance)
 }
 
 func MarkAttendance(c *gin.Context) {
 	userID := c.GetUint("user_id")
+	fmt.Println("=== MARK ATTENDANCE called, userID:", userID)
 
 	var input struct {
 		Date   string `json:"date"`
-		Status string `json:"status"` // "present" or "absent"
+		Status string `json:"status"`
 	}
 
 	if err := c.BindJSON(&input); err != nil {
@@ -57,17 +46,23 @@ func MarkAttendance(c *gin.Context) {
 		return
 	}
 
-	if input.Status != "present" && input.Status != "absent" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be 'present' or 'absent'"})
+	// Empty status = toggle off = delete
+	if input.Status == "" {
+		_, err := DB.Exec(
+			"DELETE FROM attendance WHERE user_id=$1 AND date=$2",
+			userID, input.Date,
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete attendance"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "Attendance removed"})
 		return
 	}
 
-	now := time.Now()
-
-	// Upsert: insert or update existing record
 	var exists bool
 	err := DB.QueryRow(
-		"SELECT EXISTS(SELECT 1 FROM attendances WHERE user_id=$1 AND date=$2)",
+		"SELECT EXISTS(SELECT 1 FROM attendance WHERE user_id=$1 AND date=$2)",
 		userID, input.Date,
 	).Scan(&exists)
 
@@ -78,13 +73,14 @@ func MarkAttendance(c *gin.Context) {
 
 	if exists {
 		_, err = DB.Exec(
-			"UPDATE attendances SET status=$1, updated_at=$2 WHERE user_id=$3 AND date=$4",
-			input.Status, now, userID, input.Date,
+			"UPDATE attendance SET status=$1 WHERE user_id=$2 AND date=$3",
+			input.Status, userID, input.Date,
 		)
 	} else {
+		// Remove created_at and updated_at from insert
 		_, err = DB.Exec(
-			"INSERT INTO attendances (user_id, date, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)",
-			userID, input.Date, input.Status, now, now,
+			"INSERT INTO attendance (user_id, date, status) VALUES ($1, $2, $3)",
+			userID, input.Date, input.Status,
 		)
 	}
 
@@ -105,7 +101,7 @@ func DeleteAttendance(c *gin.Context) {
 	date := c.Param("date")
 
 	result, err := DB.Exec(
-		"DELETE FROM attendances WHERE user_id=$1 AND date=$2",
+		"DELETE FROM attendance WHERE user_id=$1 AND date=$2",
 		userID, date,
 	)
 	if err != nil {
