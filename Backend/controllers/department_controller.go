@@ -24,7 +24,6 @@ func CreateDepartment(c *gin.Context) {
 		dept.DepartmentName,
 		dept.SupervisorName,
 		dept.Role,
-		dept.SupervisorID,
 		dept.StartDate,
 		dept.EndDate,
 	)
@@ -48,7 +47,7 @@ func GetDepartments(c *gin.Context) {
 
 	for rows.Next() {
 		var d models.Department
-		rows.Scan(&d.ID, &d.DepartmentName, &d.SupervisorName, &d.Role, &d.SupervisorID, &d.StartDate, &d.EndDate)
+		rows.Scan(&d.ID, &d.DepartmentName, &d.SupervisorName, &d.Role, &d.StartDate, &d.EndDate)
 		departments = append(departments, d)
 	}
 
@@ -70,7 +69,6 @@ func UpdateDepartment(c *gin.Context) {
 	`,
 		dept.DepartmentName,
 		dept.SupervisorName,
-		dept.SupervisorID,
 		dept.StartDate,
 		dept.EndDate,
 		id,

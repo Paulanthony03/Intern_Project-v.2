@@ -495,6 +495,7 @@ class _AppShellState extends State<AppShell> {
                       AdminInterns(
                         users: _users,
                         token: _token ?? '',
+                        departments: _departments,
                         onRefresh: _loadUsers,
                       ), // index 1
                       AdminDepartments(

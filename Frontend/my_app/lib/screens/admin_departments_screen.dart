@@ -26,7 +26,6 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
 
   // ── Helpers ───────────────────────────────────────────
 
-  /// Derives status purely from the current date vs the range.
   String _computeStatus(DateTime start, DateTime end) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -96,7 +95,7 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
         bg = const Color(0xFF1A2A3A);
         fg = const Color(0xFF6FB3CF);
         break;
-      default: // done
+      default:
         bg = const Color(0xFF2A2A2A);
         fg = textMuted;
     }
@@ -166,9 +165,6 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
     final roleCtrl = TextEditingController(
       text: (dept['role'] ?? '').toString(),
     );
-    final supervisorIdCtrl = TextEditingController(
-      text: (dept['supervisor_id'] ?? '').toString(),
-    );
     final internsCtrl = TextEditingController(
       text: ((dept['active_interns'] as int?) ?? 0).toString(),
     );
@@ -183,119 +179,127 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
         builder: (ctx, setDialogState) {
           final status = _computeStatus(editStart, editEnd);
 
-          Widget _fieldBox(
+          // ── Field box ──────────────────────────────────
+          Widget fieldBox(
             String label,
             TextEditingController ctrl, {
             TextInputType keyboardType = TextInputType.text,
-          }) => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(color: textMuted, fontSize: 11),
-              ),
-              const SizedBox(height: 4),
-              TextField(
-                controller: ctrl,
-                enabled: isEditing,
-                keyboardType: keyboardType,
-                style: const TextStyle(
-                  color: textMain,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                decoration: InputDecoration(
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+          }) =>
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(color: textMuted, fontSize: 11),
                   ),
-                  filled: true,
-                  fillColor: isEditing
-                      ? const Color(0xFF111111)
-                      : Colors.transparent,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: isEditing
-                        ? const BorderSide(color: accent, width: 1.5)
-                        : BorderSide.none,
+                  const SizedBox(height: 4),
+                  TextField(
+                    controller: ctrl,
+                    enabled: isEditing,
+                    keyboardType: keyboardType,
+                    style: const TextStyle(
+                      color: textMain,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      filled: true,
+                      fillColor: isEditing
+                          ? const Color(0xFF111111)
+                          : Colors.transparent,
+                      disabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF353533),
+                          width: 1.5,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                          color: accent,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: accent, width: 1.5),
-                  ),
-                  disabledBorder: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(8)),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ],
-          );
+                ],
+              );
 
-          Widget _dateTile(
+          Widget dateTile(
             String label,
             DateTime value, {
             DateTime? firstDate,
             DateTime? lastDate,
             required Function(DateTime) onPicked,
-          }) => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(color: textMuted, fontSize: 11),
-              ),
-              const SizedBox(height: 4),
-              GestureDetector(
-                onTap: isEditing
-                    ? () async {
-                        final picked = await _pickDate(
-                          ctx,
-                          value,
-                          firstDate: firstDate,
-                          lastDate: lastDate,
-                        );
-                        if (picked != null)
-                          setDialogState(() => onPicked(picked));
-                      }
-                    : null,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+          }) =>
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(color: textMuted, fontSize: 11),
                   ),
-                  decoration: BoxDecoration(
-                    color: isEditing
-                        ? const Color(0xFF111111)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                    border: isEditing
-                        ? Border.all(color: accent, width: 1.5)
-                        : Border.all(color: Colors.transparent),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_rounded,
-                        color: isEditing ? accent : textMuted,
-                        size: 14,
+                  const SizedBox(height: 4),
+                  GestureDetector(
+                    onTap: isEditing
+                        ? () async {
+                            final picked = await _pickDate(
+                              ctx,
+                              value,
+                              firstDate: firstDate,
+                              lastDate: lastDate,
+                            );
+                            if (picked != null) {
+                              setDialogState(() => onPicked(picked));
+                            }
+                          }
+                        : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _fmt(value),
-                        style: TextStyle(
-                          color: isEditing ? textMain : textMuted,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      decoration: BoxDecoration(
+                        color: isEditing
+                            ? const Color(0xFF111111)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: isEditing
+                            ? Border.all(color: borderColor, width: 1.5)
+                            : Border.all(color: Colors.transparent),
                       ),
-                    ],
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            color: isEditing ? accent : textMuted,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _fmt(value),
+                            style: TextStyle(
+                              color: isEditing ? textMain : textMuted,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
-          );
+                ],
+              );
 
           return Dialog(
             backgroundColor: Colors.transparent,
@@ -305,7 +309,7 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                 color: cardBg,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isEditing ? accent.withOpacity(0.5) : borderColor,
+                  color: isEditing ? accent : borderColor,
                 ),
               ),
               child: Stack(
@@ -319,9 +323,7 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                         // ── Header: name + status ──
                         Row(
                           children: [
-                            Expanded(
-                              child: _fieldBox('Department Name', nameCtrl),
-                            ),
+                            Expanded(child: fieldBox('Department Name', nameCtrl)),
                             const SizedBox(width: 12),
                             _statusBadge(status),
                           ],
@@ -333,7 +335,7 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                         Row(
                           children: [
                             Expanded(
-                              child: _dateTile(
+                              child: dateTile(
                                 'Start Date',
                                 editStart,
                                 lastDate: editEnd,
@@ -348,14 +350,11 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                               ),
                               child: Text(
                                 '→',
-                                style: TextStyle(
-                                  color: textMuted,
-                                  fontSize: 16,
-                                ),
+                                style: TextStyle(color: textMuted, fontSize: 16),
                               ),
                             ),
                             Expanded(
-                              child: _dateTile(
+                              child: dateTile(
                                 'End Date',
                                 editEnd,
                                 firstDate: editStart,
@@ -391,22 +390,8 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                             Expanded(
                               child: Column(
                                 children: [
-                                  _fieldBox('Supervisor Name', supervisorCtrl),
+                                  fieldBox('Supervisor Name', supervisorCtrl),
                                   const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _fieldBox('Role', roleCtrl),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: _fieldBox(
-                                          'Supervisor ID',
-                                          supervisorIdCtrl,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
                                 ],
                               ),
                             ),
@@ -432,10 +417,7 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                             children: [
                               const Text(
                                 'Active Interns',
-                                style: TextStyle(
-                                  color: textMuted,
-                                  fontSize: 13,
-                                ),
+                                style: TextStyle(color: textMuted, fontSize: 13),
                               ),
                               SizedBox(
                                 width: 80,
@@ -451,6 +433,9 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                                   ),
                                   decoration: const InputDecoration(
                                     border: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    disabledBorder: InputBorder.none,
                                     isDense: true,
                                     contentPadding: EdgeInsets.zero,
                                   ),
@@ -460,69 +445,158 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                           ),
                         ),
 
-                        // ── Save button (only in edit mode) ──
-                        if (isEditing) ...[
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: accent,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
+                        // ── Bottom action row ──
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            // Delete button
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  side: const BorderSide(color: Colors.redAccent),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                 ),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                                icon: const Icon(
+                                  Icons.delete_rounded,
+                                  color: Colors.redAccent,
+                                  size: 18,
                                 ),
-                              ),
-                              icon: const Icon(
-                                Icons.check_rounded,
-                                color: Color(0xFF111111),
-                                size: 18,
-                              ),
-                              label: const Text(
-                                'Save Changes',
-                                style: TextStyle(
-                                  color: Color(0xFF111111),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
+                                label: const Text(
+                                  'Delete',
+                                  style: TextStyle(
+                                    color: Colors.redAccent,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                              onPressed: () async {
-                                final prefs =
-                                    await SharedPreferences.getInstance();
-                                final token = prefs.getString("token");
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (c) => AlertDialog(
+                                      backgroundColor: cardBg,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        side: const BorderSide(color: borderColor),
+                                      ),
+                                      title: const Text(
+                                        'Delete Department',
+                                        style: TextStyle(color: textMain),
+                                      ),
+                                      content: Text(
+                                        'Are you sure you want to delete "${dept['department_name']}"? This cannot be undone.',
+                                        style: const TextStyle(color: textMuted),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(c, false),
+                                          child: const Text(
+                                            'Cancel',
+                                            style: TextStyle(color: textMuted),
+                                          ),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(c, true),
+                                          child: const Text(
+                                            'Delete',
+                                            style: TextStyle(color: Colors.redAccent),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
 
-                                final updated = {
-                                  "department_name": nameCtrl.text.trim(),
-                                  "supervisor_name": supervisorCtrl.text.trim(),
-                                  "role": roleCtrl.text.trim(),
-                                  "supervisor_id": supervisorIdCtrl.text.trim(),
-                                  "active_interns":
-                                      int.tryParse(internsCtrl.text.trim()) ??
-                                      0,
-                                  "start_date": editStart.toIso8601String(),
-                                  "end_date": editEnd.toIso8601String(),
-                                };
+                                  if (confirm == true) {
+                                    final prefs = await SharedPreferences.getInstance();
+                                    final token = prefs.getString("token");
 
-                                final success =
-                                    await ApiService.updateDepartment(
+                                    final success = await ApiService.deleteDepartment(
                                       token!,
                                       dept["id"].toString(),
-                                      updated,
                                     );
 
-                                if (success) {
-                                  await _fetchDepartments();
-                                  widget
-                                      .onDepartmentsChanged(); //  THIS is the real fix
-                                  Navigator.pop(ctx);
-                                }
-                              },
+                                    if (success) {
+                                      await _fetchDepartments();
+                                      widget.onDepartmentsChanged();
+                                      if (ctx.mounted) Navigator.pop(ctx);
+                                    }
+                                  }
+                                },
+                              ),
                             ),
-                          ),
-                        ],
+
+                            const SizedBox(width: 12),
+
+                            // Edit / Save button
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isEditing
+                                      ? accent
+                                      : accent,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                icon: Icon(
+                                  isEditing
+                                      ? Icons.check_rounded
+                                      : Icons.edit_rounded,
+                                  color: isEditing
+                                      ? const Color(0xFF111111)
+                                      : const Color(0xFF111111),
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  isEditing ? 'Save Changes' : 'Edit',
+                                  style: TextStyle(
+                                    color: isEditing
+                                        ? const Color(0xFF111111)
+                                        : const Color(0xFF111111),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  if (!isEditing) {
+                                    setDialogState(() => isEditing = true);
+                                    return;
+                                  }
+
+                                  // Save
+                                  final prefs = await SharedPreferences.getInstance();
+                                  final token = prefs.getString("token");
+
+                                  final updated = {
+                                    "department_name": nameCtrl.text.trim(),
+                                    "supervisor_name": supervisorCtrl.text.trim(),
+                                    "role": roleCtrl.text.trim(),
+                                    "active_interns":
+                                        int.tryParse(internsCtrl.text.trim()) ?? 0,
+                                    "start_date": editStart.toIso8601String(),
+                                    "end_date": editEnd.toIso8601String(),
+                                  };
+
+                                  final success = await ApiService.updateDepartment(
+                                    token!,
+                                    dept["id"].toString(),
+                                    updated,
+                                  );
+
+                                  if (success) {
+                                    await _fetchDepartments();
+                                    widget.onDepartmentsChanged();
+                                    if (ctx.mounted) Navigator.pop(ctx);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -533,36 +607,7 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                     right: 14,
                     child: GestureDetector(
                       onTap: () => Navigator.pop(ctx),
-                      child: const Icon(
-                        Icons.close,
-                        color: textMuted,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-
-                  // ── Edit toggle button ──
-                  Positioned(
-                    top: 12,
-                    right: 42,
-                    child: GestureDetector(
-                      onTap: () => setDialogState(() => isEditing = !isEditing),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 180),
-                        child: isEditing
-                            ? const Icon(
-                                Icons.edit_off_rounded,
-                                key: ValueKey('off'),
-                                color: accent,
-                                size: 20,
-                              )
-                            : const Icon(
-                                Icons.edit_rounded,
-                                key: ValueKey('on'),
-                                color: textMuted,
-                                size: 20,
-                              ),
-                      ),
+                      child: const Icon(Icons.close, color: textMuted, size: 20),
                     ),
                   ),
                 ],
@@ -580,7 +625,6 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
     final nameCtrl = TextEditingController();
     final supervisorCtrl = TextEditingController();
     final roleCtrl = TextEditingController(text: 'Supervisor');
-    final supervisorIdCtrl = TextEditingController();
     final activeInternsCtrl = TextEditingController(text: '0');
 
     DateTime? startDate;
@@ -588,7 +632,7 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
     String? startErr;
     String? endErr;
 
-    InputDecoration _fieldDecoration(String label, IconData icon) =>
+    InputDecoration fieldDecoration(String label, IconData icon) =>
         InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(color: textMuted, fontSize: 13),
@@ -621,64 +665,66 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) {
-          // ── Tappable date button ──
           Widget dateTile({
             required String label,
             required DateTime? value,
             String? errorText,
             required VoidCallback onTap,
-          }) => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: onTap,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF111111),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: errorText != null ? Colors.redAccent : borderColor,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_rounded,
-                        color: value != null ? accent : textMuted,
-                        size: 16,
+          }) =>
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: onTap,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
                       ),
-                      const SizedBox(width: 10),
-                      Text(
-                        value != null ? _fmt(value) : label,
-                        style: TextStyle(
-                          color: value != null ? textMain : textMuted,
-                          fontSize: 14,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF111111),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: errorText != null
+                              ? Colors.redAccent
+                              : borderColor,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              if (errorText != null) ...[
-                const SizedBox(height: 4),
-                Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: Text(
-                    errorText,
-                    style: const TextStyle(
-                      color: Colors.redAccent,
-                      fontSize: 11,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            color: value != null ? accent : textMuted,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            value != null ? _fmt(value) : label,
+                            style: TextStyle(
+                              color: value != null ? textMain : textMuted,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ],
-          );
+                  if (errorText != null) ...[
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Text(
+                        errorText,
+                        style: const TextStyle(
+                          color: Colors.redAccent,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
 
           return Dialog(
             backgroundColor: Colors.transparent,
@@ -699,7 +745,6 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Title
                           const Text(
                             'Add Department',
                             style: TextStyle(
@@ -717,14 +762,10 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                           const Divider(color: borderColor),
                           const SizedBox(height: 20),
 
-                          // Department Name
                           TextFormField(
                             controller: nameCtrl,
-                            style: const TextStyle(
-                              color: textMain,
-                              fontSize: 14,
-                            ),
-                            decoration: _fieldDecoration(
+                            style: const TextStyle(color: textMain, fontSize: 14),
+                            decoration: fieldDecoration(
                               'Department Name',
                               Icons.business_rounded,
                             ),
@@ -734,14 +775,10 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                           ),
                           const SizedBox(height: 14),
 
-                          // Supervisor Name
                           TextFormField(
                             controller: supervisorCtrl,
-                            style: const TextStyle(
-                              color: textMain,
-                              fontSize: 14,
-                            ),
-                            decoration: _fieldDecoration(
+                            style: const TextStyle(color: textMain, fontSize: 14),
+                            decoration: fieldDecoration(
                               'Supervisor Name',
                               Icons.person_rounded,
                             ),
@@ -751,7 +788,6 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                           ),
                           const SizedBox(height: 14),
 
-                          // Role & Supervisor ID
                           Row(
                             children: [
                               Expanded(
@@ -761,7 +797,7 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                                     color: textMain,
                                     fontSize: 14,
                                   ),
-                                  decoration: _fieldDecoration(
+                                  decoration: fieldDecoration(
                                     'Role',
                                     Icons.badge_rounded,
                                   ),
@@ -772,50 +808,28 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: supervisorIdCtrl,
-                                  style: const TextStyle(
-                                    color: textMain,
-                                    fontSize: 14,
-                                  ),
-                                  decoration: _fieldDecoration(
-                                    'Supervisor ID',
-                                    Icons.tag_rounded,
-                                  ),
-                                  validator: (v) =>
-                                      (v == null || v.trim().isEmpty)
-                                      ? 'Required'
-                                      : null,
-                                ),
-                              ),
                             ],
                           ),
                           const SizedBox(height: 14),
 
-                          // Active Interns
                           TextFormField(
                             controller: activeInternsCtrl,
-                            style: const TextStyle(
-                              color: textMain,
-                              fontSize: 14,
-                            ),
+                            style: const TextStyle(color: textMain, fontSize: 14),
                             keyboardType: TextInputType.number,
-                            decoration: _fieldDecoration(
+                            decoration: fieldDecoration(
                               'Active Interns',
                               Icons.groups_rounded,
                             ),
                             validator: (v) {
-                              if (v == null || v.trim().isEmpty)
-                                return 'Required';
-                              if (int.tryParse(v.trim()) == null)
+                              if (v == null || v.trim().isEmpty) return 'Required';
+                              if (int.tryParse(v.trim()) == null) {
                                 return 'Must be a number';
+                              }
                               return null;
                             },
                           ),
                           const SizedBox(height: 14),
 
-                          // ── Date Range pickers ──
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -876,7 +890,6 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                             ],
                           ),
 
-                          // ── Auto-status preview ──
                           if (startDate != null && endDate != null) ...[
                             const SizedBox(height: 12),
                             Row(
@@ -888,16 +901,13 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                                     fontSize: 12,
                                   ),
                                 ),
-                                _statusBadge(
-                                  _computeStatus(startDate!, endDate!),
-                                ),
+                                _statusBadge(_computeStatus(startDate!, endDate!)),
                               ],
                             ),
                           ],
 
                           const SizedBox(height: 24),
 
-                          // Action buttons
                           Row(
                             children: [
                               Expanded(
@@ -936,13 +946,24 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                                     ),
                                   ),
                                   onPressed: () async {
-                                    final textValid = formKey.currentState!
-                                        .validate();
+                                    final textValid =
+                                        formKey.currentState!.validate();
 
-                                    if (!textValid ||
-                                        startDate == null ||
-                                        endDate == null)
-                                      return;
+                                    bool datesValid = true;
+                                    if (startDate == null) {
+                                      setDialogState(
+                                        () => startErr = 'Select a start date',
+                                      );
+                                      datesValid = false;
+                                    }
+                                    if (endDate == null) {
+                                      setDialogState(
+                                        () => endErr = 'Select an end date',
+                                      );
+                                      datesValid = false;
+                                    }
+
+                                    if (!textValid || !datesValid) return;
 
                                     final prefs =
                                         await SharedPreferences.getInstance();
@@ -950,30 +971,26 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
 
                                     final newDept = {
                                       "department_name": nameCtrl.text.trim(),
-                                      "supervisor_name": supervisorCtrl.text
-                                          .trim(),
+                                      "supervisor_name":
+                                          supervisorCtrl.text.trim(),
                                       "role": roleCtrl.text.trim(),
-                                      "supervisor_id": supervisorIdCtrl.text
-                                          .trim(),
                                       "active_interns": int.parse(
                                         activeInternsCtrl.text.trim(),
                                       ),
-                                      "start_date": startDate!
-                                          .toIso8601String(),
+                                      "start_date": startDate!.toIso8601String(),
                                       "end_date": endDate!.toIso8601String(),
                                     };
 
                                     final success =
                                         await ApiService.createDepartment(
-                                          token!,
-                                          newDept,
-                                        );
+                                      token!,
+                                      newDept,
+                                    );
 
                                     if (success) {
                                       await _fetchDepartments();
-                                      widget
-                                          .onDepartmentsChanged(); // refresh THIS screen's data
-                                      Navigator.pop(ctx);
+                                      widget.onDepartmentsChanged();
+                                      if (ctx.mounted) Navigator.pop(ctx);
                                     }
                                   },
                                   child: const Text(
@@ -993,17 +1010,12 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                     ),
                   ),
 
-                  // Close button
                   Positioned(
                     top: 12,
                     right: 14,
                     child: GestureDetector(
                       onTap: () => Navigator.pop(ctx),
-                      child: const Icon(
-                        Icons.close,
-                        color: textMuted,
-                        size: 20,
-                      ),
+                      child: const Icon(Icons.close, color: textMuted, size: 20),
                     ),
                   ),
                 ],
@@ -1020,7 +1032,6 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
     final name = (dept['department_name'] ?? 'Unknown').toString();
     final supervisor = (dept['supervisor_name'] ?? '').toString();
     final role = (dept['role'] ?? '').toString();
-    final supervisorId = (dept['supervisor_id'] ?? '').toString();
     final activeInterns = (dept['active_interns'] as int?) ?? 0;
     final start = DateTime.parse(dept['start_date']);
     final end = DateTime.parse(dept['end_date']);
@@ -1038,7 +1049,6 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top row: name + badge
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1059,11 +1069,9 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
             ),
             const SizedBox(height: 6),
 
-            // Date range
             _dateRangeRow(start, end),
             const SizedBox(height: 12),
 
-            // Supervisor row + intern count
             Row(
               children: [
                 Container(
@@ -1093,11 +1101,6 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                           fontWeight: FontWeight.w500,
                         ),
                         overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'ID: $supervisorId',
-                        style: const TextStyle(color: textMuted, fontSize: 12),
                       ),
                     ],
                   ),
@@ -1162,10 +1165,8 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
                         size: 20,
                       ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
                     ),
                   ),
                 ),
@@ -1205,24 +1206,29 @@ class _AdminDepartmentsState extends State<AdminDepartments> {
         const SizedBox(height: 20),
 
         Expanded(
-          child: filtered.isEmpty
+          child: _loading
               ? const Center(
-                  child: Text(
-                    'No departments found.',
-                    style: TextStyle(color: textMuted, fontSize: 14),
-                  ),
+                  child: CircularProgressIndicator(color: accent),
                 )
-              : GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(28, 0, 28, 28),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 2.6,
-                  ),
-                  itemCount: filtered.length,
-                  itemBuilder: (_, i) => _buildDepartmentCard(filtered[i]),
-                ),
+              : filtered.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No departments found.',
+                        style: TextStyle(color: textMuted, fontSize: 14),
+                      ),
+                    )
+                  : GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(28, 0, 28, 28),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 2.6,
+                      ),
+                      itemCount: filtered.length,
+                      itemBuilder: (_, i) => _buildDepartmentCard(filtered[i]),
+                    ),
         ),
       ],
     );

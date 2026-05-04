@@ -76,15 +76,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   List<String> get allDepartments {
-    if (users == null) return [];
-    final list = users!
-        .map((u) => (u["department"] ?? u["dept"] ?? "").toString().trim())
-        .where((d) => d.isNotEmpty)
-        .toSet()
-        .toList();
-    list.sort();
-    return list;
-  }
+  final list = widget.departments
+      .map((d) => (d["department_name"] ?? "").toString().trim())
+      .where((d) => d.isNotEmpty)
+      .toSet()
+      .toList();
+  list.sort();
+  return list;
+}
 
   List<String> get allSchools {
     if (users == null) return [];

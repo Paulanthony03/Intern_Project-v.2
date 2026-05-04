@@ -287,4 +287,19 @@ class ApiService {
 
     return res;
   }
+
+  static Future<bool> deleteDepartment(String token, String id) async {
+  try {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/departments/$id'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+    return response.statusCode == 200 || response.statusCode == 204;
+  } catch (_) {
+    return false;
+  }
+}
 }

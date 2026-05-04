@@ -9,11 +9,13 @@ class AdminInterns extends StatefulWidget {
   final List<dynamic>? users;
   final String token;
   final Future<void> Function()? onRefresh;
+  final List<dynamic>? departments;
 
   const AdminInterns({
     super.key,
     required this.users,
     required this.token,
+    required this.departments,
     this.onRefresh,
   });
 
@@ -39,8 +41,8 @@ class _AdminInternsState extends State<AdminInterns> {
   List<dynamic> get _users => widget.users ?? [];
 
   List<String> get allDepartments {
-    final list = _users
-        .map((u) => (u["department"] ?? u["dept"] ?? "").toString().trim())
+    final list = (widget.departments ?? [])
+        .map((d) => (d["department_name"] ?? "").toString().trim())
         .where((d) => d.isNotEmpty)
         .toSet()
         .toList();
@@ -177,8 +179,8 @@ class _AdminInternsState extends State<AdminInterns> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         onPressed: () {
-                          Navigator.pop(ctx); // close view dialog
-                          showEditDialog(user); // open edit dialog
+                          Navigator.pop(ctx);
+                          showEditDialog(user);
                         },
                         child: const Text(
                           "Edit Profile",
@@ -284,10 +286,13 @@ class _AdminInternsState extends State<AdminInterns> {
     final emailCtrl = TextEditingController(text: user["email"] ?? "");
     final schoolCtrl = TextEditingController(text: user["school"] ?? "");
     final programCtrl = TextEditingController(text: user["program"] ?? "");
-    final deptCtrl = TextEditingController(
-      text: user["department"] ?? user["dept"] ?? "",
-    );
     bool isSaving = false;
+
+    // Resolve the current department value and match it against allDepartments
+    final currentDept =
+        (user["department"] ?? user["dept"] ?? "").toString().trim();
+    String? selectedEditDept =
+        allDepartments.contains(currentDept) ? currentDept : null;
 
     showDialog(
       context: context,
@@ -337,7 +342,90 @@ class _AdminInternsState extends State<AdminInterns> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      _editField("Department", deptCtrl),
+
+                      // ── Department Dropdown ──────────────────────
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Department",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: accent,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: pageBg,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: borderColor),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton2<String?>(
+                                isExpanded: true,
+                                value: selectedEditDept,
+                                hint: const Text(
+                                  "Select department",
+                                  style: TextStyle(
+                                    color: textMuted,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                items: allDepartments
+                                    .map(
+                                      (d) => DropdownMenuItem<String?>(
+                                        value: d,
+                                        child: Text(
+                                          d,
+                                          style: const TextStyle(
+                                            color: textMain,
+                                            fontSize: 13,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (val) =>
+                                    setLocal(() => selectedEditDept = val),
+                                buttonStyleData: const ButtonStyleData(
+                                  padding: EdgeInsets.zero,
+                                  height: 40,
+                                ),
+                                iconStyleData: const IconStyleData(
+                                  icon: Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: textMuted,
+                                    size: 20,
+                                  ),
+                                ),
+                                dropdownStyleData: DropdownStyleData(
+                                  maxHeight: 250,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    color: const Color(0xFF2A2A2A),
+                                  ),
+                                  scrollbarTheme: ScrollbarThemeData(
+                                    radius: const Radius.circular(40),
+                                    thickness: WidgetStateProperty.all(6),
+                                    thumbVisibility:
+                                        WidgetStateProperty.all(true),
+                                  ),
+                                ),
+                                menuItemStyleData: const MenuItemStyleData(
+                                  height: 40,
+                                  padding: EdgeInsets.symmetric(horizontal: 14),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // ────────────────────────────────────────────
+
                       const SizedBox(height: 24),
                       Row(
                         children: [
@@ -385,7 +473,7 @@ class _AdminInternsState extends State<AdminInterns> {
                                           "email": emailCtrl.text.trim(),
                                           "school": schoolCtrl.text.trim(),
                                           "program": programCtrl.text.trim(),
-                                          "department": deptCtrl.text.trim(),
+                                          "department": selectedEditDept ?? "",
                                         };
                                         final userId =
                                             user["id"]?.toString() ?? "";
@@ -758,7 +846,6 @@ class _AdminInternsState extends State<AdminInterns> {
                 borderRadius: BorderRadius.circular(10),
                 color: const Color(0xFF2A2A2A),
               ),
-              // ✅ This forces the menu to ALWAYS open downward
               offset: const Offset(0, 0),
               direction: DropdownDirection.textDirection,
               scrollbarTheme: ScrollbarThemeData(
@@ -810,9 +897,12 @@ class _AdminInternsState extends State<AdminInterns> {
                           border: Border.all(color: borderColor),
                         ),
                         child: TextField(
-                          cursorColor: const Color.fromARGB(114, 114, 114, 114),
-                          onChanged: (val) => setState(() => searchQuery = val),
-                          style: const TextStyle(color: textMain, fontSize: 13),
+                          cursorColor:
+                              const Color.fromARGB(114, 114, 114, 114),
+                          onChanged: (val) =>
+                              setState(() => searchQuery = val),
+                          style:
+                              const TextStyle(color: textMain, fontSize: 13),
                           decoration: const InputDecoration(
                             hintText: "Search for intern name or id....",
                             hintStyle: TextStyle(
@@ -825,7 +915,8 @@ class _AdminInternsState extends State<AdminInterns> {
                               size: 18,
                             ),
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 13),
+                            contentPadding:
+                                EdgeInsets.symmetric(vertical: 13),
                           ),
                         ),
                       ),
@@ -910,6 +1001,9 @@ class _AdminInternsState extends State<AdminInterns> {
   }
 }
 
+// ════════════════════════════════════════════════════════
+//  ADD INTERN DIALOG
+// ════════════════════════════════════════════════════════
 class AddInternDialog extends StatefulWidget {
   const AddInternDialog({super.key});
 
@@ -1067,7 +1161,6 @@ class _AddInternDialogState extends State<AddInternDialog> {
                     const SizedBox(height: 16),
                     Divider(color: borderColor),
                     const SizedBox(height: 16),
-
                     _field(
                       'Full Name',
                       _nameController,
@@ -1098,14 +1191,14 @@ class _AddInternDialogState extends State<AddInternDialog> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
                     Row(
                       children: [
                         Expanded(
                           child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(color: borderColor),
-                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 13),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -1113,7 +1206,8 @@ class _AddInternDialogState extends State<AddInternDialog> {
                             onPressed: () => Navigator.pop(context, false),
                             child: Text(
                               'Cancel',
-                              style: TextStyle(color: textMuted, fontSize: 13),
+                              style:
+                                  TextStyle(color: textMuted, fontSize: 13),
                             ),
                           ),
                         ),
@@ -1123,7 +1217,8 @@ class _AddInternDialogState extends State<AddInternDialog> {
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: accent,
-                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 13),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
