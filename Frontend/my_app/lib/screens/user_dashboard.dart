@@ -68,6 +68,12 @@ class _UserDashboardState extends State<UserDashboard> {
   int? hoveredIndex;
   String _selectedNav = 'dashboard';
   int _presentCount = 0;
+  String _fullPhotoUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('http')) return url;
+    return 'http://10.22.0.127:8080$url';
+  }
+
   // ─── FORM PERSISTENCE KEYS ───────────────────────────────
   static const String _profileScreenKey = 'user_profile';
   static const List<String> _profileFieldKeys = [
@@ -446,7 +452,7 @@ class _UserDashboardState extends State<UserDashboard> {
                           backgroundColor: borderColor,
                           backgroundImage:
                               photoUrl != null && photoUrl.isNotEmpty
-                              ? NetworkImage(photoUrl)
+                              ? NetworkImage(_fullPhotoUrl(photoUrl))
                               : null,
                           child: photoUrl == null || photoUrl.isEmpty
                               ? Text(
@@ -960,7 +966,7 @@ class _UserDashboardState extends State<UserDashboard> {
                   radius: 55,
                   backgroundColor: borderColor,
                   backgroundImage: photoUrl != null && photoUrl.isNotEmpty
-                      ? NetworkImage(photoUrl)
+                      ? NetworkImage(_fullPhotoUrl(photoUrl))
                       : null,
                   child: photoUrl == null || photoUrl.isEmpty
                       ? Icon(Icons.person, size: 50, color: accent)
@@ -1081,7 +1087,7 @@ class _UserDashboardState extends State<UserDashboard> {
                     radius: 18,
                     backgroundColor: borderColor,
                     backgroundImage: photoUrl != null && photoUrl.isNotEmpty
-                        ? NetworkImage(photoUrl)
+                        ? NetworkImage(_fullPhotoUrl(photoUrl))
                         : null,
                     child: photoUrl == null || photoUrl.isEmpty
                         ? Icon(Icons.person, size: 18, color: accent)
@@ -1258,7 +1264,7 @@ class _UserDashboardState extends State<UserDashboard> {
                 radius: 18,
                 backgroundColor: borderColor,
                 backgroundImage: photoUrl != null && photoUrl.isNotEmpty
-                    ? NetworkImage(photoUrl)
+                    ? NetworkImage(_fullPhotoUrl(photoUrl))
                     : null,
                 child: photoUrl == null || photoUrl.isEmpty
                     ? Icon(Icons.person, color: accent, size: 20)
@@ -1319,7 +1325,7 @@ class _UserDashboardState extends State<UserDashboard> {
                   radius: 26,
                   backgroundColor: borderColor,
                   backgroundImage: photoUrl != null && photoUrl.isNotEmpty
-                      ? NetworkImage(photoUrl)
+                      ? NetworkImage(_fullPhotoUrl(photoUrl))
                       : null,
                   child: photoUrl == null || photoUrl.isEmpty
                       ? Icon(Icons.person, size: 24, color: textMuted)
