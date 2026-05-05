@@ -12,6 +12,7 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  String? selectedSchool;
   final _formKey = GlobalKey<FormState>();
 
   final firstNameController = TextEditingController();
@@ -22,6 +23,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final internIdController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+
+  final List<String> schoolOptions = [
+    "Pamantasan ng Lungsod ng San Pablo",
+    "CARD-MRI Development Institute",
+    "Laguna State Polytechnic University",
+  ];
 
   static const _screenKey = 'register';
   static const _fieldKeys = [
@@ -69,8 +76,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (drafts.containsKey('lastName'))
         lastNameController.text = drafts['lastName']!;
       if (drafts.containsKey('email')) emailController.text = drafts['email']!;
-      if (drafts.containsKey('school'))
-        schoolController.text = drafts['school']!;
+      if (drafts.containsKey('school')) selectedSchool = drafts['school'];
+      schoolController.text = drafts['school'] ?? "";
       if (drafts.containsKey('program'))
         programController.text = drafts['program']!;
       if (drafts.containsKey('internId'))
@@ -539,28 +546,73 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     ),
                                     const SizedBox(height: 5),
 
-                                    TextFormField(
-                                      cursorColor: Color.fromARGB(
-                                        114,
-                                        114,
-                                        114,
-                                        114,
+                                    DropdownButtonFormField<String>(
+                                      value:
+                                          schoolOptions.contains(selectedSchool)
+                                          ? selectedSchool
+                                          : null,
+                                      isExpanded: true,
+                                      dropdownColor: const Color.fromARGB(
+                                        255,
+                                        41,
+                                        39,
+                                        39,
                                       ),
-                                      controller: schoolController,
-                                      textInputAction: TextInputAction.next,
-                                      onFieldSubmitted: (_) =>
-                                          FocusScope.of(context).nextFocus(),
                                       style: const TextStyle(
-                                        fontSize: 15,
                                         color: Colors.white,
+                                        fontSize: 15,
                                       ),
-                                      decoration: inputStyle(
-                                        "Enter School Name",
+                                      iconEnabledColor: Colors.white,
+
+                                      decoration: InputDecoration(
+                                        filled: true,
+                                        fillColor: const Color.fromARGB(
+                                          255,
+                                          41,
+                                          39,
+                                          39,
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              vertical: 20,
+                                              horizontal: 15,
+                                            ),
                                       ),
-                                      onChanged: (v) =>
-                                          _onFieldChanged('school', v),
-                                      validator: (v) => v!.isEmpty
-                                          ? "School name is required"
+
+                                      hint: const Text(
+                                        "Select School",
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+
+                                      items: schoolOptions.map((school) {
+                                        return DropdownMenuItem<String>(
+                                          value: school,
+                                          child: Text(
+                                            school,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        );
+                                      }).toList(),
+
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedSchool = value;
+                                        });
+
+                                        schoolController.text = value ?? "";
+                                        _onFieldChanged('school', value ?? "");
+                                      },
+
+                                      validator: (value) => value == null
+                                          ? "School is required"
                                           : null,
                                     ),
 
