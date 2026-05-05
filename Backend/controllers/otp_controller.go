@@ -18,17 +18,23 @@ func SendRegistrationOTP(c *gin.Context) {
 
 	email := strings.TrimSpace(strings.ToLower(req.Email))
 
+	// ── Check if email already registered ──────────────────
+	var count int
+	db.QueryRow("SELECT COUNT(*) FROM users WHERE email=$1", email).Scan(&count)
+	if count > 0 {
+		c.JSON(409, gin.H{"error": "Email already exists"})
+		return
+	}
+	// ───────────────────────────────────────────────────────
+
 	otp, _ := generateOTP()
-
 	db.Exec("DELETE FROM email_verifications WHERE email=$1", email)
-
 	db.Exec(`
-		INSERT INTO email_verifications (email, otp, expires_at)
-		VALUES ($1, $2, NOW() + INTERVAL '10 minutes')
-	`, email, otp)
+        INSERT INTO email_verifications (email, otp, expires_at)
+        VALUES ($1, $2, NOW() + INTERVAL '10 minutes')
+    `, email, otp)
 
 	sendOTPEmail(email, otp)
-
 	c.JSON(200, gin.H{"message": "OTP sent for registration"})
 }
 
