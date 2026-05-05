@@ -80,45 +80,75 @@ class _AdminInternsState extends State<AdminInterns> {
     }).toList();
   }
 
+Widget _infoRow(String label, String value) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      SizedBox(
+        width: 110,
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: accent,
+            fontSize: 13,
+          ),
+        ),
+      ),
+      Expanded(
+        child: Text(
+          value,
+          style: const TextStyle(
+            color: textMain,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    ],
+  );
+}
   // ════════════════════════════════════════════════════════
   //  VIEW PROFILE DIALOG
   // ════════════════════════════════════════════════════════
-  void _showProfileDialog(Map<String, dynamic> user, int internNumber) {
-    final String name = (user["name"] ?? "Unknown").toUpperCase();
-    final String? photoUrl = user["photo_url"];
+ void _showProfileDialog(Map<String, dynamic> user, int internNumber) {
+  final String name = (user["name"] ?? "Unknown").toUpperCase();
+  final String? photoUrl = user["photo_url"];
 
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          width: 400,
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: borderColor),
-          ),
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(30),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+  showDialog(
+    context: context,
+    builder: (ctx) => Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 700,
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: borderColor),
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(30),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // ── LEFT: Avatar + Name + Intern label ──
+                  SizedBox(
+                    width: 200,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         CircleAvatar(
                           radius: 55,
                           backgroundColor: borderColor,
-                          backgroundImage:
-                              photoUrl != null && photoUrl.isNotEmpty
+                          backgroundImage: photoUrl != null && photoUrl.isNotEmpty
                               ? NetworkImage(photoUrl)
                               : null,
                           child: photoUrl == null || photoUrl.isEmpty
                               ? Text(
                                   (user["name"] ?? "U")[0].toUpperCase(),
+                                  textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     fontSize: 32,
                                     color: accent,
@@ -127,88 +157,74 @@ class _AdminInternsState extends State<AdminInterns> {
                                 )
                               : null,
                         ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 10),
-                              Text(
-                                name,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: textMain,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                "Intern $internNumber",
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: textMuted,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 16),
+                        Text(
+                          name,
+                           textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: textMain,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Intern $internNumber",
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: textMuted,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    const Divider(color: borderColor),
-                    const SizedBox(height: 16),
-                    _infoRow("Email:", user["email"] ?? "-"),
-                    const SizedBox(height: 12),
-                    _infoRow("School:", user["school"] ?? "-"),
-                    const SizedBox(height: 12),
-                    _infoRow("Program:", user["program"] ?? "-"),
-                    const SizedBox(height: 12),
-                    _infoRow(
-                      "Department:",
-                      user["Department"] ?? user["dept"] ?? "-",
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: accent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+
+                  // ── DIVIDER ──
+                  Container(
+                    width: 1,
+                    height: 160,
+                    color: borderColor,
+                    margin: const EdgeInsets.symmetric(horizontal: 24),
+                  ),
+
+                  // ── RIGHT: Info fields ──
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _infoRow("Email:", user["email"] ?? "-"),
+                        const SizedBox(height: 14),
+                        _infoRow("School:", user["school"] ?? "-"),
+                        const SizedBox(height: 14),
+                        _infoRow("Program:", user["program"] ?? "-"),
+                        const SizedBox(height: 14),
+                        _infoRow(
+                          "Department:",
+                          user["Department"] ?? user["dept"] ?? "-",
                         ),
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          showEditDialog(user);
-                        },
-                        child: const Text(
-                          "Edit Profile",
-                          style: TextStyle(
-                            color: pageBg,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Positioned(
-                top: 12,
-                right: 16,
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(ctx),
-                  child: const Icon(Icons.close, color: textMuted, size: 20),
-                ),
+            ),
+
+            // ── Close button ──
+            Positioned(
+              top: 12,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(ctx),
+                child: const Icon(Icons.close, color: textMuted, size: 20),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ════════════════════════════════════════════════════════
   //  DELETE DIALOG
@@ -277,478 +293,119 @@ class _AdminInternsState extends State<AdminInterns> {
       ),
     );
   }
-
-  // ════════════════════════════════════════════════════════
-  //  EDIT DIALOG
-  // ════════════════════════════════════════════════════════
-  void showEditDialog(Map<String, dynamic> user) {
-    final nameCtrl = TextEditingController(text: user["name"] ?? "");
-    final emailCtrl = TextEditingController(text: user["email"] ?? "");
-    final schoolCtrl = TextEditingController(text: user["school"] ?? "");
-    final programCtrl = TextEditingController(text: user["program"] ?? "");
-    bool isSaving = false;
-
-    // Resolve the current department value and match it against allDepartments
-    final currentDept =
-        (user["department"] ?? user["dept"] ?? "").toString().trim();
-    String? selectedEditDept =
-        allDepartments.contains(currentDept) ? currentDept : null;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            width: 420,
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: borderColor),
-            ),
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(30),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Edit intern profile",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: textMain,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        "Changes will be saved to the server.",
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                      const SizedBox(height: 16),
-                      const Divider(color: borderColor),
-                      const SizedBox(height: 16),
-                      _editField("Full name", nameCtrl),
-                      const SizedBox(height: 12),
-                      _editField("Email", emailCtrl),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(child: _editField("School", schoolCtrl)),
-                          const SizedBox(width: 12),
-                          Expanded(child: _editField("Program", programCtrl)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // ── Department Dropdown ──────────────────────
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Department",
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: accent,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: pageBg,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: borderColor),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton2<String?>(
-                                isExpanded: true,
-                                value: selectedEditDept,
-                                hint: const Text(
-                                  "Select department",
-                                  style: TextStyle(
-                                    color: textMuted,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                items: allDepartments
-                                    .map(
-                                      (d) => DropdownMenuItem<String?>(
-                                        value: d,
-                                        child: Text(
-                                          d,
-                                          style: const TextStyle(
-                                            color: textMain,
-                                            fontSize: 13,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (val) =>
-                                    setLocal(() => selectedEditDept = val),
-                                buttonStyleData: const ButtonStyleData(
-                                  padding: EdgeInsets.zero,
-                                  height: 40,
-                                ),
-                                iconStyleData: const IconStyleData(
-                                  icon: Icon(
-                                    Icons.keyboard_arrow_down,
-                                    color: textMuted,
-                                    size: 20,
-                                  ),
-                                ),
-                                dropdownStyleData: DropdownStyleData(
-                                  maxHeight: 250,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                    color: const Color(0xFF2A2A2A),
-                                  ),
-                                  scrollbarTheme: ScrollbarThemeData(
-                                    radius: const Radius.circular(40),
-                                    thickness: WidgetStateProperty.all(6),
-                                    thumbVisibility:
-                                        WidgetStateProperty.all(true),
-                                  ),
-                                ),
-                                menuItemStyleData: const MenuItemStyleData(
-                                  height: 40,
-                                  padding: EdgeInsets.symmetric(horizontal: 14),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      // ────────────────────────────────────────────
-
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: borderColor),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 13,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text(
-                                "Cancel",
-                                style: TextStyle(
-                                  color: textMuted,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            flex: 2,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: accent,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 13,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              onPressed: isSaving
-                                  ? null
-                                  : () async {
-                                      setLocal(() => isSaving = true);
-                                      try {
-                                        final updatedData = {
-                                          "name": nameCtrl.text.trim(),
-                                          "email": emailCtrl.text.trim(),
-                                          "school": schoolCtrl.text.trim(),
-                                          "program": programCtrl.text.trim(),
-                                          "department": selectedEditDept ?? "",
-                                        };
-                                        final userId =
-                                            user["id"]?.toString() ?? "";
-                                        await ApiService.updateUser(
-                                          widget.token,
-                                          userId,
-                                          updatedData,
-                                        );
-                                        await widget.onRefresh?.call();
-                                        Navigator.pop(ctx);
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              "${nameCtrl.text} updated successfully.",
-                                            ),
-                                            backgroundColor: accent,
-                                          ),
-                                        );
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text("Failed to save: $e"),
-                                            backgroundColor: Colors.redAccent,
-                                          ),
-                                        );
-                                      } finally {
-                                        setLocal(() => isSaving = false);
-                                      }
-                                    },
-                              child: isSaving
-                                  ? const SizedBox(
-                                      height: 16,
-                                      width: 16,
-                                      child: CircularProgressIndicator(
-                                        color: pageBg,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text(
-                                      "Save changes",
-                                      style: TextStyle(
-                                        color: pageBg,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: 12,
-                  right: 16,
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx),
-                    child: const Icon(Icons.close, color: textMuted, size: 20),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── HELPERS ───────────────────────────────────────────
-  Widget _editField(String label, TextEditingController ctrl) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            color: accent,
-          ),
-        ),
-        const SizedBox(height: 5),
-        TextField(
-          controller: ctrl,
-          style: const TextStyle(color: textMain, fontSize: 13),
-          cursorColor: accent,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: pageBg,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: borderColor),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: borderColor),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: accent),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _infoRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 110,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: accent,
-              fontSize: 13,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(color: textMain, fontSize: 13),
-          ),
-        ),
-      ],
-    );
-  }
-
   // ════════════════════════════════════════════════════════
   //  PROFILE CARD
   // ════════════════════════════════════════════════════════
-  Widget buildProfileCard(Map<String, dynamic> user, int index) {
-    final name = user["name"] ?? "Unknown";
-    final id = user["intern_id"]?.toString() ?? user["id"]?.toString() ?? "-";
-    final photoUrl = user["photo_url"] as String?;
-    final isHovered = hoveredIndex == index;
+ Widget buildProfileCard(Map<String, dynamic> user, int index) {
+  final name = user["name"] ?? "Unknown";
+  final id = user["intern_id"]?.toString() ?? user["id"]?.toString() ?? "-";
+  final photoUrl = user["photo_url"] as String?;
+  final isHovered = hoveredIndex == index;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => hoveredIndex = index),
-      onExit: (_) => setState(() => hoveredIndex = null),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: isHovered ? const Color(0xFF222222) : cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isHovered ? accent.withOpacity(0.4) : borderColor,
-          ),
-        ),
-        child: Stack(
-          children: [
-            // ── Card content ──────────────────────────
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: SizedBox.expand(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: borderColor,
-                      backgroundImage: photoUrl != null && photoUrl.isNotEmpty
-                          ? NetworkImage(photoUrl)
-                          : null,
-                      child: photoUrl == null || photoUrl.isEmpty
-                          ? const Icon(Icons.person, size: 36, color: textMuted)
-                          : null,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      name,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: textMain,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "id: $id",
-                      style: const TextStyle(color: textMuted, fontSize: 13),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Hover overlay — View + Delete only ────
-            if (isHovered)
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 140,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: accent,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          icon: const Icon(
-                            Icons.visibility,
-                            color: pageBg,
-                            size: 16,
-                          ),
-                          label: const Text(
-                            "View",
-                            style: TextStyle(
-                              color: pageBg,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          onPressed: () => _showProfileDialog(user, index + 1),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: 140,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.shade700,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            color: textMain,
-                            size: 16,
-                          ),
-                          label: const Text(
-                            "Delete",
-                            style: TextStyle(
-                              color: textMain,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          onPressed: () => _showDeleteDialog(user),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
+  return MouseRegion(
+    onEnter: (_) => setState(() => hoveredIndex = index),
+    onExit: (_) => setState(() => hoveredIndex = null),
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: isHovered
+            ? Border.all(color: accent, width: 1.5)
+            : Border.all(color: borderColor, width: 0.8),
       ),
-    );
-  }
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // ── Avatar ──
+          CircleAvatar(
+            radius: 70,
+            backgroundColor: borderColor,
+            backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                ? NetworkImage(photoUrl)
+                : null,
+            child: photoUrl == null || photoUrl.isEmpty
+                ? Text(
+                    (user["name"] ?? "U")[0].toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 32,
+                      color: accent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(height: 12),
 
+          // ── Name ──
+          Text(
+            name,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: textMain,
+            ),
+          ),
+          const SizedBox(height: 4),
+
+          // ── ID ──
+          Text(
+            "id: $id",
+            style: const TextStyle(fontSize: 11, color: textMuted),
+          ),
+          const SizedBox(height: 16),
+
+          // ── Action buttons — View Profile left, Edit+Delete right ──
+          Row(
+            children: [
+              // View Profile
+              GestureDetector(
+                onTap: () => _showProfileDialog(user, index + 1),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: accent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    "View Profile",
+                    style: TextStyle(
+                      color: pageBg,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+
+              const Spacer(),
+              GestureDetector(
+                onTap: () => _showDeleteDialog(user),
+                child: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: Colors.redAccent.withOpacity(0.5)),
+                  ),
+                  child: const Icon(Icons.delete_rounded,
+                      size: 14, color: Colors.redAccent),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
   // ════════════════════════════════════════════════════════
   //  DROPDOWNS
   // ════════════════════════════════════════════════════════
@@ -809,60 +466,60 @@ class _AdminInternsState extends State<AdminInterns> {
       onChanged: (val) => setState(() => selectedSchool = val),
     );
   }
-
   Widget _styledDropdown<T>({
-    required T value,
-    required String hint,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: borderColor),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton2<T>(
-            isExpanded: true,
-            value: value,
-            hint: Text(hint, style: TextStyle(color: textMain, fontSize: 13)),
-            style: TextStyle(color: textMain, fontSize: 13),
-            items: items,
-            onChanged: onChanged,
-            buttonStyleData: const ButtonStyleData(
-              padding: EdgeInsets.zero,
-              height: 40,
+  required T value,
+  required String hint,
+  required List<DropdownMenuItem<T>> items,
+  required ValueChanged<T?> onChanged,
+}) {
+  return Material(
+    color: Colors.transparent,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderColor),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton2<T>(
+          isExpanded: true,
+          value: value,
+          hint: Text(
+            hint,
+            style: const TextStyle(color: textMain, fontSize: 13),
+          ),
+          style: const TextStyle(color: textMain, fontSize: 13),
+          items: items,
+          onChanged: onChanged,
+          buttonStyleData: const ButtonStyleData(
+            padding: EdgeInsets.zero,
+            height: 40,
+          ),
+          iconStyleData: const IconStyleData(
+            icon: Icon(Icons.keyboard_arrow_down, color: textMuted, size: 20),
+          ),
+          dropdownStyleData: DropdownStyleData(
+            maxHeight: 300,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFF2A2A2A),
             ),
-            iconStyleData: IconStyleData(
-              icon: Icon(Icons.keyboard_arrow_down, color: textMuted, size: 20),
+            scrollbarTheme: ScrollbarThemeData(
+              radius: const Radius.circular(40),
+              thickness: WidgetStateProperty.all(6),
+              thumbVisibility: WidgetStateProperty.all(true),
             ),
-            dropdownStyleData: DropdownStyleData(
-              maxHeight: 300,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: const Color(0xFF2A2A2A),
-              ),
-              offset: const Offset(0, 0),
-              direction: DropdownDirection.textDirection,
-              scrollbarTheme: ScrollbarThemeData(
-                radius: const Radius.circular(40),
-                thickness: WidgetStateProperty.all(6),
-                thumbVisibility: WidgetStateProperty.all(true),
-              ),
-            ),
-            menuItemStyleData: const MenuItemStyleData(
-              height: 40,
-              padding: EdgeInsets.symmetric(horizontal: 14),
-            ),
+          ),
+          menuItemStyleData: const MenuItemStyleData(
+            height: 40,
+            padding: EdgeInsets.symmetric(horizontal: 14),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ════════════════════════════════════════════════════════
   //  BUILD
@@ -986,7 +643,7 @@ class _AdminInternsState extends State<AdminInterns> {
                           crossAxisCount: 3,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
-                          childAspectRatio: 1.1,
+                          childAspectRatio: 1.3,
                         ),
                     itemCount: filtered.length,
                     itemBuilder: (_, i) => buildProfileCard(

@@ -372,20 +372,6 @@ class _AppShellState extends State<AppShell> {
             ),
           ),
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: cardBg,
-              shape: BoxShape.circle,
-              border: Border.all(color: borderColor),
-            ),
-            child: const Icon(
-              Icons.notifications_none_rounded,
-              color: textMuted,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 16),
           // AFTER
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -406,7 +392,7 @@ class _AppShellState extends State<AppShell> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Admin Mc",
+                      "Admin",
                       style: TextStyle(
                         color: textMain,
                         fontSize: 13,
@@ -414,7 +400,7 @@ class _AppShellState extends State<AppShell> {
                       ),
                     ),
                     Text(
-                      "id: admin_08",
+                      "id: admin_10",
                       style: TextStyle(color: textMuted, fontSize: 11),
                     ),
                   ],
@@ -430,6 +416,12 @@ class _AppShellState extends State<AppShell> {
   // ════════════════════════════════════════════════════════
   //  LOGOUT DIALOG
   // ════════════════════════════════════════════════════════
+
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    Navigator.pushReplacementNamed(context, '/login');
+  }
   void _showLogoutDialog() {
     showDialog(
       context: context,
