@@ -59,35 +59,22 @@ func Register(c *gin.Context) {
 
 	_, err = DB.Exec(
 		`INSERT INTO users (
-			name,
-			email,
-			password,
-			intern_id,
-			school,
-			contact,
-			department,
-			reset_token,
-			token_expiry,
-			role,
-			role_id,
-			created_at,
-			updated_at
-		)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
-
+        name, email, password, intern_id, school,
+        contact, department, role, role_id,
+        created_at, updated_at, photo_url
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
 		user.Name,
 		user.Email,
 		user.Password,
 		user.InternID,
 		user.School,
-		"",  // contact
-		"",  // department
-		nil, // reset_token
-		nil, // token_expiry
+		"", // contact
+		"", // department
 		user.Role,
-		1, // role_id (default user role)
+		1,
 		now,
 		now,
+		"", // photo_url
 	)
 
 	if err != nil {
@@ -106,11 +93,17 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// fetch user
+	// fetch user by EMAIL not userID
 	err := DB.QueryRow(
-		"SELECT id, name, email, password, role, intern_id, school, contact, department FROM users WHERE email=$1",
+		`SELECT id, name, email, password, role,
+		 COALESCE(intern_id, ''),
+		 COALESCE(school, ''),
+		 COALESCE(contact, ''),
+		 COALESCE(department, ''),
+		 COALESCE(photo_url, '')
+		 FROM users WHERE email=$1`,
 		input.Email,
-	).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Role, &user.InternID, &user.School, &user.Contact, &user.Department)
+	).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Role, &user.InternID, &user.School, &user.Contact, &user.Department, &user.PhotoURL)
 
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
@@ -122,7 +115,6 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// compare password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Wrong password"})
@@ -146,6 +138,7 @@ func Login(c *gin.Context) {
 			"school":     user.School,
 			"contact":    user.Contact,
 			"department": user.Department,
+			"photo_url":  user.PhotoURL,
 		},
 	})
 }

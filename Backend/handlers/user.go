@@ -20,9 +20,16 @@ func GetProfile(c *gin.Context) {
 	var user models.User
 
 	err := DB.QueryRow(
-		"SELECT id, name, email, password, role, intern_id, school, contact, department, photo_url FROM users WHERE id=$1",
+		`SELECT id, name, email, password, role, 
+     COALESCE(intern_id, ''), 
+     COALESCE(school, ''), 
+     COALESCE(contact, ''), 
+     COALESCE(department, ''), 
+     COALESCE(photo_url, '') 
+     FROM users WHERE id=$1`,
 		userID,
 	).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Role, &user.InternID, &user.School, &user.Contact, &user.Department, &user.PhotoURL)
+
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
