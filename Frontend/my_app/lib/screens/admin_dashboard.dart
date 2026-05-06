@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import '../services/api_service.dart';
+import 'app_theme.dart'; // 👈 import
 import 'package:shared_preferences/shared_preferences.dart';
-
-// ════════════════════════════════════════════════════════════════════════════
-//  ADMIN DASHBOARD — StatefulWidget
-// ════════════════════════════════════════════════════════════════════════════
 
 class AdminDashboard extends StatefulWidget {
   final String token;
   final List<dynamic>? users;
   final List<Map<String, dynamic>> departments;
   final Future<void> Function()? onRefresh;
+  final AppColors colors; // 👈 ADD THIS
 
   const AdminDashboard({
     Key? key,
@@ -19,50 +17,31 @@ class AdminDashboard extends StatefulWidget {
     this.users,
     required this.departments,
     this.onRefresh,
+    required this.colors, // 👈 ADD THIS
   }) : super(key: key);
 
   @override
   _AdminDashboardState createState() => _AdminDashboardState();
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  STATE
-// ════════════════════════════════════════════════════════════════════════════
-
 class _AdminDashboardState extends State<AdminDashboard> {
 
-  // ─── Data ────────────────────────────────────────────────────────────────
-  List<dynamic>? get users => widget.users;
-  String fullName    = "";
-  String currentUserId = "";
+  // ── shorthand getter so we don't type widget.colors every time ──
+  AppColors get c => widget.colors; // 👈 handy shortcut
 
-  // ─── Filter / Search ─────────────────────────────────────────────────────
+  List<dynamic>? get users => widget.users;
+  String fullName       = "";
+  String currentUserId  = "";
+
   String  searchQuery        = "";
   String? selectedDepartment;
   String? selectedSchool;
+  int?    hoveredIndex;
 
-  // ─── UI ──────────────────────────────────────────────────────────────────
-  int? hoveredIndex;
-
-  // ─── Theme Colors ─────────────────────────────────────────────────────────
-  final Color pageBg       = const Color(0xFF1A1A1A);
-  final Color sidebarBg    = const Color(0xFF111111);
-  final Color headerBg     = const Color(0xFF1E1E1E);
-  final Color cardBg       = const Color(0xFF222222);
-  final Color accent       = const Color.fromARGB(255, 212, 226, 74);
-  final Color textMain     = Colors.white;
-  final Color textMuted    = const Color(0xFF888888);
-  final Color borderColor  = const Color(0xFF2E2E2E);
-
-  // ─── Spacing constants ────────────────────────────────────────────────────
-  static const double kGap      = 12.0;   // uniform gap between all columns/rows
-  static const double kPadH     = 20.0;   // horizontal page padding
-  static const double kPadV     = 20.0;   // top page padding
-  static const double kSection  = 20.0;   // vertical gap between sections
-
-  // ════════════════════════════════════════════════════════════════════════
-  //  LIFECYCLE
-  // ════════════════════════════════════════════════════════════════════════
+  static const double kGap     = 12.0;
+  static const double kPadH    = 20.0;
+  static const double kPadV    = 20.0;
+  static const double kSection = 20.0;
 
   @override
   void initState() {
@@ -81,10 +60,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     });
   }
 
-  // ════════════════════════════════════════════════════════════════════════
-  //  COMPUTED GETTERS
-  // ════════════════════════════════════════════════════════════════════════
-
+  // ── COMPUTED GETTERS ──────────────────────────────────
   int get departmentCount => widget.departments.length;
 
   int get schoolCount {
@@ -136,17 +112,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return List<dynamic>.from(users!).take(2).toList();
   }
 
-  // ════════════════════════════════════════════════════════════════════════
-  //  HELPERS
-  // ════════════════════════════════════════════════════════════════════════
-
+  // ── HELPERS ───────────────────────────────────────────
   String timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
-    if (diff.inDays > 365)    return '${(diff.inDays / 365).floor()}y ago';
-    if (diff.inDays > 30)     return '${(diff.inDays / 30).floor()}mo ago';
-    if (diff.inDays > 0)      return '${diff.inDays}d ago';
-    if (diff.inHours > 0)     return '${diff.inHours}h ago';
-    if (diff.inMinutes > 0)   return '${diff.inMinutes}m ago';
+    if (diff.inDays > 365)  return '${(diff.inDays / 365).floor()}y ago';
+    if (diff.inDays > 30)   return '${(diff.inDays / 30).floor()}mo ago';
+    if (diff.inDays > 0)    return '${diff.inDays}d ago';
+    if (diff.inHours > 0)   return '${diff.inHours}h ago';
+    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
     return 'just now';
   }
 
@@ -159,10 +132,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
       return DateTime.now();
     }
   }
-  // ════════════════════════════════════════════════════════════════════════
-  //  DIALOGS — View Profile
-  // ════════════════════════════════════════════════════════════════════════
 
+  // ════════════════════════════════════════════════════════
+  //  DIALOGS — View Profile
+  // ════════════════════════════════════════════════════════
   void showProfileDialog(Map<String, dynamic> user, int internNumber) {
     final name     = (user["name"] ?? "Unknown").toUpperCase();
     final photoUrl = user["photo_url"] as String?;
@@ -180,9 +153,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
         child: Container(
           width: 400,
           decoration: BoxDecoration(
-            color: cardBg,
+            color: c.cardBg, // 👈
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: borderColor),
+            border: Border.all(color: c.borderColor), // 👈
           ),
           child: Stack(
             children: [
@@ -192,18 +165,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Avatar + name
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CircleAvatar(
                           radius: 55,
-                          backgroundColor: borderColor,
+                          backgroundColor: c.borderColor, // 👈
                           backgroundImage: photoUrl != null && photoUrl.isNotEmpty
                               ? NetworkImage(photoUrl) : null,
                           child: photoUrl == null || photoUrl.isEmpty
                               ? Text((user["name"] ?? "U")[0].toUpperCase(),
-                                  style: TextStyle(fontSize: 32, color: accent,
+                                  style: TextStyle(fontSize: 32,
+                                      color: c.accent,
                                       fontWeight: FontWeight.bold))
                               : null,
                         ),
@@ -215,33 +188,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               const SizedBox(height: 10),
                               Text(name,
                                   style: TextStyle(fontSize: 18,
-                                      fontWeight: FontWeight.bold, color: textMain)),
+                                      fontWeight: FontWeight.bold,
+                                      color: c.textMain)), // 👈
                               const SizedBox(height: 6),
                               Text("Intern $internNumber",
-                                  style: TextStyle(fontSize: 13, color: textMuted)),
+                                  style: TextStyle(fontSize: 13,
+                                      color: c.textMuted)), // 👈
                             ],
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 24),
-                    Divider(color: borderColor),
+                    Divider(color: c.borderColor), // 👈
                     const SizedBox(height: 16),
-
-                    // Fields
                     ...fields.map((f) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _infoRow(f["label"]!, f["value"]!),
                     )),
-
                     const SizedBox(height: 24),
-
-                    // Edit button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: accent,
+                          backgroundColor: c.accent,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -252,7 +222,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               arguments: user);
                         },
                         child: Text("Edit Profile",
-                            style: TextStyle(color: pageBg, fontSize: 14,
+                            style: TextStyle(color: c.pageBg, fontSize: 14, // 👈
                                 fontWeight: FontWeight.bold)),
                       ),
                     ),
@@ -267,10 +237,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
   //  DIALOGS — Edit Intern
-  // ════════════════════════════════════════════════════════════════════════
-
+  // ════════════════════════════════════════════════════════
   void showEditDialog(Map<String, dynamic> user) {
     final nameCtrl    = TextEditingController(text: user["name"]    ?? "");
     final emailCtrl   = TextEditingController(text: user["email"]   ?? "");
@@ -288,9 +257,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: Container(
             width: 420,
             decoration: BoxDecoration(
-              color: cardBg,
+              color: c.cardBg, // 👈
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: borderColor),
+              border: Border.all(color: c.borderColor), // 👈
             ),
             child: Stack(
               children: [
@@ -302,14 +271,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     children: [
                       Text("Edit intern profile",
                           style: TextStyle(fontSize: 16,
-                              fontWeight: FontWeight.bold, color: textMain)),
+                              fontWeight: FontWeight.bold,
+                              color: c.textMain)), // 👈
                       const SizedBox(height: 4),
                       Text("Changes will be saved to the server.",
-                          style: TextStyle(fontSize: 12, color: textMuted)),
+                          style: TextStyle(fontSize: 12,
+                              color: c.textMuted)), // 👈
                       const SizedBox(height: 16),
-                      Divider(color: borderColor),
+                      Divider(color: c.borderColor), // 👈
                       const SizedBox(height: 16),
-
                       _editField("Full name", nameCtrl),
                       const SizedBox(height: 12),
                       _editField("Email", emailCtrl),
@@ -324,22 +294,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       const SizedBox(height: 12),
                       _editField("Department", deptCtrl),
                       const SizedBox(height: 24),
-
                       Row(
                         children: [
                           Expanded(
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: borderColor),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 13),
+                                side: BorderSide(color: c.borderColor), // 👈
+                                padding: const EdgeInsets.symmetric(vertical: 13),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)),
                               ),
                               onPressed: () => Navigator.pop(ctx),
                               child: Text("Cancel",
-                                  style: TextStyle(
-                                      color: textMuted, fontSize: 13)),
+                                  style: TextStyle(color: c.textMuted, // 👈
+                                      fontSize: 13)),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -347,44 +315,40 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             flex: 2,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: accent,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 13),
+                                backgroundColor: c.accent,
+                                padding: const EdgeInsets.symmetric(vertical: 13),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10)),
                               ),
-                              onPressed: isSaving
-                                  ? null
-                                  : () async {
-                                      setLocal(() => isSaving = true);
-                                      try {
-                                        await ApiService.updateUser(
-                                          widget.token,
-                                          user["id"]?.toString() ?? "",
-                                          {
-                                            "name":       nameCtrl.text.trim(),
-                                            "email":      emailCtrl.text.trim(),
-                                            "school":     schoolCtrl.text.trim(),
-                                            "program":    programCtrl.text.trim(),
-                                            "department": deptCtrl.text.trim(),
-                                          },
-                                        );
-                                        await widget.onRefresh?.call();
-                                        Navigator.pop(ctx);
-                                        _showSnack(
-                                            "${nameCtrl.text} updated.", accent);
-                                      } catch (e) {
-                                        _showSnack("Failed to save: $e",
-                                            Colors.redAccent);
-                                      } finally {
-                                        setLocal(() => isSaving = false);
-                                      }
+                              onPressed: isSaving ? null : () async {
+                                setLocal(() => isSaving = true);
+                                try {
+                                  await ApiService.updateUser(
+                                    widget.token,
+                                    user["id"]?.toString() ?? "",
+                                    {
+                                      "name":       nameCtrl.text.trim(),
+                                      "email":      emailCtrl.text.trim(),
+                                      "school":     schoolCtrl.text.trim(),
+                                      "program":    programCtrl.text.trim(),
+                                      "department": deptCtrl.text.trim(),
                                     },
+                                  );
+                                  await widget.onRefresh?.call();
+                                  Navigator.pop(ctx);
+                                  _showSnack("${nameCtrl.text} updated.",
+                                      c.accent);
+                                } catch (e) {
+                                  _showSnack("Failed to save: $e",
+                                      Colors.redAccent);
+                                } finally {
+                                  setLocal(() => isSaving = false);
+                                }
+                              },
                               child: isSaving
                                   ? _loadingSpinner()
                                   : Text("Save changes",
-                                      style: TextStyle(
-                                          color: pageBg,
+                                      style: TextStyle(color: c.pageBg, // 👈
                                           fontSize: 13,
                                           fontWeight: FontWeight.bold)),
                             ),
@@ -403,10 +367,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
   //  DIALOGS — Delete Intern
-  // ════════════════════════════════════════════════════════════════════════
-
+  // ════════════════════════════════════════════════════════
   void showDeleteDialog(Map<String, dynamic> user) {
     final name   = user["name"] ?? "this intern";
     final userId = user["id"]?.toString() ?? "";
@@ -414,17 +377,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: cardBg,
+        backgroundColor: c.cardBg, // 👈
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text("Delete Intern",
-            style: TextStyle(
-                color: Colors.redAccent, fontWeight: FontWeight.bold)),
-        content: Text("Are you sure you want to delete $name?\nThis cannot be undone.",
-            style: TextStyle(color: textMain)),
+            style: TextStyle(color: Colors.redAccent,
+                fontWeight: FontWeight.bold)),
+        content: Text(
+            "Are you sure you want to delete $name?\nThis cannot be undone.",
+            style: TextStyle(color: c.textMain)), // 👈
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text("Cancel", style: TextStyle(color: textMuted)),
+            child: Text("Cancel",
+                style: TextStyle(color: c.textMuted)), // 👈
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -443,19 +408,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
               }
             },
             child: const Text("Delete",
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold)),
+                style: TextStyle(color: Colors.white,
+                    fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
   //  SMALL REUSABLE WIDGETS
-  // ════════════════════════════════════════════════════════════════════════
-
-  /// Labelled info row for profile dialog
+  // ════════════════════════════════════════════════════════
   Widget _infoRow(String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -463,112 +426,107 @@ class _AdminDashboardState extends State<AdminDashboard> {
         SizedBox(
           width: 110,
           child: Text(label,
-              style: TextStyle(
-                  fontWeight: FontWeight.bold, color: accent, fontSize: 13)),
+              style: TextStyle(fontWeight: FontWeight.bold,
+                  color: c.accent, fontSize: 13)),
         ),
         Expanded(
-            child:
-                Text(value, style: TextStyle(color: textMain, fontSize: 13))),
+            child: Text(value,
+                style: TextStyle(color: c.textMain, fontSize: 13))), // 👈
       ],
     );
   }
 
-  /// Labelled text field for edit dialog
   Widget _editField(String label, TextEditingController ctrl) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: TextStyle(
-                fontSize: 11, fontWeight: FontWeight.bold, color: accent)),
+            style: TextStyle(fontSize: 11,
+                fontWeight: FontWeight.bold, color: c.accent)),
         const SizedBox(height: 5),
         TextField(
           controller: ctrl,
-          style: TextStyle(color: textMain, fontSize: 13),
-          cursorColor: accent,
+          style: TextStyle(color: c.textMain, fontSize: 13), // 👈
+          cursorColor: c.accent,
           decoration: InputDecoration(
             filled: true,
-            fillColor: pageBg,
+            fillColor: c.pageBg, // 👈
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: borderColor)),
+                borderSide: BorderSide(color: c.borderColor)), // 👈
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: borderColor)),
+                borderSide: BorderSide(color: c.borderColor)), // 👈
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: accent)),
+                borderSide: BorderSide(color: c.accent)),
           ),
         ),
       ],
     );
   }
 
-  /// Close (×) button for dialogs
   Widget _closeButton(BuildContext ctx) {
     return Positioned(
       top: 12,
       right: 16,
       child: GestureDetector(
         onTap: () => Navigator.pop(ctx),
-        child: Icon(Icons.close, color: textMuted, size: 20),
+        child: Icon(Icons.close, color: c.textMuted, size: 20), // 👈
       ),
     );
   }
 
-  /// Small circular progress indicator
   Widget _loadingSpinner() {
     return SizedBox(
       height: 16,
       width: 16,
-      child: CircularProgressIndicator(color: pageBg, strokeWidth: 2),
+      child: CircularProgressIndicator(color: c.pageBg, strokeWidth: 2), // 👈
     );
   }
 
-  /// SnackBar helper
   void _showSnack(String msg, Color bg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), backgroundColor: bg),
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════
-  //  SECTION WIDGETS — Stat Cards Row
-  // ════════════════════════════════════════════════════════════════════════
-
+  // ════════════════════════════════════════════════════════
+  //  STAT CARDS
+  // ════════════════════════════════════════════════════════
   Widget _buildStatCard(String value, String label, IconData icon) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
         decoration: BoxDecoration(
-          color: cardBg,
+          color: c.cardBg, // 👈
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: borderColor),
+          border: Border.all(color: c.borderColor), // 👈
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: accent.withOpacity(0.15),
+                color: c.accent.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: accent, size: 28),
+              child: Icon(icon, color: c.accent, size: 28),
             ),
             const SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(value,
-                    style: TextStyle(
-                        fontSize: 30,
+                    style: TextStyle(fontSize: 30,
                         fontWeight: FontWeight.bold,
-                        color: textMain)),
+                        color: c.textMain)), // 👈
                 const SizedBox(height: 2),
                 Text(label,
-                    style: TextStyle(fontSize: 12, color: textMuted)),
+                    style: TextStyle(fontSize: 12,
+                        color: c.textMuted)), // 👈
               ],
             ),
           ],
@@ -580,52 +538,40 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildStatRow() {
     return Row(
       children: [
-        _buildStatCard(
-          (users?.length ?? 0).toString().padLeft(2, '0'),
-          "Total Interns",
-          Icons.people_alt_rounded,
-        ),
+        _buildStatCard((users?.length ?? 0).toString().padLeft(2, '0'),
+            "Total Interns", Icons.people_alt_rounded),
         const SizedBox(width: kGap),
-        _buildStatCard(
-          departmentCount.toString().padLeft(2, '0'),
-          "Total Departments",
-          Icons.folder_rounded,
-        ),
+        _buildStatCard(departmentCount.toString().padLeft(2, '0'),
+            "Total Departments", Icons.folder_rounded),
         const SizedBox(width: kGap),
-        _buildStatCard(
-          schoolCount.toString().padLeft(2, '0'),
-          "Partner Schools",
-          Icons.account_balance_rounded,
-        ),
+        _buildStatCard(schoolCount.toString().padLeft(2, '0'),
+            "Partner Schools", Icons.account_balance_rounded),
       ],
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════
-  //  SECTION WIDGETS — Recently Added Interns
-  // ════════════════════════════════════════════════════════════════════════
-
+  // ════════════════════════════════════════════════════════
+  //  RECENT INTERNS PANEL
+  // ════════════════════════════════════════════════════════
   Widget _buildRecentPanel() {
     final recent = recentUsers;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: c.cardBg, // 👈
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor),
+        border: Border.all(color: c.borderColor), // 👈
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text("Recently Added Interns",
-              style: TextStyle(
-                  color: textMain,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold)),
+              style: TextStyle(color: c.textMain, // 👈
+                  fontSize: 15, fontWeight: FontWeight.bold)),
           const SizedBox(height: 14),
           if (recent.isEmpty)
             Text("No interns yet.",
-                style: TextStyle(color: textMuted, fontSize: 13))
+                style: TextStyle(color: c.textMuted, fontSize: 13)) // 👈
           else
             ...recent.asMap().entries.map((e) {
               final user     = e.value as Map<String, dynamic>;
@@ -640,13 +586,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     children: [
                       CircleAvatar(
                         radius: 20,
-                        backgroundColor: borderColor,
-                        backgroundImage:
-                            photoUrl != null && photoUrl.isNotEmpty
-                                ? NetworkImage(photoUrl)
-                                : null,
+                        backgroundColor: c.borderColor, // 👈
+                        backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                            ? NetworkImage(photoUrl) : null,
                         child: photoUrl == null || photoUrl.isEmpty
-                            ? Icon(Icons.person, size: 18, color: textMuted)
+                            ? Icon(Icons.person, size: 18,
+                                color: c.textMuted) // 👈
                             : null,
                       ),
                       const SizedBox(width: 12),
@@ -655,22 +600,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(name,
-                                style: TextStyle(
-                                    color: textMain,
+                                style: TextStyle(color: c.textMain, // 👈
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold)),
                             Text(timeAgo(time),
-                                style:
-                                    TextStyle(color: textMuted, fontSize: 11)),
+                                style: TextStyle(color: c.textMuted, // 👈
+                                    fontSize: 11)),
                           ],
                         ),
                       ),
                       Text("id: $id",
-                          style: TextStyle(color: textMuted, fontSize: 11)),
+                          style: TextStyle(color: c.textMuted, fontSize: 11)), // 👈
                     ],
                   ),
                   if (e.key < recent.length - 1)
-                    Divider(color: borderColor, height: 20),
+                    Divider(color: c.borderColor, height: 20), // 👈
                 ],
               );
             }).toList(),
@@ -679,10 +623,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════
-  //  SECTION WIDGETS — Department Overview
-  // ════════════════════════════════════════════════════════════════════════
-
+  // ════════════════════════════════════════════════════════
+  //  DEPARTMENT OVERVIEW
+  // ════════════════════════════════════════════════════════
   Widget _buildDepartmentOverview() {
     final now     = DateTime.now();
     final ongoing = widget.departments.where((d) {
@@ -694,45 +637,37 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: c.cardBg, // 👈
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor),
+        border: Border.all(color: c.borderColor), // 👈
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("Department Overview",
-                  style: TextStyle(
-                      color: textMain,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold)),
+                  style: TextStyle(color: c.textMain, // 👈
+                      fontSize: 15, fontWeight: FontWeight.bold)),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: accent.withOpacity(0.15),
+                  color: c.accent.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text("${ongoing.length} ongoing",
-                    style: TextStyle(
-                        color: accent,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600)),
+                    style: TextStyle(color: c.accent,
+                        fontSize: 11, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
           const SizedBox(height: 16),
-
-          // Content
           if (ongoing.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text("No ongoing departments.",
-                  style: TextStyle(color: textMuted, fontSize: 13)),
+                  style: TextStyle(color: c.textMuted, fontSize: 13)), // 👈
             )
           else
             SizedBox(
@@ -749,17 +684,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                   return Column(
                     children: [
-                      // Department row
                       Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: accent.withOpacity(0.15),
+                              color: c.accent.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(Icons.check_circle_rounded,
-                                color: accent, size: 20),
+                                color: c.accent, size: 20),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -767,32 +701,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(name,
-                                    style: TextStyle(
-                                        color: textMain,
+                                    style: TextStyle(color: c.textMain, // 👈
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold),
                                     overflow: TextOverflow.ellipsis),
-                                Text("ongoing",
-                                    style:
-                                        TextStyle(color: accent, fontSize: 11)),
+                                 Text("ongoing",
+                                    style: TextStyle(color: c.accent,
+                                        fontSize: 11)),
                               ],
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 10),
-
-                      // Supervisor row
                       Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: borderColor,
+                              color: c.borderColor, // 👈
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(Icons.person_outline_rounded,
-                                color: textMuted, size: 20),
+                                color: c.textMuted, size: 20), // 👈
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -800,23 +731,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(supervisor,
-                                    style: TextStyle(
-                                        color: textMain,
+                                    style: TextStyle(color: c.textMain, // 👈
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold),
                                     overflow: TextOverflow.ellipsis),
                                 Text(role.toLowerCase(),
-                                    style: TextStyle(
-                                        color: textMuted, fontSize: 11)),
+                                    style: TextStyle(color: c.textMuted, // 👈
+                                        fontSize: 11)),
                               ],
                             ),
                           ),
                         ],
                       ),
-
                       if (!isLast) ...[
                         const SizedBox(height: 14),
-                        Divider(color: borderColor, height: 1),
+                        Divider(color: c.borderColor, height: 1), // 👈
                         const SizedBox(height: 14),
                       ],
                     ],
@@ -829,31 +758,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════
-  //  SECTION WIDGETS — Search / Filter / Add Row
-  // ════════════════════════════════════════════════════════════════════════
-
+  // ════════════════════════════════════════════════════════
+  //  SEARCH ROW
+  // ════════════════════════════════════════════════════════
   Widget _buildSearchRow() {
     return Row(
       children: [
-        // 1st column — Search bar (same width as 1st stat card)
         Expanded(
           flex: 1,
           child: Container(
             height: 44,
             decoration: BoxDecoration(
-              color: cardBg,
+              color: c.cardBg, // 👈
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: borderColor),
+              border: Border.all(color: c.borderColor), // 👈
             ),
             child: TextField(
               cursorColor: const Color.fromARGB(114, 114, 114, 114),
               onChanged: (val) => setState(() => searchQuery = val),
-              style: TextStyle(color: textMain, fontSize: 13),
+              style: TextStyle(color: c.textMain, fontSize: 13), // 👈
               decoration: InputDecoration(
                 hintText: "Search for intern name or id...",
-                hintStyle: TextStyle(fontSize: 12, color: textMuted),
-                prefixIcon: Icon(Icons.search, color: textMuted, size: 18),
+                hintStyle: TextStyle(fontSize: 12, color: c.textMuted), // 👈
+                prefixIcon: Icon(Icons.search, color: c.textMuted, size: 18), // 👈
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(vertical: 13),
               ),
@@ -861,8 +788,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
         ),
         const SizedBox(width: kGap),
-
-        // 2nd column — Two dropdowns (same width as 2nd stat card)
         Expanded(
           flex: 1,
           child: Row(
@@ -874,31 +799,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
         ),
         const SizedBox(width: kGap),
-
-        // 3rd column — Add Intern button (same width as 3rd stat card)
         Expanded(
           flex: 1,
           child: SizedBox(
             height: 44,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: accent,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                backgroundColor: c.accent,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
-              icon: Icon(Icons.add, color: pageBg, size: 20),
+              icon: Icon(Icons.add, color: c.pageBg, size: 20), // 👈
               label: Text("Add Intern",
-                  style: TextStyle(
-                      color: pageBg,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold)),
+                  style: TextStyle(color: c.pageBg, // 👈
+                      fontSize: 14, fontWeight: FontWeight.bold)),
               onPressed: () async {
                 final result = await showDialog<bool>(
                   context: context,
                   barrierDismissible: false,
-                  builder: (_) => const AddInternDialog(),
+                  builder: (_) => AddInternDialog(colors: c), // 👈 pass colors
                 );
                 if (result == true) await widget.onRefresh?.call();
               },
@@ -909,10 +829,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════
-  //  SECTION WIDGETS — Dropdowns
-  // ════════════════════════════════════════════════════════════════════════
-
+  // ════════════════════════════════════════════════════════
+  //  DROPDOWNS
+  // ════════════════════════════════════════════════════════
   Widget _buildDepartmentDropdown() {
     return _styledDropdown<String?>(
       value: selectedDepartment,
@@ -921,14 +840,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
         DropdownMenuItem<String?>(
           value: null,
           child: Text("All Departments",
-              style: TextStyle(color: textMain, fontSize: 13)),
+              style: TextStyle(color: c.textMain, fontSize: 13)),
         ),
         ...allDepartments.map((d) => DropdownMenuItem<String?>(
               value: d,
               child: Text(d,
-                  style: TextStyle(color: textMain, fontSize: 13),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1),
+                  style: TextStyle(color: c.textMain, fontSize: 13),
+                  overflow: TextOverflow.ellipsis, maxLines: 1),
             )),
       ],
       onChanged: (val) => setState(() => selectedDepartment = val),
@@ -943,14 +861,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
         DropdownMenuItem<String?>(
           value: null,
           child: Text("All Schools",
-              style: TextStyle(color: textMain, fontSize: 13)),
+              style: TextStyle(color: c.textMain, fontSize: 13)),
         ),
         ...allSchools.map((s) => DropdownMenuItem<String?>(
               value: s,
               child: Text(s,
-                  style: TextStyle(color: textMain, fontSize: 13),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1),
+                  style: TextStyle(color: c.textMain, fontSize: 13),
+                  overflow: TextOverflow.ellipsis, maxLines: 1),
             )),
       ],
       onChanged: (val) => setState(() => selectedSchool = val),
@@ -968,33 +885,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: cardBg,
+          color: c.cardBg, // 👈
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: borderColor),
+          border: Border.all(color: c.borderColor), // 👈
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton2<T>(
             isExpanded: true,
             value: value,
-            hint: Text(hint, style: TextStyle(color: textMain, fontSize: 13)),
-            style: TextStyle(color: textMain, fontSize: 13),
+            hint: Text(hint, style: TextStyle(color: c.textMain, fontSize: 13)),
+            style: TextStyle(color: c.textMain, fontSize: 13),
             items: items,
             onChanged: onChanged,
             buttonStyleData: const ButtonStyleData(
-              padding: EdgeInsets.zero,
-              height: 40,
-            ),
+                padding: EdgeInsets.zero, height: 40),
             iconStyleData: IconStyleData(
-              icon: Icon(Icons.keyboard_arrow_down, color: textMuted, size: 20),
+              icon: Icon(Icons.keyboard_arrow_down,
+                  color: c.textMuted, size: 20), // 👈
             ),
             dropdownStyleData: DropdownStyleData(
               maxHeight: 400,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: const Color(0xFF2A2A2A),
+                color: c.cardBg, // 👈
               ),
-              offset: const Offset(0, 0),
-              direction: DropdownDirection.textDirection,
               scrollbarTheme: ScrollbarThemeData(
                 radius: const Radius.circular(40),
                 thickness: WidgetStateProperty.all(6),
@@ -1002,24 +916,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
             ),
             menuItemStyleData: const MenuItemStyleData(
-              height: 40,
-              padding: EdgeInsets.symmetric(horizontal: 14),
-            ),
+                height: 40,
+                padding: EdgeInsets.symmetric(horizontal: 14)),
           ),
         ),
       ),
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════
-  //  SECTION WIDGETS — Intern Card
-  // ════════════════════════════════════════════════════════════════════════
-
+  // ════════════════════════════════════════════════════════
+  //  INTERN CARD
+  // ════════════════════════════════════════════════════════
   Widget _buildInternCard(Map<String, dynamic> user, int index) {
-    final name     = user["name"] ?? "Unknown";
-    final internId = user["intern_id"]?.toString()
-                  ?? user["id"]?.toString()
-                  ?? "-";
+    final name      = user["name"] ?? "Unknown";
+    final internId  = user["intern_id"]?.toString()
+                   ?? user["id"]?.toString() ?? "-";
     final photoUrl  = user["photo_url"] as String?;
     final isHovered = hoveredIndex == index;
 
@@ -1030,25 +941,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: cardBg,
+          color: c.cardBg, // 👈
           borderRadius: BorderRadius.circular(14),
           border: isHovered
-              ? Border.all(color: accent, width: 1.5)
-              : Border.all(color: borderColor, width: 0.8),
+              ? Border.all(color: c.accent, width: 1.5)
+              : Border.all(color: c.borderColor, width: 0.8), // 👈
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Avatar + name
             Row(
               children: [
                 CircleAvatar(
                   radius: 26,
-                  backgroundColor: borderColor,
+                  backgroundColor: c.borderColor, // 👈
                   backgroundImage: photoUrl != null && photoUrl.isNotEmpty
                       ? NetworkImage(photoUrl) : null,
                   child: photoUrl == null || photoUrl.isEmpty
-                      ? Icon(Icons.person, size: 24, color: textMuted)
+                      ? Icon(Icons.person, size: 24, color: c.textMuted) // 👈
                       : null,
                 ),
                 const SizedBox(width: 12),
@@ -1059,59 +969,51 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       Text(name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              fontSize: 14,
+                          style: TextStyle(fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: textMain)),
+                              color: c.textMain)), // 👈
                       const SizedBox(height: 2),
                       Text("id: $internId",
-                          style: TextStyle(fontSize: 11, color: textMuted)),
+                          style: TextStyle(fontSize: 11,
+                              color: c.textMuted)), // 👈
                     ],
                   ),
                 ),
               ],
             ),
-
             const Spacer(),
-
-            // Action buttons
             Row(
               children: [
-                // View Profile
                 GestureDetector(
                   onTap: () => showProfileDialog(user, index + 1),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 7),
                     decoration: BoxDecoration(
-                      color: accent,
+                      color: c.accent,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text("View Profile",
-                        style: TextStyle(
-                            color: pageBg,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold)),
+                        style: TextStyle(color: c.pageBg, // 👈
+                            fontSize: 11, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const Spacer(),
-
-                // Edit
                 GestureDetector(
                   onTap: () => showEditDialog(user),
                   child: Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: accent.withOpacity(0.15),
+                      color: c.accent.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: accent.withOpacity(0.5)),
+                      border: Border.all(
+                          color: c.accent.withOpacity(0.5)),
                     ),
-                    child: Icon(Icons.edit_rounded, size: 14, color: accent),
+                    child: Icon(Icons.edit_rounded,
+                        size: 14, color: c.accent),
                   ),
                 ),
                 const SizedBox(width: 8),
-
-                // Delete
                 GestureDetector(
                   onTap: () => showDeleteDialog(user),
                   child: Container(
@@ -1122,7 +1024,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       border: Border.all(
                           color: Colors.redAccent.withOpacity(0.5)),
                     ),
-                    child: Icon(Icons.delete_rounded,
+                    child: const Icon(Icons.delete_rounded,
                         size: 14, color: Colors.redAccent),
                   ),
                 ),
@@ -1134,26 +1036,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
   //  BUILD
-  // ════════════════════════════════════════════════════════════════════════
-
+  // ════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final filtered = filteredUsers;
 
     return Column(
       children: [
-        // ── Upper scrollable sections ────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(kPadH, kPadV, kPadH, 0),
           child: Column(
             children: [
-              // Row 1 — Stat cards
               _buildStatRow(),
               const SizedBox(height: kSection),
-
-              // Row 2 — Recent interns (2/3) + Department overview (1/3)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1163,22 +1060,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ],
               ),
               const SizedBox(height: kSection),
-
-              // Row 3 — Search (1/3) + Dropdowns (1/3) + Add Intern (1/3)
               _buildSearchRow(),
               const SizedBox(height: kGap),
             ],
           ),
         ),
-
-        // ── Intern cards grid (fills remaining space) ────────────────────
         Expanded(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(kPadH, 0, kPadH, kPadV),
             child: filtered.isEmpty
                 ? Center(
                     child: Text("No interns found.",
-                        style: TextStyle(color: textMuted, fontSize: 14)),
+                        style: TextStyle(color: c.textMuted, fontSize: 14)),
                   )
                 : GridView.builder(
                     gridDelegate:
@@ -1190,9 +1083,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     ),
                     itemCount: filtered.length,
                     itemBuilder: (_, i) => _buildInternCard(
-                      filtered[i] as Map<String, dynamic>,
-                      i,
-                    ),
+                      filtered[i] as Map<String, dynamic>, i),
                   ),
           ),
         ),
@@ -1201,33 +1092,27 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  ADD INTERN DIALOG
-// ════════════════════════════════════════════════════════════════════════════
-
+// ════════════════════════════════════════════════════════
 class AddInternDialog extends StatefulWidget {
-  const AddInternDialog({super.key});
+  final AppColors colors; // 👈
+  const AddInternDialog({super.key, required this.colors}); // 👈
 
   @override
   State<AddInternDialog> createState() => _AddInternDialogState();
 }
 
 class _AddInternDialogState extends State<AddInternDialog> {
-  final _formKey           = GlobalKey<FormState>();
-  final _nameController    = TextEditingController();
-  final _emailController   = TextEditingController();
+  AppColors get c => widget.colors; // 👈 shortcut
+
+  final _formKey            = GlobalKey<FormState>();
+  final _nameController     = TextEditingController();
+  final _emailController    = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _isLoading       = false;
-
-  // ─── Theme ───────────────────────────────────────────────────────────────
-  final Color pageBg      = const Color(0xFF1A1A1A);
-  final Color cardBg      = const Color(0xFF222222);
-  final Color accent      = const Color.fromARGB(255, 212, 226, 74);
-  final Color textMain    = Colors.white;
-  final Color textMuted   = const Color(0xFF888888);
-  final Color borderColor = const Color(0xFF2E2E2E);
 
   @override
   void dispose() {
@@ -1241,13 +1126,11 @@ class _AddInternDialogState extends State<AddInternDialog> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
-      // TODO: call ApiService.register(...)
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Error: $e'),
+          SnackBar(content: Text('Error: $e'),
               backgroundColor: Colors.redAccent),
         );
       }
@@ -1256,41 +1139,36 @@ class _AddInternDialogState extends State<AddInternDialog> {
     }
   }
 
-  Widget _field(
-    String label,
-    TextEditingController ctrl, {
-    bool obscure         = false,
-    Widget? suffix,
-    TextInputType? keyboard,
-  }) {
+  Widget _field(String label, TextEditingController ctrl,
+      {bool obscure = false, Widget? suffix, TextInputType? keyboard}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: TextStyle(
-                fontSize: 11, fontWeight: FontWeight.bold, color: accent)),
+            style: TextStyle(fontSize: 11,
+                fontWeight: FontWeight.bold, color: c.accent)),
         const SizedBox(height: 5),
         TextFormField(
           controller: ctrl,
           obscureText: obscure,
           keyboardType: keyboard,
-          style: TextStyle(color: textMain, fontSize: 13),
-          cursorColor: accent,
+          style: TextStyle(color: c.textMain, fontSize: 13), // 👈
+          cursorColor: c.accent,
           decoration: InputDecoration(
             suffixIcon: suffix,
             filled: true,
-            fillColor: pageBg,
+            fillColor: c.pageBg, // 👈
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: borderColor)),
+                borderSide: BorderSide(color: c.borderColor)), // 👈
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: borderColor)),
+                borderSide: BorderSide(color: c.borderColor)), // 👈
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: accent)),
+                borderSide: BorderSide(color: c.accent)),
             errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: Colors.redAccent)),
@@ -1319,9 +1197,9 @@ class _AddInternDialogState extends State<AddInternDialog> {
       child: Container(
         width: 400,
         decoration: BoxDecoration(
-          color: cardBg,
+          color: c.cardBg, // 👈
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: borderColor),
+          border: Border.all(color: c.borderColor), // 👈
         ),
         child: Stack(
           children: [
@@ -1334,47 +1212,40 @@ class _AddInternDialogState extends State<AddInternDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text("Add Intern",
-                        style: TextStyle(
-                            fontSize: 16,
+                        style: TextStyle(fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: textMain)),
+                            color: c.textMain)), // 👈
                     const SizedBox(height: 4),
                     Text("Fill in the details for the new intern.",
-                        style: TextStyle(fontSize: 12, color: textMuted)),
+                        style: TextStyle(fontSize: 12,
+                            color: c.textMuted)), // 👈
                     const SizedBox(height: 16),
-                    Divider(color: borderColor),
+                    Divider(color: c.borderColor), // 👈
                     const SizedBox(height: 16),
-
                     _field("Full Name", _nameController,
                         keyboard: TextInputType.name),
                     const SizedBox(height: 12),
                     _field("Email", _emailController,
                         keyboard: TextInputType.emailAddress),
                     const SizedBox(height: 12),
-                    _field(
-                      "Password",
-                      _passwordController,
+                    _field("Password", _passwordController,
                       obscure: _obscurePassword,
                       suffix: IconButton(
                         icon: Icon(
                           _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: textMuted,
-                          size: 18,
-                        ),
+                              ? Icons.visibility_off : Icons.visibility,
+                          color: c.textMuted, size: 18), // 👈
                         onPressed: () => setState(
                             () => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                     const SizedBox(height: 24),
-
                     Row(
                       children: [
                         Expanded(
                           child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: borderColor),
+                              side: BorderSide(color: c.borderColor), // 👈
                               padding:
                                   const EdgeInsets.symmetric(vertical: 13),
                               shape: RoundedRectangleBorder(
@@ -1382,8 +1253,8 @@ class _AddInternDialogState extends State<AddInternDialog> {
                             ),
                             onPressed: () => Navigator.pop(context, false),
                             child: Text("Cancel",
-                                style: TextStyle(
-                                    color: textMuted, fontSize: 13)),
+                                style: TextStyle(color: c.textMuted, // 👈
+                                    fontSize: 13)),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -1391,7 +1262,7 @@ class _AddInternDialogState extends State<AddInternDialog> {
                           flex: 2,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: accent,
+                              backgroundColor: c.accent,
                               padding:
                                   const EdgeInsets.symmetric(vertical: 13),
                               shape: RoundedRectangleBorder(
@@ -1400,14 +1271,12 @@ class _AddInternDialogState extends State<AddInternDialog> {
                             onPressed: _isLoading ? null : _submit,
                             child: _isLoading
                                 ? SizedBox(
-                                    height: 16,
-                                    width: 16,
+                                    height: 16, width: 16,
                                     child: CircularProgressIndicator(
-                                        color: pageBg, strokeWidth: 2),
+                                        color: c.pageBg, strokeWidth: 2), // 👈
                                   )
                                 : Text("Add Intern",
-                                    style: TextStyle(
-                                        color: pageBg,
+                                    style: TextStyle(color: c.pageBg, // 👈
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold)),
                           ),
@@ -1418,14 +1287,11 @@ class _AddInternDialogState extends State<AddInternDialog> {
                 ),
               ),
             ),
-
-            // Close button
             Positioned(
-              top: 12,
-              right: 16,
+              top: 12, right: 16,
               child: GestureDetector(
                 onTap: () => Navigator.pop(context, false),
-                child: Icon(Icons.close, color: textMuted, size: 20),
+                child: Icon(Icons.close, color: c.textMuted, size: 20), // 👈
               ),
             ),
           ],

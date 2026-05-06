@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'app_theme.dart';
 
 // ════════════════════════════════════════════════════════
 //  HOVER EDIT BUTTON
 // ════════════════════════════════════════════════════════
 class _HoverEditButton extends StatefulWidget {
   final VoidCallback onTap;
-  const _HoverEditButton({required this.onTap});
+  final AppColors colors;
+  const _HoverEditButton({required this.onTap, required this.colors});
 
   @override
   State<_HoverEditButton> createState() => _HoverEditButtonState();
@@ -19,15 +21,13 @@ class _HoverEditButtonState extends State<_HoverEditButton> {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
+      onExit:  (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: Text(
           'Edit',
           style: TextStyle(
-            color: _hovered
-                ? const Color.fromARGB(255, 212, 226, 74)
-                : const Color(0xFF888888),
+            color: _hovered ? widget.colors.accent : widget.colors.textMuted, // 👈
             fontSize: 15,
             fontWeight: FontWeight.bold,
           ),
@@ -42,7 +42,13 @@ class _HoverEditButtonState extends State<_HoverEditButton> {
 // ════════════════════════════════════════════════════════
 class AdminSettings extends StatefulWidget {
   final Map<String, dynamic>? adminData;
-  const AdminSettings({super.key, this.adminData});
+  final AppColors colors; // 👈
+
+  const AdminSettings({
+    super.key,
+    this.adminData,
+    required this.colors, // 👈
+  });
 
   @override
   State<AdminSettings> createState() => _AdminSettingsState();
@@ -50,17 +56,11 @@ class AdminSettings extends StatefulWidget {
 
 class _AdminSettingsState extends State<AdminSettings>
     with SingleTickerProviderStateMixin {
-  // ── THEME COLORS ──────────────────────────────────────
-  static const pageBg = Color(0xFF111111);
-  static const cardBg = Color(0xFF1A1A1A);
-  static const borderColor = Color(0xFF2A2A2A);
-  static const accent = Color.fromARGB(255, 212, 226, 74);
-  static const textMain = Color(0xFFFFFFFF);
-  static const textMuted = Color(0xFF888888);
+
+  AppColors get c => widget.colors; // 👈 shortcut
 
   late TabController _tabController;
 
-  // ── EDITABLE FIELDS STATE ─────────────────────────────
   late Map<String, String> _personalInfo;
   late Map<String, String> _loginInfo;
 
@@ -68,27 +68,27 @@ class _AdminSettingsState extends State<AdminSettings>
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, FocusNode> _focusNodes = {};
 
-  // ── CHANGE PASSWORD DIALOG ────────────────────────────
+  // ════════════════════════════════════════════════════════
+  //  CHANGE PASSWORD DIALOG
+  // ════════════════════════════════════════════════════════
   void _showChangePasswordDialog() {
     final currentCtrl = TextEditingController();
-    final newCtrl = TextEditingController();
+    final newCtrl     = TextEditingController();
     final confirmCtrl = TextEditingController();
     bool obscureCurrent = true;
-    bool obscureNew = true;
+    bool obscureNew     = true;
     bool obscureConfirm = true;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
-          backgroundColor: cardBg,
+          backgroundColor: c.cardBg, // 👈
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Change Password',
-            style: TextStyle(color: textMain, fontWeight: FontWeight.bold),
-          ),
+              borderRadius: BorderRadius.circular(16)),
+          title: Text('Change Password',
+              style: TextStyle(color: c.textMain, // 👈
+                  fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -120,15 +120,15 @@ class _AdminSettingsState extends State<AdminSettings>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: textMuted)),
+              child: Text('Cancel',
+                  style: TextStyle(color: c.textMuted)), // 👈
             ),
             const SizedBox(width: 8),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: accent,
+                backgroundColor: c.accent,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                    borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () {
                 if (newCtrl.text != confirmCtrl.text) {
@@ -143,10 +143,9 @@ class _AdminSettingsState extends State<AdminSettings>
                 setState(() => _loginInfo['password'] = newCtrl.text);
                 Navigator.pop(ctx);
               },
-              child: const Text(
-                'Save',
-                style: TextStyle(color: pageBg, fontWeight: FontWeight.bold),
-              ),
+              child: Text('Save',
+                  style: TextStyle(color: c.pageBg, // 👈
+                      fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -163,28 +162,25 @@ class _AdminSettingsState extends State<AdminSettings>
     return TextField(
       controller: controller,
       obscureText: obscure,
-      style: const TextStyle(color: textMain, fontSize: 14),
-      cursorColor: accent,
+      style: TextStyle(color: c.textMain, fontSize: 14), // 👈
+      cursorColor: c.accent,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: textMuted, fontSize: 13),
+        labelStyle: TextStyle(color: c.textMuted, fontSize: 13), // 👈
         filled: true,
-        fillColor: const Color(0xFF111111),
+        fillColor: c.pageBg, // 👈
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: borderColor),
+          borderSide: BorderSide(color: c.borderColor), // 👈
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: accent.withOpacity(0.6)),
+          borderSide: BorderSide(color: c.accent.withOpacity(0.6)),
         ),
         suffixIcon: GestureDetector(
           onTap: onToggle,
-          child: Icon(
-            obscure ? Icons.visibility_off : Icons.visibility,
-            color: textMuted,
-            size: 18,
-          ),
+          child: Icon(obscure ? Icons.visibility_off : Icons.visibility,
+              color: c.textMuted, size: 18), // 👈
         ),
       ),
     );
@@ -198,9 +194,9 @@ class _AdminSettingsState extends State<AdminSettings>
     final data = widget.adminData ?? {};
 
     _personalInfo = {
-      'name': (data['name'] ?? 'Admin').toString(),
-      'admin_id': (data['admin_id'] ?? 'admin_08').toString(),
-      'email': (data['email'] ?? 'admin@test.com').toString(),
+      'name':           (data['name']           ?? 'Admin').toString(),
+      'admin_id':       (data['admin_id']       ?? 'admin_08').toString(),
+      'email':          (data['email']          ?? 'admin@test.com').toString(),
       'contact_number': (data['contact_number'] ?? '').toString(),
     };
 
@@ -211,7 +207,7 @@ class _AdminSettingsState extends State<AdminSettings>
 
     for (final key in [..._personalInfo.keys, ..._loginInfo.keys]) {
       _controllers[key] = TextEditingController();
-      _focusNodes[key] = FocusNode();
+      _focusNodes[key]  = FocusNode();
     }
   }
 
@@ -238,9 +234,11 @@ class _AdminSettingsState extends State<AdminSettings>
     final newVal = _controllers[field]!.text.trim();
     setState(() {
       if (isPersonal) {
-        _personalInfo[field] = newVal.isEmpty ? _personalInfo[field]! : newVal;
+        _personalInfo[field] =
+            newVal.isEmpty ? _personalInfo[field]! : newVal;
       } else {
-        _loginInfo[field] = newVal.isEmpty ? _loginInfo[field]! : newVal;
+        _loginInfo[field] =
+            newVal.isEmpty ? _loginInfo[field]! : newVal;
       }
       _editingField = null;
     });
@@ -248,14 +246,16 @@ class _AdminSettingsState extends State<AdminSettings>
 
   void _cancelEdit() => setState(() => _editingField = null);
 
-  // ── FIELD ROW ─────────────────────────────────────────
+  // ════════════════════════════════════════════════════════
+  //  FIELD ROW
+  // ════════════════════════════════════════════════════════
   Widget _buildFieldRow({
     required String label,
     required String field,
     required String value,
     required bool isPersonal,
     bool obscure = false,
-    bool isLast = false,
+    bool isLast  = false,
   }) {
     final isEditing = _editingField == field;
 
@@ -269,44 +269,36 @@ class _AdminSettingsState extends State<AdminSettings>
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Label
-              Text(
-                label,
-                style: const TextStyle(
-                  color: textMain,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.3,
-                ),
-              ),
+              Text(label,
+                  style: TextStyle(
+                    color: c.textMain, // 👈
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                  )),
 
               // Edit / Save / Cancel
               if (!isEditing)
-                _HoverEditButton(onTap: () => _startEdit(field, value))
+                _HoverEditButton(
+               onTap: () {},
+               colors: c,)
               else
                 Row(
                   children: [
                     GestureDetector(
                       onTap: _cancelEdit,
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          color: textMuted,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      child: Text('Cancel',
+                          style: TextStyle(color: c.textMuted, // 👈
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600)),
                     ),
                     const SizedBox(width: 16),
                     GestureDetector(
                       onTap: () => _commitEdit(field, isPersonal),
-                      child: const Text(
-                        'Save',
-                        style: TextStyle(
-                          color: accent,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: Text('Save',
+                          style: TextStyle(color: c.accent,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -320,7 +312,7 @@ class _AdminSettingsState extends State<AdminSettings>
             padding: const EdgeInsets.only(left: 8, bottom: 8),
             child: Text(
               obscure ? '•' * 9 : value,
-              style: const TextStyle(color: textMuted, fontSize: 14),
+              style: TextStyle(color: c.textMuted, fontSize: 14), // 👈
             ),
           )
         else
@@ -328,98 +320,77 @@ class _AdminSettingsState extends State<AdminSettings>
             padding: const EdgeInsets.only(bottom: 8),
             child: TextField(
               controller: _controllers[field],
-              focusNode: _focusNodes[field],
+              focusNode:  _focusNodes[field],
               obscureText: obscure,
-              style: const TextStyle(color: textMain, fontSize: 14),
-              cursorColor: accent,
+              style: TextStyle(color: c.textMain, fontSize: 14), // 👈
+              cursorColor: c.accent,
               decoration: InputDecoration(
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
+                    horizontal: 12, vertical: 10),
                 filled: true,
-                fillColor: cardBg,
+                fillColor: c.cardBg, // 👈
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: borderColor),
+                  borderSide: BorderSide(color: c.borderColor), // 👈
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: accent.withOpacity(0.6)),
+                  borderSide: BorderSide(
+                      color: c.accent.withOpacity(0.6)),
                 ),
               ),
               onSubmitted: (_) => _commitEdit(field, isPersonal),
             ),
           ),
 
-        const Divider(color: borderColor, thickness: 1, height: 1),
+        Divider(color: c.borderColor, thickness: 1, height: 1), // 👈
       ],
     );
   }
 
   // ════════════════════════════════════════════════════════
-  //  PERSONAL INFO CONTENT (no scroll wrapper)
+  //  PERSONAL INFO
   // ════════════════════════════════════════════════════════
   Widget _buildPersonalInfoContent() {
     return Container(
       decoration: BoxDecoration(
-        color: cardBg,
+        color: c.cardBg, // 👈
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
+        border: Border.all(color: c.borderColor), // 👈
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          _buildFieldRow(
-            label: 'Name',
-            field: 'name',
-            value: _personalInfo['name']!,
-            isPersonal: true,
-          ),
-          _buildFieldRow(
-            label: 'Admin ID',
-            field: 'admin_id',
-            value: _personalInfo['admin_id']!,
-            isPersonal: true,
-          ),
-          _buildFieldRow(
-            label: 'Email',
-            field: 'email',
-            value: _personalInfo['email']!,
-            isPersonal: true,
-          ),
-          _buildFieldRow(
-            label: 'Contact Number',
-            field: 'contact_number',
-            value: _personalInfo['contact_number']!,
-            isPersonal: true,
-            isLast: true,
-          ),
+          _buildFieldRow(label: 'Name',           field: 'name',
+              value: _personalInfo['name']!,           isPersonal: true),
+          _buildFieldRow(label: 'Admin ID',        field: 'admin_id',
+              value: _personalInfo['admin_id']!,       isPersonal: true),
+          _buildFieldRow(label: 'Email',           field: 'email',
+              value: _personalInfo['email']!,          isPersonal: true),
+          _buildFieldRow(label: 'Contact Number',  field: 'contact_number',
+              value: _personalInfo['contact_number']!, isPersonal: true,
+              isLast: true),
         ],
       ),
     );
   }
 
   // ════════════════════════════════════════════════════════
-  //  LOGIN & SECURITY CONTENT (no scroll wrapper)
+  //  LOGIN & SECURITY
   // ════════════════════════════════════════════════════════
   Widget _buildLoginSecurityContent() {
     return Container(
       decoration: BoxDecoration(
-        color: cardBg,
+        color: c.cardBg, // 👈
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
+        border: Border.all(color: c.borderColor), // 👈
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          _buildFieldRow(
-            label: 'Username',
-            field: 'username',
-            value: _loginInfo['username']!,
-            isPersonal: false,
-          ),
+          _buildFieldRow(label: 'Username', field: 'username',
+              value: _loginInfo['username']!, isPersonal: false),
           // Password row
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -429,24 +400,20 @@ class _AdminSettingsState extends State<AdminSettings>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Password',
-                      style: TextStyle(
-                        color: textMain,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    _HoverEditButton(onTap: _showChangePasswordDialog),
+                    Text('Password',
+                        style: TextStyle(
+                          color: c.textMain, // 👈
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        )),
+                    _HoverEditButton(onTap: _showChangePasswordDialog, colors: c),
                   ],
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.only(left: 8, bottom: 20),
-                child: Text(
-                  '•••••••••',
-                  style: TextStyle(color: textMuted, fontSize: 14),
-                ),
+              Padding(
+                padding: const EdgeInsets.only(left: 8, bottom: 20),
+                child: Text('•••••••••',
+                    style: TextStyle(color: c.textMuted, fontSize: 14)), // 👈
               ),
             ],
           ),
@@ -469,49 +436,41 @@ class _AdminSettingsState extends State<AdminSettings>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // ── CENTERED AVATAR ──────────────────────
+                // ── Avatar ──
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       Container(
-                        width: 175,
-                        height: 175,
+                        width: 175, height: 175,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: cardBg,
+                          color: c.cardBg, // 👈
                           border: Border.all(
-                            color: accent.withOpacity(0.6),
+                            color: c.accent.withOpacity(0.6),
                             width: 3,
                           ),
                         ),
-                        child: const Icon(
-                          Icons.person,
-                          color: textMuted,
-                          size: 68,
-                        ),
+                        child: Icon(Icons.person,
+                            color: c.textMuted, size: 68), // 👈
                       ),
                       Positioned(
-                        bottom: 2,
-                        right: 2,
+                        bottom: 2, right: 2,
                         child: GestureDetector(
                           onTap: () {
                             // TODO: image picker
                           },
                           child: Container(
-                            width: 50,
-                            height: 50,
+                            width: 50, height: 50,
                             decoration: BoxDecoration(
-                              color: accent,
+                              color: c.accent,
                               shape: BoxShape.circle,
-                              border: Border.all(color: pageBg, width: 2),
+                              border: Border.all(
+                                  color: c.pageBg, width: 2), // 👈
                             ),
-                            child: const Icon(
-                              Icons.camera_alt,
-                              color: pageBg,
-                              size: 25,
-                            ),
+                            child: Icon(Icons.camera_alt,
+                                color: c.pageBg, size: 25), // 👈
                           ),
                         ),
                       ),
@@ -521,7 +480,7 @@ class _AdminSettingsState extends State<AdminSettings>
 
                 const SizedBox(height: 32),
 
-                // ── TWO COLUMNS ──────────────────────────
+                // ── Two Columns ──
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -530,14 +489,12 @@ class _AdminSettingsState extends State<AdminSettings>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Personal Info',
-                            style: TextStyle(
-                              color: textMain,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          Text('Personal Info',
+                              style: TextStyle(
+                                color: c.textMain, // 👈
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              )),
                           const SizedBox(height: 14),
                           _buildPersonalInfoContent(),
                         ],
@@ -551,14 +508,12 @@ class _AdminSettingsState extends State<AdminSettings>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Login & Security',
-                            style: TextStyle(
-                              color: textMain,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          Text('Login & Security',
+                              style: TextStyle(
+                                color: c.textMain, // 👈
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              )),
                           const SizedBox(height: 14),
                           _buildLoginSecurityContent(),
                         ],
