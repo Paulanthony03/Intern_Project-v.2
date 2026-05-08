@@ -1612,18 +1612,22 @@ class _UserDashboardState extends State<UserDashboard> {
                             style: TextStyle(color: textMuted, fontSize: 14),
                           ),
                         )
-                      : ListView.builder(
+                      : GridView.builder(
                           itemCount: filtered.length,
-                          itemBuilder: (_, i) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: SizedBox(
-                              height: 140, // 👉 controls "long box" height
-                              child: buildProfileCard(
-                                filtered[i] as Map<String, dynamic>,
-                                i,
+                          padding: const EdgeInsets.only(bottom: 10),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2, // 2 columns
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 4.5, // controls box shape
                               ),
-                            ),
-                          ),
+                          itemBuilder: (_, i) {
+                            return buildProfileCard(
+                              filtered[i] as Map<String, dynamic>,
+                              i,
+                            );
+                          },
                         ),
                 ),
                 const SizedBox(width: 16),

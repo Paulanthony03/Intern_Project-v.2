@@ -39,7 +39,9 @@ class _CalendarPageState extends State<CalendarPage> {
   @override
   void initState() {
     super.initState();
-    _loadAttendance();
+    _loadAttendance().then((_) {
+      _autoMarkAbsent(); // runs AFTER data loads
+    });
   }
 
   // ─── PERSISTENCE ─────────────────────────────────────────
@@ -51,10 +53,12 @@ class _CalendarPageState extends State<CalendarPage> {
   Future<void> _loadAttendance() async {
     try {
       final token = await _getToken();
-      print("=== LOADING ATTENDANCE, token: $token ===");
       final data = await ApiService.getAttendance(token);
-      print("=== ATTENDANCE DATA: $data ===");
-      setState(() => _attendance = data);
+
+      // DO NOT modify or guess missing days
+      setState(() {
+        _attendance = data;
+      });
     } catch (e) {
       print("Failed to load attendance: $e");
     }
@@ -70,6 +74,46 @@ class _CalendarPageState extends State<CalendarPage> {
       print("=== ATTENDANCE SAVED SUCCESSFULLY ===");
     } catch (e) {
       print("Failed to save attendance: $e");
+    }
+  }
+
+  Future<void> _autoMarkAbsent() async {
+    try {
+      final now = DateTime.now();
+      final start = DateTime(now.year, now.month, 1);
+
+      final List<MapEntry<String, String>> updates = [];
+
+      for (
+        DateTime day = start;
+        day.isBefore(now);
+        day = day.add(const Duration(days: 1))
+      ) {
+        if (_isWeekend(day)) continue;
+
+        final key = _dateKey(day);
+
+        // IMPORTANT: only mark absent if truly missing
+        if (!_attendance.containsKey(key)) {
+          updates.add(MapEntry(key, 'absent'));
+        }
+      }
+
+      // update UI first (fast, no rebuild spam)
+      setState(() {
+        for (var entry in updates) {
+          _attendance[entry.key] = entry.value;
+        }
+      });
+
+      // THEN send to backend (sequential, stable)
+      for (var entry in updates) {
+        await _saveAttendance(entry.key, entry.value);
+      }
+
+      widget.onAttendanceChanged?.call();
+    } catch (e) {
+      print("Auto-mark absent failed: $e");
     }
   }
 
@@ -94,199 +138,26 @@ class _CalendarPageState extends State<CalendarPage> {
   int get _totalMarked => _attendance.length;
 
   // ─── MARK ATTENDANCE ─────────────────────────────────────
-  void _markAttendance(DateTime day, String status) async {
+  void _markAttendance(DateTime day) async {
     if (widget.isAdmin) return;
-    if (_isFuture(day)) return;
-    if (_isWeekend(day)) return;
-
-    final key = _dateKey(day);
-    final isToggleOff = _attendance[key] == status;
-
-    setState(() {
-      if (isToggleOff) {
-        _attendance.remove(key);
-      } else {
-        _attendance[key] = status;
-      }
-    });
-
-    await _saveAttendance(key, isToggleOff ? "" : status);
-    widget.onAttendanceChanged?.call();
-  }
-
-  void _showDayDialog(DateTime day) {
     if (_isFuture(day) || _isWeekend(day)) return;
 
     final key = _dateKey(day);
-    final current = _attendance[key];
 
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          width: 320,
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: accent.withOpacity(0.4)),
-          ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "${_monthName(_focusedMonth.month)} ${day.day}, ${day.year}",
-                style: TextStyle(
-                  color: accent,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                widget.isAdmin
-                    ? "Attendance record"
-                    : "Mark your attendance for this day.",
-                style: TextStyle(color: textMuted, fontSize: 12),
-              ),
-              const SizedBox(height: 20),
-              if (current != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: current == 'present'
-                        ? presentColor.withOpacity(0.15)
-                        : absentColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: current == 'present'
-                          ? presentColor.withOpacity(0.5)
-                          : absentColor.withOpacity(0.5),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        current == 'present'
-                            ? Icons.check_circle_rounded
-                            : Icons.cancel_rounded,
-                        color: current == 'present'
-                            ? presentColor
-                            : absentColor,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        current == 'present' ? 'Present' : 'Absent',
-                        style: TextStyle(
-                          color: current == 'present'
-                              ? presentColor
-                              : absentColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                Text(
-                  "No record yet.",
-                  style: TextStyle(color: textMuted, fontSize: 13),
-                ),
-              if (!widget.isAdmin) ...[
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: presentColor,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        icon: const Icon(
-                          Icons.check_rounded,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                        label: const Text(
-                          "Present",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        onPressed: () {
-                          _markAttendance(day, 'present');
-                          Navigator.pop(ctx);
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: absentColor,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        icon: const Icon(
-                          Icons.close_rounded,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                        label: const Text(
-                          "Absent",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        onPressed: () {
-                          _markAttendance(day, 'absent');
-                          Navigator.pop(ctx);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: borderColor,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  onPressed: () => Navigator.pop(ctx),
-                  child: Text(
-                    "Close",
-                    style: TextStyle(
-                      color: textMuted,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    setState(() {
+      if (_attendance[key] == 'present') {
+        // toggle OFF → becomes absent
+        _attendance[key] = 'absent';
+      } else {
+        // toggle ON → present
+        _attendance[key] = 'present';
+      }
+    });
+
+    // save updated state
+    await _saveAttendance(key, _attendance[key]!);
+
+    widget.onAttendanceChanged?.call();
   }
 
   // ─── CALENDAR GRID ───────────────────────────────────────
@@ -299,13 +170,14 @@ class _CalendarPageState extends State<CalendarPage> {
     ).day;
     final startWeekday = firstDay.weekday % 7;
 
-    // Build flat list of cells
     final List<Widget> cells = [];
 
+    // empty leading cells
     for (int i = 0; i < startWeekday; i++) {
       cells.add(const SizedBox());
     }
 
+    // day cells
     for (int day = 1; day <= daysInMonth; day++) {
       final date = DateTime(_focusedMonth.year, _focusedMonth.month, day);
       final key = _dateKey(date);
@@ -314,27 +186,19 @@ class _CalendarPageState extends State<CalendarPage> {
       final future = _isFuture(date);
       final weekend = _isWeekend(date);
 
-      Color bgColor = Colors.transparent;
-      if (status == 'present') bgColor = presentColor;
-      if (status == 'absent') bgColor = absentColor;
-
       cells.add(
         GestureDetector(
-          onTap: () => _showDayDialog(date),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
+          onTap: () => _markAttendance(date),
+          child: Container(
             margin: const EdgeInsets.all(2),
             decoration: BoxDecoration(
-              color: bgColor.withOpacity(status != null ? 0.85 : 0),
+              color: status == 'present'
+                  ? presentColor.withOpacity(0.85)
+                  : status == 'absent'
+                  ? absentColor.withOpacity(0.85)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(6),
-              border: today
-                  ? Border.all(color: accent, width: 2)
-                  : status != null
-                  ? Border.all(
-                      color: status == 'present' ? presentColor : absentColor,
-                      width: 1,
-                    )
-                  : null,
+              border: today ? Border.all(color: accent, width: 2) : null,
             ),
             child: Center(
               child: Text(
@@ -355,7 +219,7 @@ class _CalendarPageState extends State<CalendarPage> {
       );
     }
 
-    // Pad to complete last row
+    // pad grid to full weeks
     while (cells.length % 7 != 0) {
       cells.add(const SizedBox());
     }
@@ -365,7 +229,6 @@ class _CalendarPageState extends State<CalendarPage> {
 
     return Column(
       children: [
-        // Day headers
         Row(
           children: headers
               .map(
@@ -385,17 +248,21 @@ class _CalendarPageState extends State<CalendarPage> {
               .toList(),
         ),
         const SizedBox(height: 4),
-        // Day rows
-        ...List.generate(rows, (r) {
-          return Expanded(
-            child: Row(
-              children: List.generate(7, (c) {
-                final idx = r * 7 + c;
-                return Expanded(child: cells[idx]);
-              }),
-            ),
-          );
-        }),
+
+        Expanded(
+          child: Column(
+            children: List.generate(rows, (r) {
+              return Expanded(
+                child: Row(
+                  children: List.generate(7, (c) {
+                    final idx = r * 7 + c;
+                    return Expanded(child: cells[idx]);
+                  }),
+                ),
+              );
+            }),
+          ),
+        ),
       ],
     );
   }
