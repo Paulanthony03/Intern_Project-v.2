@@ -12,7 +12,7 @@ class AdminDashboard extends StatefulWidget {
     Key? key,
     required this.token,
     this.users,
-    required this.onRefresh,
+    this.onRefresh,
   }) : super(key: key);
 
   @override
@@ -21,7 +21,7 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   // ─── STATE ───────────────────────────────────────────────
-  List<dynamic>? users;
+  List<dynamic>? get users => widget.users;
   String fullName = "";
   String currentUserId = "";
   String searchQuery = "";
@@ -46,44 +46,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   void initState() {
     super.initState();
-    loadUsers();
-  }
-
-  // ─── LOAD USERS ──────────────────────────────────────────
-  Future<void> loadUsers() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("token");
-    final name =
-        prefs.getString("full_name") ??
-        prefs.getString("name") ??
-        prefs.getString("username") ??
-        "Admin";
-    final userId = prefs.getString("user_id") ?? "";
-    final savedDept = prefs.getInt("department_count");
-
-    if (token != null) {
-      final data = await ApiService.getUsers(token);
-
-      final seen = <String>{};
-      final deduped = data?.where((u) {
-        final id = u["id"]?.toString() ?? "";
-        return seen.add(id);
-      }).toList();
-
-      final internsOnly = deduped?.where((u) {
-        final role = (u["role"] ?? u["user_type"] ?? "")
-            .toString()
-            .toLowerCase();
-        return role != "admin";
-      }).toList();
-
-      setState(() {
-        users = internsOnly;
-        fullName = name;
-        currentUserId = userId;
-        if (savedDept != null) departmentCount = savedDept;
-      });
-    }
   }
 
   String timeAgo(DateTime time) {

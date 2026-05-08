@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import 'admin_dashboard.dart';
-import 'admin_interns_screen.dart';
-import 'admin_school_screen.dart';
-import 'admin_settings_screen.dart';
-import 'admin_departments_screen.dart';
+import 'admin_interns.dart';
+import 'admin_school.dart';
+import 'admin_settings.dart';
+import 'admin_departments.dart';
 
 // ════════════════════════════════════════════════════════
 //  APP SHELL — Shared sidebar + top bar wrapper
@@ -20,8 +20,8 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   // ── THEME COLORS ──
   static const pageBg = Color(0xFF111111);
-  static const sidebarBg = Color.fromARGB(255, 0, 0, 0);
-  static const headerBg = Color(0xFF111111);
+  static const sidebarBg = Color(0xFF151515);
+  static const headerBg = Color(0xFF151515);
   static const cardBg = Color(0xFF1A1A1A);
   static const borderColor = Color(0xFF2A2A2A);
   static const accent = Color(0xFFBFCF33);
@@ -91,10 +91,6 @@ class _AppShellState extends State<AppShell> {
     } else {
       if (mounted) setState(() => _users = []);
     }
-  }
-
-  Future<void> _refreshAll() async {
-    await _loadUsers();
   }
 
   // ════════════════════════════════════════════════════════
@@ -472,7 +468,7 @@ class _AppShellState extends State<AppShell> {
                       AdminDashboard(
                         token: _token ?? '',
                         users: _users,
-                        onRefresh: _refreshAll,
+                        onRefresh: _loadUsers,
                       ), // index 0
                       AdminInterns(
                         users: _users,
