@@ -3,10 +3,11 @@ import 'package:my_app/screens/app_shell.dart';
 import 'package:my_app/screens/landing_screen.dart';
 import 'package:my_app/screens/register_screen.dart';
 import 'package:my_app/screens/login_screen.dart';
-import 'package:my_app/screens/user_dashboard.dart';
+//import 'package:my_app/screens/user_dashboard.dart';
 import 'package:my_app/screens/forgot_password_screen.dart';
 import 'package:my_app/screens/verify_otp_screen.dart';
 import 'package:my_app/screens/reset_password_screen.dart';
+import 'package:my_app/screens/user_shell.dart';
 
 void main() {
   runApp(const MyApp());
@@ -26,7 +27,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => LandingScreen(),
         '/admin': (context) => AppShell(),
         '/register': (context) => const RegisterScreen(),
-        '/user': (context) => UserDashboard(token: ''),
+        '/user': (context) => UserAppShell(),
         '/login': (_) => LoginScreen(),
         '/forgot-password': (_) => ForgotPasswordScreen(),
         '/verify-otp': (_) => VerifyOTPScreen(),
